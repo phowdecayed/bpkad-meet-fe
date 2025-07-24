@@ -83,5 +83,6 @@ export const useUsersStore = defineStore('users', () => {
     updateUser,
     deleteUser,
     sendPasswordReset,
+    resendVerificationEmail,
   }
 })

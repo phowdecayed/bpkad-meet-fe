@@ -36,6 +36,7 @@ const { users, roles, isLoading } = storeToRefs(usersStore)
 const isDialogOpen = ref(false)
 const isEditing = ref(false)
 const isSaving = ref(false)
+const isResending = ref<Record<number, boolean>>({})
 const selectedUser = ref<User | null>(null)
 const selectedRoles = ref<number[]>([])
 
@@ -136,6 +137,7 @@ async function handleSendPasswordReset() {
 }
 
 async function handleResendVerification(user: User) {
+  isResending.value[user.id] = true
   try {
     await usersStore.resendVerificationEmail(user.id)
     toast.success('Verification Email Sent', {
@@ -144,6 +146,8 @@ async function handleResendVerification(user: User) {
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'An unexpected error occurred.'
     toast.error('Failed to Send', { description: message })
+  } finally {
+    isResending.value[user.id] = false
   }
 }
 
@@ -202,8 +206,9 @@ function formatDate(dateString: string) {
               </Badge>
             </TableCell>
             <TableCell class="text-right">
-              <Button v-if="!user.email_verified_at" variant="ghost" size="icon" @click="handleResendVerification(user)">
-                <MailWarning class="h-4 w-4" />
+              <Button v-if="!user.email_verified_at" variant="ghost" size="icon" :disabled="isResending[user.id]" @click="handleResendVerification(user)">
+                <LoaderCircle v-if="isResending[user.id]" class="h-4 w-4 animate-spin" />
+                <MailWarning v-else class="h-4 w-4" />
               </Button>
               <Button variant="ghost" size="icon" @click="openEditDialog(user)">
                 <Pencil class="h-4 w-4" />

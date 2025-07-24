@@ -81,6 +81,12 @@ const router = createRouter({
           component: () => import('../views/RoleManagementView.vue'),
           meta: { requiresPermission: 'manage roles' },
         },
+        {
+          path: 'locations',
+          name: 'locations',
+          component: () => import('../views/MeetingLocationsView.vue'),
+          meta: { requiresPermission: 'edit meetings' },
+        },
       ],
     },
     // Catch-all route for 404 Not Found pages

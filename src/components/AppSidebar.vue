@@ -26,6 +26,7 @@ const authStore = useAuthStore()
 const canManageSettings = computed(() => authStore.hasPermission('manage settings'))
 const canManageUsers = computed(() => authStore.hasPermission('manage users'))
 const canManageRoles = computed(() => authStore.hasPermission('manage roles'))
+const canEditMeetings = computed(() => authStore.hasPermission('edit meetings'))
 
 // This is sample data.
 const data = {
@@ -77,6 +78,14 @@ const navAdmin = computed(() => {
     })
   }
 
+  if (canEditMeetings.value) {
+    menu.push({
+      title: 'Meeting Locations',
+      url: '/app/locations',
+      icon: Settings2, // You might want to change this icon
+    })
+  }
+
   return menu
 })
 </script>
@@ -88,7 +97,7 @@ const navAdmin = computed(() => {
     </SidebarHeader>
     <SidebarContent>
       <NavMain :items="navMain" />
-      <NavAdmin :items="navAdmin" />
+      <NavAdmin v-if="navAdmin.length > 0" :items="navAdmin" />
     </SidebarContent>
     <SidebarFooter>
       <NavUser v-if="authStore.user" :user="authStore.user" />
