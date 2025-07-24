@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import { useRoute, RouterLink } from 'vue-router'
+import { useRoute, useRouter, RouterLink } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { toast } from 'vue-sonner'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { LoaderCircle, CircleCheck, CircleX } from 'lucide-vue-next'
 
 const route = useRoute()
+const router = useRouter()
 const authStore = useAuthStore()
 
 const verificationStatus = ref('verifying') // 'verifying', 'success', 'error'
@@ -16,6 +17,7 @@ const errorMessage = ref('')
 onMounted(async () => {
   const { id, hash } = route.query
   const query = route.query
+  const isAdminAction = ref(false)
 
   if (!id || !hash) {
     verificationStatus.value = 'error'
@@ -24,11 +26,46 @@ onMounted(async () => {
   }
 
   try {
+    // Security Check: If a user is logged in, ensure they are the correct user OR an admin.
+    if (
+      authStore.isAuthenticated &&
+      authStore.user &&
+      String(authStore.user.id) !== id
+    ) {
+      if (authStore.hasPermission('manage users')) {
+        isAdminAction.value = true
+      } else {
+        await authStore.logout()
+        toast.info('You have been logged out', {
+          description: 'The verification link you used belongs to a different account.',
+        })
+      }
+    }
+
     await authStore.verifyEmail(id as string, hash as string, query)
     verificationStatus.value = 'success'
-    toast.success('Success', {
-      description: 'Your email has been verified. You can now log in.',
-    })
+
+    // After successful verification, check auth state again.
+    if (authStore.isAuthenticated) {
+      await authStore.fetchUser() // Refresh current user's data
+      
+      if (isAdminAction.value) {
+        toast.success('Verification Successful', {
+          description: "The user's email address has been verified.",
+        })
+        router.push({ name: 'users' })
+      } else {
+        toast.success('Success', {
+          description: 'Your email has been verified.',
+        })
+        router.push({ name: 'profile' })
+      }
+    } else {
+      // This runs if the user was not logged in, or was just logged out.
+      toast.success('Email Verified!', {
+        description: 'Your email has been verified. You can now log in.',
+      })
+    }
   } catch (error: any) {
     verificationStatus.value = 'error'
     errorMessage.value =
@@ -76,8 +113,22 @@ onMounted(async () => {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Button v-if="verificationStatus !== 'verifying'" as-child class="w-full">
+        <Button
+          v-if="verificationStatus === 'success' && !authStore.isAuthenticated"
+          as-child
+          class="w-full"
+        >
           <RouterLink to="/"> Go to Login </RouterLink>
+        </Button>
+        <Button
+          v-else-if="verificationStatus === 'success' && authStore.isAuthenticated"
+          as-child
+          class="w-full"
+        >
+          <RouterLink to="/app/profile"> Go to Your Dashboard </RouterLink>
+        </Button>
+        <Button v-else-if="verificationStatus === 'error'" as-child class="w-full">
+          <RouterLink to="/"> Back to Home </RouterLink>
         </Button>
       </CardContent>
     </Card>

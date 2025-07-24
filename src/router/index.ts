@@ -35,13 +35,6 @@ const router = createRouter({
       name: 'verify-email',
       component: VerifyEmailView,
       meta: { requiresAuth: false },
-      beforeEnter: (to, from, next) => {
-        if (to.query.id && to.query.hash) {
-          next()
-        } else {
-          next({ name: 'login' })
-        }
-      },
     },
     {
       path: '/app',
@@ -114,8 +107,12 @@ router.beforeEach((to, from, next) => {
     return next({ name: 'dashboard' })
   }
 
+  if (to.name === 'verify-email') {
+    return next()
+  }
+
   if (
-    ['login', 'forgot-password', 'reset-password', 'verify-email'].includes(to.name as string) &&
+    ['login', 'forgot-password', 'reset-password'].includes(to.name as string) &&
     isAuthenticated
   ) {
     return next({ name: 'dashboard' })
