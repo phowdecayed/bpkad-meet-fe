@@ -24,12 +24,10 @@ async function initializeApp() {
     if (authStore.token) {
       await authStore.fetchUser()
     }
-  }
-  catch (error) {
+  } catch {
     // Token might be invalid, clear it
     authStore.logout()
-  }
-  finally {
+  } finally {
     app.mount('#app')
   }
 }
