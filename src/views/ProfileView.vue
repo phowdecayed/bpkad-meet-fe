@@ -119,6 +119,7 @@ async function handleChangePassword() {
               id="current_password"
               v-model="current_password"
               :type="showCurrentPassword ? 'text' : 'password'"
+              placeholder="Enter Current Password"
             />
             <Button
               type="button"
@@ -132,7 +133,12 @@ async function handleChangePassword() {
           </div>
           <div class="grid gap-2 relative">
             <Label for="password">New Password</Label>
-            <Input id="password" v-model="password" :type="showPassword ? 'text' : 'password'" />
+            <Input
+              id="password"
+              v-model="password"
+              :type="showPassword ? 'text' : 'password'"
+              placeholder="Enter New Password"
+            />
             <Button
               type="button"
               variant="ghost"
@@ -149,6 +155,7 @@ async function handleChangePassword() {
               id="password_confirmation"
               v-model="password_confirmation"
               :type="showPasswordConfirmation ? 'text' : 'password'"
+              placeholder="Enter Confirmation Password"
             />
             <Button
               type="button"

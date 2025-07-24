@@ -35,6 +35,13 @@ const router = createRouter({
       name: 'verify-email',
       component: VerifyEmailView,
       meta: { requiresAuth: false },
+      beforeEnter: (to, from, next) => {
+        if (to.query.id && to.query.hash) {
+          next()
+        } else {
+          next({ name: 'login' })
+        }
+      },
     },
     {
       path: '/app',
@@ -61,6 +68,18 @@ const router = createRouter({
           name: 'settings',
           component: () => import('../views/SettingsView.vue'),
           meta: { requiresPermission: 'manage settings' },
+        },
+        {
+          path: 'users',
+          name: 'users',
+          component: () => import('../views/UserManagementView.vue'),
+          meta: { requiresPermission: 'manage users' },
+        },
+        {
+          path: 'roles',
+          name: 'roles',
+          component: () => import('../views/RoleManagementView.vue'),
+          meta: { requiresPermission: 'manage roles' },
         },
       ],
     },

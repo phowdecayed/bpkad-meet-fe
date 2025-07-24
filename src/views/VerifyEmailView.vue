@@ -3,6 +3,9 @@ import { onMounted, ref } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { toast } from 'vue-sonner'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { LoaderCircle, CircleCheck, CircleX } from 'lucide-vue-next'
 
 const route = useRoute()
 const authStore = useAuthStore()
@@ -16,7 +19,7 @@ onMounted(async () => {
 
   if (!id || !hash) {
     verificationStatus.value = 'error'
-    errorMessage.value = 'Invalid verification link.'
+    errorMessage.value = 'Invalid verification link. Please check the URL and try again.'
     return
   }
 
@@ -38,36 +41,61 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="flex min-h-screen flex-col items-center justify-center text-center p-4">
-    <div v-if="verificationStatus === 'verifying'">
-      <h1 class="text-3xl font-bold">
-        Verifying Your Email...
-      </h1>
-      <p class="text-muted-foreground mt-2">
-        Please wait a moment.
-      </p>
-    </div>
-    <div v-else-if="verificationStatus === 'success'">
-      <h1 class="text-3xl font-bold text-green-600">
-        Email Verified!
-      </h1>
-      <p class="text-muted-foreground mt-2">
-        Thank you for verifying your email address.
-      </p>
-      <RouterLink to="/" class="mt-8 inline-block rounded-md bg-primary px-6 py-3 font-medium text-primary-foreground hover:bg-primary/90">
-        Go to Login
-      </RouterLink>
-    </div>
-    <div v-else-if="verificationStatus === 'error'">
-      <h1 class="text-3xl font-bold text-red-600">
-        Verification Failed
-      </h1>
-      <p class="text-muted-foreground mt-2">
-        {{ errorMessage }}
-      </p>
-      <RouterLink to="/" class="mt-8 inline-block rounded-md bg-primary px-6 py-3 font-medium text-primary-foreground hover:bg-primary/90">
-        Back to Login
-      </RouterLink>
-    </div>
+  <div class="flex min-h-screen items-center justify-center bg-muted p-4">
+    <Card class="w-full max-w-md text-center shadow-lg">
+      <CardHeader>
+        <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+          <transition name="fade" mode="out-in">
+            <LoaderCircle v-if="verificationStatus === 'verifying'" class="h-8 w-8 animate-spin text-primary" />
+            <CircleCheck v-else-if="verificationStatus === 'success'" class="pop-in h-8 w-8 text-green-500" />
+            <CircleX v-else-if="verificationStatus === 'error'" class="pop-in h-8 w-8 text-red-500" />
+          </transition>
+        </div>
+        <CardTitle class="text-2xl font-bold">
+          <span v-if="verificationStatus === 'verifying'">Verifying Your Email...</span>
+          <span v-else-if="verificationStatus === 'success'">Email Verified!</span>
+          <span v-else-if="verificationStatus === 'error'">Verification Failed</span>
+        </CardTitle>
+        <CardDescription>
+          <span v-if="verificationStatus === 'verifying'">Please wait a moment while we confirm your email address.</span>
+          <span v-else-if="verificationStatus === 'success'">Thank you for verifying your email. Welcome aboard!</span>
+          <span v-else-if="verificationStatus === 'error'">{{ errorMessage }}</span>
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Button v-if="verificationStatus !== 'verifying'" as-child class="w-full">
+          <RouterLink to="/">
+            Go to Login
+          </RouterLink>
+        </Button>
+      </CardContent>
+    </Card>
   </div>
 </template>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+.pop-in {
+  animation: pop-in 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+}
+
+@keyframes pop-in {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+</style>

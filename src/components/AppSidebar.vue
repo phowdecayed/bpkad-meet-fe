@@ -5,6 +5,7 @@ import { useAuthStore } from '@/stores/auth'
 
 import { GalleryVerticalEnd, PieChart, Settings2 } from 'lucide-vue-next'
 import NavMain from '@/components/NavMain.vue'
+import NavAdmin from '@/components/NavAdmin.vue'
 import NavUser from '@/components/NavUser.vue'
 import TeamSwitcher from '@/components/TeamSwitcher.vue'
 
@@ -23,6 +24,8 @@ const props = withDefaults(defineProps<SidebarProps>(), {
 const authStore = useAuthStore()
 
 const canManageSettings = computed(() => authStore.hasPermission('manage settings'))
+const canManageUsers = computed(() => authStore.hasPermission('manage users'))
+const canManageRoles = computed(() => authStore.hasPermission('manage roles'))
 
 // This is sample data.
 const data = {
@@ -44,11 +47,33 @@ const navMain = computed(() => {
     },
   ]
 
+  return menu
+})
+
+const navAdmin = computed(() => {
+  const menu = []
+
   if (canManageSettings.value) {
     menu.push({
       title: 'Settings',
       url: '/app/settings',
       icon: Settings2,
+    })
+  }
+
+  if (canManageUsers.value) {
+    menu.push({
+      title: 'User Management',
+      url: '/app/users',
+      icon: Settings2, // You might want to change this icon
+    })
+  }
+
+  if (canManageRoles.value) {
+    menu.push({
+      title: 'Role Management',
+      url: '/app/roles',
+      icon: Settings2, // You might want to change this icon
     })
   }
 
@@ -63,6 +88,7 @@ const navMain = computed(() => {
     </SidebarHeader>
     <SidebarContent>
       <NavMain :items="navMain" />
+      <NavAdmin :items="navAdmin" />
     </SidebarContent>
     <SidebarFooter>
       <NavUser v-if="authStore.user" :user="authStore.user" />
