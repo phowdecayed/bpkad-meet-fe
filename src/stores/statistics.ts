@@ -13,7 +13,7 @@ export const useStatisticsStore = defineStore('statistics', () => {
     error.value = null
     try {
       const response = await axios.get('/api/statistics/dashboard')
-      dashboardStats.value = response.data
+      dashboardStats.value = response.data.data
     }
     catch (err: any) {
       error.value = err.response?.data?.message || 'Failed to fetch dashboard statistics.'

@@ -3,9 +3,8 @@ import { computed } from 'vue'
 import type { SidebarProps } from '@/components/ui/sidebar'
 import { useAuthStore } from '@/stores/auth'
 
-import { Frame, GalleryVerticalEnd, Map, PieChart, Settings2 } from 'lucide-vue-next'
+import { GalleryVerticalEnd, PieChart, Settings2 } from 'lucide-vue-next'
 import NavMain from '@/components/NavMain.vue'
-import NavProjects from '@/components/NavProjects.vue'
 import NavUser from '@/components/NavUser.vue'
 import TeamSwitcher from '@/components/TeamSwitcher.vue'
 
@@ -32,23 +31,6 @@ const data = {
       name: 'BPKAD Meeting',
       logo: GalleryVerticalEnd,
       plan: 'Enterprise',
-    },
-  ],
-  projects: [
-    {
-      name: 'Design Engineering',
-      url: '#',
-      icon: Frame,
-    },
-    {
-      name: 'Sales & Marketing',
-      url: '#',
-      icon: PieChart,
-    },
-    {
-      name: 'Travel',
-      url: '#',
-      icon: Map,
     },
   ],
 }
@@ -81,7 +63,6 @@ const navMain = computed(() => {
     </SidebarHeader>
     <SidebarContent>
       <NavMain :items="navMain" />
-      <NavProjects :projects="data.projects" />
     </SidebarContent>
     <SidebarFooter>
       <NavUser v-if="authStore.user" :user="authStore.user" />
