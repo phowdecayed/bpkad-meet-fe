@@ -23,13 +23,13 @@ import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/s
         <Breadcrumb>
           <BreadcrumbList>
             <BreadcrumbItem class="hidden md:block">
-              <BreadcrumbLink href="#">
-                BPKAD
-              </BreadcrumbLink>
+              <BreadcrumbLink href="#"> BPKAD </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator class="hidden md:block" />
             <BreadcrumbItem>
-              <BreadcrumbPage>{{ $route.name?.toString().charAt(0).toUpperCase() + $route.name?.toString().slice(1) }}</BreadcrumbPage>
+              <BreadcrumbPage>{{
+                $route.name?.toString().charAt(0).toUpperCase() + $route.name?.toString().slice(1)
+              }}</BreadcrumbPage>
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>

@@ -90,7 +90,7 @@ async function handleSave() {
         description: `${userData.name} has been updated successfully.`,
       })
     } else {
-      const roleName = roles.value.find(r => r.id === selectedRoles.value[0])?.name || 'user'
+      const roleName = roles.value.find((r) => r.id === selectedRoles.value[0])?.name || 'user'
       const userData: UserCreationPayload = {
         name: form.value.name,
         email: form.value.email,
@@ -207,15 +207,29 @@ function formatDate(dateString: string) {
             </TableCell>
             <TableCell>{{ formatDate(user.created_at) }}</TableCell>
             <TableCell>
-              <Badge v-if="user.email_verified_at" variant="secondary" class="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+              <Badge
+                v-if="user.email_verified_at"
+                variant="secondary"
+                class="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+              >
                 Verified
               </Badge>
-              <Badge v-else variant="secondary" class="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+              <Badge
+                v-else
+                variant="secondary"
+                class="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+              >
                 Pending
               </Badge>
             </TableCell>
             <TableCell class="text-right">
-              <Button v-if="!user.email_verified_at" variant="ghost" size="icon" :disabled="isResending[user.id]" @click="handleResendVerification(user)">
+              <Button
+                v-if="!user.email_verified_at"
+                variant="ghost"
+                size="icon"
+                :disabled="isResending[user.id]"
+                @click="handleResendVerification(user)"
+              >
                 <LoaderCircle v-if="isResending[user.id]" class="h-4 w-4 animate-spin" />
                 <MailWarning v-else class="h-4 w-4" />
               </Button>

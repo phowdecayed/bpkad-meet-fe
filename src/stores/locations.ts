@@ -14,16 +14,16 @@ export const useLocationsStore = defineStore('locations', () => {
     try {
       const response = await axios.get('/api/meeting-locations')
       locations.value = response.data.data
-    }
-    catch (err: any) {
+    } catch (err: any) {
       error.value = err.response?.data?.message || 'Failed to fetch locations.'
-    }
-    finally {
+    } finally {
       isLoading.value = false
     }
   }
 
-  async function createLocation(locationData: Omit<MeetingLocation, 'id' | 'created_at' | 'updated_at'>) {
+  async function createLocation(
+    locationData: Omit<MeetingLocation, 'id' | 'created_at' | 'updated_at'>,
+  ) {
     const response = await axios.post('/api/meeting-locations', locationData)
     await fetchLocations()
     return response.data

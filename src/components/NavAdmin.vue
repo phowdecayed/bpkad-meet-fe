@@ -1,11 +1,7 @@
 <script setup lang="ts">
 import { ChevronRight, type LucideIcon } from 'lucide-vue-next'
 import { RouterLink } from 'vue-router'
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -47,7 +43,9 @@ defineProps<{
               <SidebarMenuButton :tooltip="item.title">
                 <component :is="item.icon" v-if="item.icon" />
                 <span>{{ item.title }}</span>
-                <ChevronRight class="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                <ChevronRight
+                  class="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90"
+                />
               </SidebarMenuButton>
             </CollapsibleTrigger>
             <CollapsibleContent>

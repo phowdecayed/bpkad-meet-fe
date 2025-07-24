@@ -15,13 +15,11 @@ export const useSettingsStore = defineStore('settings', () => {
       const response = await axios.get('/api/settings', { params: { group } })
       console.log('[Settings Store] API Response Success:', response.data)
       settings.value = response.data
-    }
-    catch (err: any) {
+    } catch (err: any) {
       console.error('[Settings Store] API Response Error:', err)
       error.value = err.response?.data?.message || 'Failed to fetch settings.'
       settings.value = []
-    }
-    finally {
+    } finally {
       isLoading.value = false
     }
   }

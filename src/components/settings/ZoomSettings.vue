@@ -5,7 +5,15 @@ import { useSettingsStore } from '@/stores/settings'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from '@/components/ui/dialog'
 import { toast } from 'vue-sonner'
 import { LoaderCircle, Trash2, PlusCircle, Settings, ChevronRight } from 'lucide-vue-next'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -36,7 +44,7 @@ onMounted(() => {
 
 const selectedSetting = computed(() => {
   if (!selectedAccountId.value) return null
-  return storeSettings.value.find(s => s.id === selectedAccountId.value) || null
+  return storeSettings.value.find((s) => s.id === selectedAccountId.value) || null
 })
 
 function selectAccount(id: number) {
@@ -51,13 +59,11 @@ async function handleUpdate(setting: any) {
     toast.success('Settings Saved', {
       description: `${setting.name} has been updated successfully.`,
     })
-  }
-  catch (error: any) {
+  } catch (error: any) {
     toast.error('Save Failed', {
       description: error.message,
     })
-  }
-  finally {
+  } finally {
     isSaving.value[setting.id] = false
   }
 }
@@ -72,8 +78,7 @@ async function handleDelete(setting: any) {
       if (selectedAccountId.value === setting.id) {
         selectedAccountId.value = null
       }
-    }
-    catch (error: any) {
+    } catch (error: any) {
       toast.error('Delete Failed', {
         description: error.message,
       })
@@ -95,13 +100,11 @@ async function handleCreate() {
       group: 'zoom',
       payload: { client_id: '', client_secret: '', account_id: '', host_key: '' },
     }
-  }
-  catch (error: any) {
+  } catch (error: any) {
     toast.error('Creation Failed', {
       description: error.message,
     })
-  }
-  finally {
+  } finally {
     isCreating.value = false
   }
 }
@@ -110,7 +113,7 @@ async function handleCreate() {
 <template>
   <div class="space-y-4">
     <div class="flex items-center justify-between">
-       <div class="space-y-1">
+      <div class="space-y-1">
         <h1 class="text-3xl font-bold">Zoom Account Integrations</h1>
         <p class="text-sm text-muted-foreground">
           Manage the Zoom accounts used to create meetings.
@@ -131,7 +134,11 @@ async function handleCreate() {
           <form class="space-y-4" @submit.prevent="handleCreate">
             <div class="grid gap-2">
               <Label for="new-name">Account Name</Label>
-              <Input id="new-name" v-model="newAccountForm.name" placeholder="e.g., 'Secondary Zoom Account'" />
+              <Input
+                id="new-name"
+                v-model="newAccountForm.name"
+                placeholder="e.g., 'Secondary Zoom Account'"
+              />
             </div>
             <div class="grid gap-2">
               <Label for="new-client-id">Client ID</Label>
@@ -139,7 +146,11 @@ async function handleCreate() {
             </div>
             <div class="grid gap-2">
               <Label for="new-client-secret">Client Secret</Label>
-              <Input id="new-client-secret" v-model="newAccountForm.payload.client_secret" type="password" />
+              <Input
+                id="new-client-secret"
+                v-model="newAccountForm.payload.client_secret"
+                type="password"
+              />
             </div>
             <div class="grid gap-2">
               <Label for="new-account-id">Account ID</Label>
@@ -151,9 +162,7 @@ async function handleCreate() {
             </div>
             <DialogFooter>
               <DialogClose as-child>
-                <Button type="button" variant="secondary">
-                  Cancel
-                </Button>
+                <Button type="button" variant="secondary"> Cancel </Button>
               </DialogClose>
               <Button type="submit" :disabled="isCreating">
                 <LoaderCircle v-if="isCreating" class="mr-2 h-4 w-4 animate-spin" />
@@ -180,7 +189,7 @@ async function handleCreate() {
             class="w-full text-left p-3 rounded-lg transition-colors"
             :class="{
               'bg-primary text-primary-foreground': selectedAccountId === setting.id,
-              'hover:bg-muted': selectedAccountId !== setting.id
+              'hover:bg-muted': selectedAccountId !== setting.id,
             }"
             @click="selectAccount(setting.id)"
           >
@@ -191,9 +200,7 @@ async function handleCreate() {
           </button>
         </div>
         <div v-else class="text-center text-muted-foreground py-8 border rounded-lg">
-          <h3 class="text-lg font-semibold">
-            No Zoom Accounts
-          </h3>
+          <h3 class="text-lg font-semibold">No Zoom Accounts</h3>
           <p class="text-sm">Click "Add New Account" to get started.</p>
         </div>
       </div>
@@ -201,19 +208,20 @@ async function handleCreate() {
       <!-- Right Column: Settings Form -->
       <div class="md:col-span-2">
         <div v-if="selectedSetting" class="p-6 border rounded-lg">
-           <AccountSettingsForm
-              :key="selectedSetting.id"
-              :setting="selectedSetting"
-              :is-saving="isSaving[selectedSetting.id] || false"
-              @update="handleUpdate"
-              @delete="handleDelete"
-            />
+          <AccountSettingsForm
+            :key="selectedSetting.id"
+            :setting="selectedSetting"
+            :is-saving="isSaving[selectedSetting.id] || false"
+            @update="handleUpdate"
+            @delete="handleDelete"
+          />
         </div>
-        <div v-else class="flex flex-col items-center justify-center text-center text-muted-foreground p-12 border rounded-lg h-full">
+        <div
+          v-else
+          class="flex flex-col items-center justify-center text-center text-muted-foreground p-12 border rounded-lg h-full"
+        >
           <Settings class="h-12 w-12 mb-4" />
-          <h3 class="text-lg font-semibold">
-            Select an Account
-          </h3>
+          <h3 class="text-lg font-semibold">Select an Account</h3>
           <p class="text-sm">Choose an account from the list to view and edit its settings.</p>
         </div>
       </div>

@@ -33,22 +33,19 @@ export const useAuthStore = defineStore('auth', () => {
       const { access_token } = response.data
       setToken(access_token)
       await fetchUser()
-    }
-    catch (error) {
+    } catch (error) {
       clearAuth()
       throw error
     }
   }
 
   async function fetchUser() {
-    if (!token.value)
-      return
+    if (!token.value) return
 
     try {
       const response = await axios.get('/api/user')
       setUser(response.data.data)
-    }
-    catch (error) {
+    } catch (error) {
       clearAuth()
       console.error('Failed to fetch user:', error)
     }
@@ -57,11 +54,9 @@ export const useAuthStore = defineStore('auth', () => {
   async function logout() {
     try {
       await axios.post('/api/logout')
-    }
-    catch (error) {
+    } catch (error) {
       console.error('Failed to logout on server:', error)
-    }
-    finally {
+    } finally {
       clearAuth()
     }
   }
@@ -93,8 +88,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   const hasPermission = computed(() => {
     return (permission: string) => {
-      if (!user.value || !user.value.roles)
-        return false
+      if (!user.value || !user.value.roles) return false
       return user.value.roles.some((role: any) =>
         role.permissions.some((p: any) => p.name === permission),
       )
@@ -102,8 +96,7 @@ export const useAuthStore = defineStore('auth', () => {
   })
 
   // Set auth header on initial load if token exists
-  if (token.value)
-    axios.defaults.headers.common['Authorization'] = `Bearer ${token.value}`
+  if (token.value) axios.defaults.headers.common['Authorization'] = `Bearer ${token.value}`
 
   return {
     token,

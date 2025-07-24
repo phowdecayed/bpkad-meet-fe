@@ -19,13 +19,11 @@ async function handleSubmit() {
     toast.success('Success', {
       description: 'If an account with that email exists, a password reset link has been sent.',
     })
-  }
-  catch (error: any) {
+  } catch (error: any) {
     toast.error('Error', {
       description: error.response?.data?.message || 'An error occurred.',
     })
-  }
-  finally {
+  } finally {
     isLoading.value = false
   }
 }
@@ -35,9 +33,7 @@ async function handleSubmit() {
   <div class="flex min-h-screen items-center justify-center">
     <div class="w-full max-w-md space-y-6 p-4">
       <div class="text-center">
-        <h1 class="text-3xl font-bold">
-          Forgot Password
-        </h1>
+        <h1 class="text-3xl font-bold">Forgot Password</h1>
         <p class="text-muted-foreground">
           Enter your email and we'll send you a link to reset your password.
         </p>
@@ -45,7 +41,14 @@ async function handleSubmit() {
       <form class="space-y-4" @submit.prevent="handleSubmit">
         <div class="grid gap-2">
           <Label for="email">Email</Label>
-          <Input id="email" v-model="email" type="email" placeholder="m@example.com" required :disabled="isLoading" />
+          <Input
+            id="email"
+            v-model="email"
+            type="email"
+            placeholder="m@example.com"
+            required
+            :disabled="isLoading"
+          />
         </div>
         <Button type="submit" class="w-full" :disabled="isLoading">
           <LoaderCircle v-if="isLoading" class="mr-2 h-4 w-4 animate-spin" />

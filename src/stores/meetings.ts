@@ -16,14 +16,12 @@ export const useMeetingsStore = defineStore('meetings', () => {
       if (startDate) params.start_date = startDate
       if (endDate) params.end_date = endDate
 
-      const endpoint = (startDate && endDate) ? '/api/calendar' : '/api/meetings'
+      const endpoint = startDate && endDate ? '/api/calendar' : '/api/meetings'
       const response = await axios.get(endpoint, { params })
       meetings.value = response.data.data
-    }
-    catch (err: any) {
+    } catch (err: any) {
       error.value = err.response?.data?.message || 'Failed to fetch meetings.'
-    }
-    finally {
+    } finally {
       isLoading.value = false
     }
   }

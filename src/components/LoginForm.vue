@@ -26,8 +26,7 @@ async function handleSubmit() {
   try {
     await authStore.login({ email: email.value, password: password.value })
     router.push('/app/dashboard')
-  }
-  catch (err) {
+  } catch (err) {
     error.value = 'Failed to login. Please check your credentials.'
     console.error(err)
   }
@@ -50,13 +49,28 @@ async function handleSubmit() {
       <div class="grid gap-3">
         <div class="flex items-center">
           <Label for="password">Password</Label>
-          <RouterLink to="/forgot-password" class="ml-auto text-sm underline-offset-4 hover:underline">
+          <RouterLink
+            to="/forgot-password"
+            class="ml-auto text-sm underline-offset-4 hover:underline"
+          >
             Forgot your password?
           </RouterLink>
         </div>
         <div class="relative">
-          <Input id="password" v-model="password" :type="showPassword ? 'text' : 'password'" required placeholder="Enter your password" />
-          <Button type="button" variant="ghost" size="icon" class="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" @click="showPassword = !showPassword">
+          <Input
+            id="password"
+            v-model="password"
+            :type="showPassword ? 'text' : 'password'"
+            required
+            placeholder="Enter your password"
+          />
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            class="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
+            @click="showPassword = !showPassword"
+          >
             <component :is="showPassword ? EyeOff : Eye" class="h-4 w-4" />
           </Button>
         </div>
@@ -68,4 +82,3 @@ async function handleSubmit() {
     </div>
   </form>
 </template>
-

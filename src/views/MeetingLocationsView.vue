@@ -79,18 +79,19 @@ async function handleSave() {
 
     if (isEditing.value && selectedLocation.value) {
       await locationsStore.updateLocation(selectedLocation.value.id, locationData)
-      toast.success('Location Updated', { description: `${locationData.name} has been updated successfully.` })
-    }
-    else {
+      toast.success('Location Updated', {
+        description: `${locationData.name} has been updated successfully.`,
+      })
+    } else {
       await locationsStore.createLocation(locationData)
-      toast.success('Location Created', { description: `${locationData.name} has been created successfully.` })
+      toast.success('Location Created', {
+        description: `${locationData.name} has been created successfully.`,
+      })
     }
     isDialogOpen.value = false
-  }
-  catch (error: any) {
+  } catch (error: any) {
     toast.error('Save Failed', { description: error.message })
-  }
-  finally {
+  } finally {
     isSaving.value = false
   }
 }
@@ -104,7 +105,9 @@ async function onConfirmDelete() {
   if (!locationToDelete.value) return
   try {
     await locationsStore.deleteLocation(locationToDelete.value.id)
-    toast.success('Location Deleted', { description: `${locationToDelete.value.name} has been deleted.` })
+    toast.success('Location Deleted', {
+      description: `${locationToDelete.value.name} has been deleted.`,
+    })
   } catch (error: any) {
     toast.error('Delete Failed', { description: error.message })
   } finally {
@@ -117,9 +120,7 @@ async function onConfirmDelete() {
   <div class="flex-1 space-y-4 p-4 pt-6 md:p-8">
     <div class="flex items-center justify-between">
       <div class="space-y-1">
-        <h1 class="text-3xl font-bold">
-          Meeting Locations
-        </h1>
+        <h1 class="text-3xl font-bold">Meeting Locations</h1>
         <p class="text-sm text-muted-foreground">
           Manage the physical locations and rooms for offline and hybrid meetings.
         </p>
@@ -141,9 +142,7 @@ async function onConfirmDelete() {
             <TableHead>Address</TableHead>
             <TableHead>Room</TableHead>
             <TableHead>Capacity</TableHead>
-            <TableHead class="text-right">
-              Actions
-            </TableHead>
+            <TableHead class="text-right"> Actions </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -170,7 +169,11 @@ async function onConfirmDelete() {
         <DialogHeader>
           <DialogTitle>{{ isEditing ? 'Edit Location' : 'Create Location' }}</DialogTitle>
           <DialogDescription>
-            {{ isEditing ? 'Update the details for this location.' : 'Enter the details for the new location.' }}
+            {{
+              isEditing
+                ? 'Update the details for this location.'
+                : 'Enter the details for the new location.'
+            }}
           </DialogDescription>
         </DialogHeader>
         <form class="space-y-4" @submit.prevent="handleSave">
@@ -185,7 +188,11 @@ async function onConfirmDelete() {
           <div class="grid grid-cols-2 gap-4">
             <div class="grid gap-2">
               <Label for="room_name">Room Name (Optional)</Label>
-              <Input id="room_name" v-model="form.room_name" placeholder="e.g., Conference Room A" />
+              <Input
+                id="room_name"
+                v-model="form.room_name"
+                placeholder="e.g., Conference Room A"
+              />
             </div>
             <div class="grid gap-2">
               <Label for="capacity">Capacity (Optional)</Label>
@@ -194,9 +201,7 @@ async function onConfirmDelete() {
           </div>
           <DialogFooter>
             <DialogClose as-child>
-              <Button type="button" variant="secondary" :disabled="isSaving">
-                Cancel
-              </Button>
+              <Button type="button" variant="secondary" :disabled="isSaving"> Cancel </Button>
             </DialogClose>
             <Button type="submit" :disabled="isSaving">
               <LoaderCircle v-if="isSaving" class="mr-2 h-4 w-4 animate-spin" />

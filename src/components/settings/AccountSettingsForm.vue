@@ -15,9 +15,13 @@ const emit = defineEmits(['update', 'delete'])
 
 const form = ref<any>(null)
 
-watch(() => props.setting, (newSetting) => {
-  form.value = JSON.parse(JSON.stringify(newSetting))
-}, { immediate: true, deep: true })
+watch(
+  () => props.setting,
+  (newSetting) => {
+    form.value = JSON.parse(JSON.stringify(newSetting))
+  },
+  { immediate: true, deep: true },
+)
 
 function onUpdate() {
   emit('update', form.value)
@@ -35,12 +39,7 @@ function onDelete() {
       <Input :id="`${form.id}-name`" v-model="form.name" />
     </div>
 
-    <RecursiveFormField
-      :id="form.id"
-      field-key="payload"
-      v-model="form.payload"
-      :is-root="true"
-    />
+    <RecursiveFormField :id="form.id" field-key="payload" v-model="form.payload" :is-root="true" />
 
     <div class="flex justify-between pt-4">
       <Button type="submit" :disabled="isSaving">
@@ -52,7 +51,5 @@ function onDelete() {
       </Button>
     </div>
   </form>
-  <div v-else class="text-muted-foreground pt-4">
-    This setting has no configurable payload.
-  </div>
+  <div v-else class="text-muted-foreground pt-4">This setting has no configurable payload.</div>
 </template>

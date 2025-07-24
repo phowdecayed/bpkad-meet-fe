@@ -36,14 +36,10 @@ function handleConfirm() {
       </AlertDialogHeader>
       <AlertDialogFooter>
         <AlertDialogCancel as-child>
-          <Button variant="outline">
-            Cancel
-          </Button>
+          <Button variant="outline"> Cancel </Button>
         </AlertDialogCancel>
         <AlertDialogAction as-child>
-          <Button variant="destructive" @click="handleConfirm">
-            Confirm
-          </Button>
+          <Button variant="destructive" @click="handleConfirm"> Confirm </Button>
         </AlertDialogAction>
       </AlertDialogFooter>
     </AlertDialogContent>

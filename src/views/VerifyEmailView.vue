@@ -29,10 +29,10 @@ onMounted(async () => {
     toast.success('Success', {
       description: 'Your email has been verified. You can now log in.',
     })
-  }
-  catch (error: any) {
+  } catch (error: any) {
     verificationStatus.value = 'error'
-    errorMessage.value = error.response?.data?.message || 'Verification failed. The link may be invalid or expired.'
+    errorMessage.value =
+      error.response?.data?.message || 'Verification failed. The link may be invalid or expired.'
     toast.error('Error', {
       description: errorMessage.value,
     })
@@ -46,9 +46,18 @@ onMounted(async () => {
       <CardHeader>
         <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
           <transition name="fade" mode="out-in">
-            <LoaderCircle v-if="verificationStatus === 'verifying'" class="h-8 w-8 animate-spin text-primary" />
-            <CircleCheck v-else-if="verificationStatus === 'success'" class="pop-in h-8 w-8 text-green-500" />
-            <CircleX v-else-if="verificationStatus === 'error'" class="pop-in h-8 w-8 text-red-500" />
+            <LoaderCircle
+              v-if="verificationStatus === 'verifying'"
+              class="h-8 w-8 animate-spin text-primary"
+            />
+            <CircleCheck
+              v-else-if="verificationStatus === 'success'"
+              class="pop-in h-8 w-8 text-green-500"
+            />
+            <CircleX
+              v-else-if="verificationStatus === 'error'"
+              class="pop-in h-8 w-8 text-red-500"
+            />
           </transition>
         </div>
         <CardTitle class="text-2xl font-bold">
@@ -57,16 +66,18 @@ onMounted(async () => {
           <span v-else-if="verificationStatus === 'error'">Verification Failed</span>
         </CardTitle>
         <CardDescription>
-          <span v-if="verificationStatus === 'verifying'">Please wait a moment while we confirm your email address.</span>
-          <span v-else-if="verificationStatus === 'success'">Thank you for verifying your email. Welcome aboard!</span>
+          <span v-if="verificationStatus === 'verifying'"
+            >Please wait a moment while we confirm your email address.</span
+          >
+          <span v-else-if="verificationStatus === 'success'"
+            >Thank you for verifying your email. Welcome aboard!</span
+          >
           <span v-else-if="verificationStatus === 'error'">{{ errorMessage }}</span>
         </CardDescription>
       </CardHeader>
       <CardContent>
         <Button v-if="verificationStatus !== 'verifying'" as-child class="w-full">
-          <RouterLink to="/">
-            Go to Login
-          </RouterLink>
+          <RouterLink to="/"> Go to Login </RouterLink>
         </Button>
       </CardContent>
     </Card>

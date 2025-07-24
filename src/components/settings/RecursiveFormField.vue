@@ -30,7 +30,11 @@ const localValue = computed({
 const isSecretVisible = ref(false)
 
 const isObject = computed(() => {
-  return props.modelValue !== null && typeof props.modelValue === 'object' && !Array.isArray(props.modelValue)
+  return (
+    props.modelValue !== null &&
+    typeof props.modelValue === 'object' &&
+    !Array.isArray(props.modelValue)
+  )
 })
 
 const isSecretField = computed(() => {
@@ -40,16 +44,14 @@ const isSecretField = computed(() => {
 // Convert snake_case or camelCase to Title Case for the label
 const formattedLabel = computed(() => {
   // We don't want to display a label for the root payload object itself.
-  if (props.isRoot)
-    return ''
+  if (props.isRoot) return ''
 
   const key = props.fieldKey.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ')
   return key.charAt(0).toUpperCase() + key.slice(1)
 })
 
 const inputType = computed(() => {
-  if (isSecretField.value && !isSecretVisible.value)
-    return 'password'
+  if (isSecretField.value && !isSecretVisible.value) return 'password'
 
   return 'text'
 })
@@ -79,7 +81,14 @@ function toggleSecretVisibility() {
     <Label :for="`${id}-${fieldKey}`">{{ formattedLabel }}</Label>
     <div class="relative">
       <Input :id="`${id}-${fieldKey}`" v-model="localValue" :type="inputType" />
-      <Button v-if="isSecretField" type="button" variant="ghost" size="icon" class="absolute inset-y-0 right-0 h-full" @click="toggleSecretVisibility">
+      <Button
+        v-if="isSecretField"
+        type="button"
+        variant="ghost"
+        size="icon"
+        class="absolute inset-y-0 right-0 h-full"
+        @click="toggleSecretVisibility"
+      >
         <EyeOff v-if="isSecretVisible" class="h-4 w-4" />
         <Eye v-else class="h-4 w-4" />
       </Button>

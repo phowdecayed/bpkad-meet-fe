@@ -15,10 +15,9 @@ const canViewMeetings = computed(() => authStore.hasPermission('view meetings'))
 const stats = computed(() => statisticsStore.dashboardStats)
 
 const meetingTypeChartData = computed(() => {
-  if (!stats.value)
-    return null
-  const labels = stats.value.meeting_trends.by_type.map(item => item.type)
-  const data = stats.value.meeting_trends.by_type.map(item => item.count)
+  if (!stats.value) return null
+  const labels = stats.value.meeting_trends.by_type.map((item) => item.type)
+  const data = stats.value.meeting_trends.by_type.map((item) => item.count)
 
   return {
     labels,
@@ -33,10 +32,9 @@ const meetingTypeChartData = computed(() => {
 })
 
 const meetingsByMonthChartData = computed(() => {
-  if (!stats.value?.charts?.meetings_by_month)
-    return null
-  const labels = stats.value.charts.meetings_by_month.map(item => `${item.month} ${item.year}`)
-  const data = stats.value.charts.meetings_by_month.map(item => item.count)
+  if (!stats.value?.charts?.meetings_by_month) return null
+  const labels = stats.value.charts.meetings_by_month.map((item) => `${item.month} ${item.year}`)
+  const data = stats.value.charts.meetings_by_month.map((item) => item.count)
 
   return {
     labels,
@@ -52,11 +50,15 @@ const meetingsByMonthChartData = computed(() => {
   }
 })
 
-watch(canViewMeetings, (hasPermission) => {
-  if (hasPermission) {
-    statisticsStore.fetchDashboardStats()
-  }
-}, { immediate: true })
+watch(
+  canViewMeetings,
+  (hasPermission) => {
+    if (hasPermission) {
+      statisticsStore.fetchDashboardStats()
+    }
+  },
+  { immediate: true },
+)
 </script>
 
 <template>
@@ -83,9 +85,7 @@ watch(canViewMeetings, (hasPermission) => {
             <CardTitle>Average Duration</CardTitle>
           </CardHeader>
           <CardContent>
-            <div class="text-2xl font-bold">
-              {{ stats.overview.average_duration_minutes }} min
-            </div>
+            <div class="text-2xl font-bold">{{ stats.overview.average_duration_minutes }} min</div>
           </CardContent>
         </Card>
         <Card>
@@ -106,7 +106,10 @@ watch(canViewMeetings, (hasPermission) => {
             <CardTitle>Monthly Meetings</CardTitle>
           </CardHeader>
           <CardContent>
-            <MeetingsByMonthChart v-if="meetingsByMonthChartData" :chart-data="meetingsByMonthChartData" />
+            <MeetingsByMonthChart
+              v-if="meetingsByMonthChartData"
+              :chart-data="meetingsByMonthChartData"
+            />
           </CardContent>
         </Card>
         <Card>
@@ -123,7 +126,11 @@ watch(canViewMeetings, (hasPermission) => {
           </CardHeader>
           <CardContent>
             <div class="space-y-4">
-              <div v-for="item in stats.leaderboards.top_organizers" :key="item.name" class="flex justify-between">
+              <div
+                v-for="item in stats.leaderboards.top_organizers"
+                :key="item.name"
+                class="flex justify-between"
+              >
                 <span>{{ item.name }}</span>
                 <Badge variant="secondary">
                   {{ item.meetings_count }}
@@ -138,7 +145,11 @@ watch(canViewMeetings, (hasPermission) => {
           </CardHeader>
           <CardContent>
             <div class="space-y-4">
-              <div v-for="item in stats.leaderboards.top_locations" :key="item.name" class="flex justify-between">
+              <div
+                v-for="item in stats.leaderboards.top_locations"
+                :key="item.name"
+                class="flex justify-between"
+              >
                 <span>{{ item.name }}</span>
                 <Badge variant="secondary">
                   {{ item.meetings_count }}
@@ -150,12 +161,8 @@ watch(canViewMeetings, (hasPermission) => {
       </div>
     </div>
     <div v-else class="text-center">
-      <h1 class="text-2xl font-bold">
-        Welcome, {{ authStore.user?.name }}!
-      </h1>
-      <p class="text-muted-foreground">
-        You do not have permission to view dashboard statistics.
-      </p>
+      <h1 class="text-2xl font-bold">Welcome, {{ authStore.user?.name }}!</h1>
+      <p class="text-muted-foreground">You do not have permission to view dashboard statistics.</p>
     </div>
   </div>
 </template>

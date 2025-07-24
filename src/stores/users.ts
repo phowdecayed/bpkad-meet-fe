@@ -74,7 +74,7 @@ export const useUsersStore = defineStore('users', () => {
     const response = await axios.post('/api/roles', { name: roleData.name })
     const newRole = response.data
     for (const permissionId of roleData.permissions) {
-      const permission = permissions.value.find(p => p.id === permissionId)
+      const permission = permissions.value.find((p) => p.id === permissionId)
       if (permission) {
         await axios.post(`/api/roles/${newRole.id}/permissions`, { permission: permission.name })
       }
@@ -85,20 +85,24 @@ export const useUsersStore = defineStore('users', () => {
 
   async function updateRole(id: number, roleData: { name: string; permissions: number[] }) {
     await axios.patch(`/api/roles/${id}`, { name: roleData.name })
-    const currentRole = roles.value.find(r => r.id === id)
-    const currentPermissionIds = currentRole?.permissions?.map(p => p.id) || []
-    const permissionsToAdd = roleData.permissions.filter(id => !currentPermissionIds.includes(id))
-    const permissionsToRemove = currentPermissionIds.filter(id => !roleData.permissions.includes(id))
+    const currentRole = roles.value.find((r) => r.id === id)
+    const currentPermissionIds = currentRole?.permissions?.map((p) => p.id) || []
+    const permissionsToAdd = roleData.permissions.filter((id) => !currentPermissionIds.includes(id))
+    const permissionsToRemove = currentPermissionIds.filter(
+      (id) => !roleData.permissions.includes(id),
+    )
     for (const permissionId of permissionsToAdd) {
-      const permission = permissions.value.find(p => p.id === permissionId)
+      const permission = permissions.value.find((p) => p.id === permissionId)
       if (permission) {
         await axios.post(`/api/roles/${id}/permissions`, { permission: permission.name })
       }
     }
     for (const permissionId of permissionsToRemove) {
-      const permission = permissions.value.find(p => p.id === permissionId)
+      const permission = permissions.value.find((p) => p.id === permissionId)
       if (permission) {
-        await axios.delete(`/api/roles/${id}/permissions`, { data: { permission: permission.name } })
+        await axios.delete(`/api/roles/${id}/permissions`, {
+          data: { permission: permission.name },
+        })
       }
     }
     await fetchRoles()

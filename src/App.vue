@@ -11,5 +11,4 @@ import 'vue-sonner/style.css'
   </Teleport>
 </template>
 
-<style scoped>
-</style>
+<style scoped></style>

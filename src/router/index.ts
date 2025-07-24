@@ -106,12 +106,18 @@ router.beforeEach((to, from, next) => {
     return next({ name: 'login' })
   }
 
-  if (to.meta.requiresPermission && !authStore.hasPermission(to.meta.requiresPermission as string)) {
+  if (
+    to.meta.requiresPermission &&
+    !authStore.hasPermission(to.meta.requiresPermission as string)
+  ) {
     // Optional: Redirect to a 'not-authorized' page or just the dashboard
     return next({ name: 'dashboard' })
   }
 
-  if (['login', 'forgot-password', 'reset-password', 'verify-email'].includes(to.name as string) && isAuthenticated) {
+  if (
+    ['login', 'forgot-password', 'reset-password', 'verify-email'].includes(to.name as string) &&
+    isAuthenticated
+  ) {
     return next({ name: 'dashboard' })
   }
 
@@ -119,4 +125,3 @@ router.beforeEach((to, from, next) => {
 })
 
 export default router
-
