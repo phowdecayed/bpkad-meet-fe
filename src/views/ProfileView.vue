@@ -48,7 +48,7 @@ async function handleUpdateProfile() {
     toast.success('Success', {
       description: 'Profile updated successfully.',
     })
-  } catch (error: unknown) {
+  } catch (error: any) {
     toast.error('Error', {
       description: error.response?.data?.message || 'Failed to update profile.',
     })
@@ -70,7 +70,7 @@ async function handleChangePassword() {
     })
 
     router.push({ name: 'login' })
-  } catch (error: unknown) {
+  } catch (error: any) {
     toast.error('Error', {
       description: error.response?.data?.message || 'Failed to update password.',
     })
