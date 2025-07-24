@@ -16,8 +16,12 @@ export const useUsersStore = defineStore('users', () => {
     try {
       const response = await axios.get('/api/users')
       users.value = response.data.data
-    } catch (err: any) {
-      error.value = err.response?.data?.message || 'Failed to fetch users.'
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err) && err.response) {
+        error.value = err.response.data.message || 'Failed to fetch users.'
+      } else {
+        error.value = 'An unexpected error occurred.'
+      }
     } finally {
       isLoading.value = false
     }
@@ -27,7 +31,7 @@ export const useUsersStore = defineStore('users', () => {
     try {
       const response = await axios.get('/api/roles')
       roles.value = response.data
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to fetch roles:', err)
     }
   }
@@ -36,7 +40,7 @@ export const useUsersStore = defineStore('users', () => {
     try {
       const response = await axios.get('/api/permissions')
       permissions.value = response.data.data
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to fetch permissions:', err)
     }
   }

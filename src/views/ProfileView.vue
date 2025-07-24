@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { toast } from 'vue-sonner'
 import { Eye, EyeOff, AlertTriangle } from 'lucide-vue-next'
+import axios from 'axios'
 
 const authStore = useAuthStore()
 const router = useRouter()
@@ -48,10 +49,16 @@ async function handleUpdateProfile() {
     toast.success('Success', {
       description: 'Profile updated successfully.',
     })
-  } catch (error: any) {
-    toast.error('Error', {
-      description: error.response?.data?.message || 'Failed to update profile.',
-    })
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error) && error.response) {
+      toast.error('Error', {
+        description: error.response.data.message || 'Failed to update profile.',
+      })
+    } else {
+      toast.error('Error', {
+        description: 'An unexpected error occurred.',
+      })
+    }
   }
 }
 
@@ -70,10 +77,16 @@ async function handleChangePassword() {
     })
 
     router.push({ name: 'login' })
-  } catch (error: any) {
-    toast.error('Error', {
-      description: error.response?.data?.message || 'Failed to update password.',
-    })
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error) && error.response) {
+      toast.error('Error', {
+        description: error.response.data.message || 'Failed to update password.',
+      })
+    } else {
+      toast.error('Error', {
+        description: 'An unexpected error occurred.',
+      })
+    }
   }
 }
 </script>
