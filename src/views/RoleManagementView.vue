@@ -4,6 +4,7 @@ import { storeToRefs } from 'pinia'
 import { useUsersStore } from '@/stores/users'
 import type { Role, Permission } from '@/types/user'
 import ConfirmationDialog from '@/components/ConfirmationDialog.vue'
+import axios from 'axios'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -97,8 +98,12 @@ async function handleSave() {
     }
     isDialogOpen.value = false
   }
-  catch (error: any) {
-    toast.error('Save Failed', { description: error.message })
+  catch (error: unknown) {
+    if (axios.isAxiosError(error) && error.response) {
+      toast.error('Save Failed', { description: error.response.data.message })
+    } else {
+      toast.error('Save Failed', { description: 'An unexpected error occurred.' })
+    }
   }
   finally {
     isSaving.value = false
@@ -115,8 +120,12 @@ async function onConfirmDelete() {
   try {
     await usersStore.deleteRole(roleToDelete.value.id)
     toast.success('Role Deleted', { description: `${roleToDelete.value.name} has been deleted.` })
-  } catch (error: any) {
-    toast.error('Delete Failed', { description: error.message })
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error) && error.response) {
+      toast.error('Delete Failed', { description: error.response.data.message })
+    } else {
+      toast.error('Delete Failed', { description: 'An unexpected error occurred.' })
+    }
   } finally {
     roleToDelete.value = null
   }
