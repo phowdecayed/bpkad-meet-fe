@@ -3,6 +3,7 @@ import { onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useLocationsStore } from '@/stores/locations'
 import type { MeetingLocation } from '@/types/meeting'
+import ConfirmationDialog from '@/components/ConfirmationDialog.vue'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -32,9 +33,11 @@ const locationsStore = useLocationsStore()
 const { locations, isLoading } = storeToRefs(locationsStore)
 
 const isDialogOpen = ref(false)
+const isConfirmDialogOpen = ref(false)
 const isEditing = ref(false)
 const isSaving = ref(false)
 const selectedLocation = ref<MeetingLocation | null>(null)
+const locationToDelete = ref<MeetingLocation | null>(null)
 
 const form = ref({
   name: '',
@@ -92,15 +95,20 @@ async function handleSave() {
   }
 }
 
-async function handleDelete(location: MeetingLocation) {
-  if (confirm(`Are you sure you want to delete "${location.name}"?`)) {
-    try {
-      await locationsStore.deleteLocation(location.id)
-      toast.success('Location Deleted', { description: `${location.name} has been deleted.` })
-    }
-    catch (error: any) {
-      toast.error('Delete Failed', { description: error.message })
-    }
+function handleDelete(location: MeetingLocation) {
+  locationToDelete.value = location
+  isConfirmDialogOpen.value = true
+}
+
+async function onConfirmDelete() {
+  if (!locationToDelete.value) return
+  try {
+    await locationsStore.deleteLocation(locationToDelete.value.id)
+    toast.success('Location Deleted', { description: `${locationToDelete.value.name} has been deleted.` })
+  } catch (error: any) {
+    toast.error('Delete Failed', { description: error.message })
+  } finally {
+    locationToDelete.value = null
   }
 }
 </script>
@@ -198,5 +206,13 @@ async function handleDelete(location: MeetingLocation) {
         </form>
       </DialogContent>
     </Dialog>
+
+    <ConfirmationDialog
+      v-if="locationToDelete"
+      v-model:open="isConfirmDialogOpen"
+      title="Are you sure?"
+      :description="`This will permanently delete the location '${locationToDelete.name}'. This action cannot be undone.`"
+      @confirm="onConfirmDelete"
+    />
   </div>
 </template>

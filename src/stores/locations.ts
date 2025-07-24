@@ -13,7 +13,7 @@ export const useLocationsStore = defineStore('locations', () => {
     error.value = null
     try {
       const response = await axios.get('/api/meeting-locations')
-      locations.value = response.data
+      locations.value = response.data.data
     }
     catch (err: any) {
       error.value = err.response?.data?.message || 'Failed to fetch locations.'

@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import type { SidebarProps } from '@/components/ui/sidebar'
 import { useAuthStore } from '@/stores/auth'
 
-import { GalleryVerticalEnd, PieChart, Settings2 } from 'lucide-vue-next'
+import { GalleryVerticalEnd, PieChart, Settings2, Users, Shield, MapPin } from 'lucide-vue-next'
 import NavMain from '@/components/NavMain.vue'
 import NavAdmin from '@/components/NavAdmin.vue'
 import NavUser from '@/components/NavUser.vue'
@@ -66,7 +66,7 @@ const navAdmin = computed(() => {
     menu.push({
       title: 'User Management',
       url: '/app/users',
-      icon: Settings2, // You might want to change this icon
+      icon: Users,
     })
   }
 
@@ -74,7 +74,7 @@ const navAdmin = computed(() => {
     menu.push({
       title: 'Role Management',
       url: '/app/roles',
-      icon: Settings2, // You might want to change this icon
+      icon: Shield,
     })
   }
 
@@ -82,7 +82,7 @@ const navAdmin = computed(() => {
     menu.push({
       title: 'Meeting Locations',
       url: '/app/locations',
-      icon: Settings2, // You might want to change this icon
+      icon: MapPin,
     })
   }
 

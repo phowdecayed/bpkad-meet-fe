@@ -66,8 +66,43 @@ export const useUsersStore = defineStore('users', () => {
     return axios.post(`/api/users/${userId}/resend-verification`)
   }
 
-  async function resendVerificationEmail(id: number) {
-    return axios.post(`/api/users/${id}/resend-verification`)
+  async function createRole(roleData: { name: string; permissions: number[] }) {
+    const response = await axios.post('/api/roles', { name: roleData.name })
+    const newRole = response.data
+    for (const permissionId of roleData.permissions) {
+      const permission = permissions.value.find(p => p.id === permissionId)
+      if (permission) {
+        await axios.post(`/api/roles/${newRole.id}/permissions`, { permission: permission.name })
+      }
+    }
+    await fetchRoles()
+    return newRole
+  }
+
+  async function updateRole(id: number, roleData: { name: string; permissions: number[] }) {
+    await axios.patch(`/api/roles/${id}`, { name: roleData.name })
+    const currentRole = roles.value.find(r => r.id === id)
+    const currentPermissionIds = currentRole?.permissions?.map(p => p.id) || []
+    const permissionsToAdd = roleData.permissions.filter(id => !currentPermissionIds.includes(id))
+    const permissionsToRemove = currentPermissionIds.filter(id => !roleData.permissions.includes(id))
+    for (const permissionId of permissionsToAdd) {
+      const permission = permissions.value.find(p => p.id === permissionId)
+      if (permission) {
+        await axios.post(`/api/roles/${id}/permissions`, { permission: permission.name })
+      }
+    }
+    for (const permissionId of permissionsToRemove) {
+      const permission = permissions.value.find(p => p.id === permissionId)
+      if (permission) {
+        await axios.delete(`/api/roles/${id}/permissions`, { data: { permission: permission.name } })
+      }
+    }
+    await fetchRoles()
+  }
+
+  async function deleteRole(id: number) {
+    await axios.delete(`/api/roles/${id}`)
+    await fetchRoles()
   }
 
   return {
@@ -84,5 +119,8 @@ export const useUsersStore = defineStore('users', () => {
     deleteUser,
     sendPasswordReset,
     resendVerificationEmail,
+    createRole,
+    updateRole,
+    deleteRole,
   }
 })

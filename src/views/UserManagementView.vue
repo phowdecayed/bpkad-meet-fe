@@ -3,6 +3,7 @@ import { onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useUsersStore } from '@/stores/users'
 import type { User, UserCreationPayload, UserUpdatePayload } from '@/types/user'
+import ConfirmationDialog from '@/components/ConfirmationDialog.vue'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -34,10 +35,12 @@ const usersStore = useUsersStore()
 const { users, roles, isLoading } = storeToRefs(usersStore)
 
 const isDialogOpen = ref(false)
+const isConfirmDialogOpen = ref(false)
 const isEditing = ref(false)
 const isSaving = ref(false)
 const isResending = ref<Record<number, boolean>>({})
 const selectedUser = ref<User | null>(null)
+const userToDelete = ref<User | null>(null)
 const selectedRoles = ref<number[]>([])
 
 const form = ref({
@@ -109,15 +112,21 @@ async function handleSave() {
   }
 }
 
-async function handleDelete(user: User) {
-  if (confirm(`Are you sure you want to delete "${user.name}"?`)) {
-    try {
-      await usersStore.deleteUser(user.id)
-      toast.success('User Deleted', { description: `${user.name} has been deleted.` })
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'An unexpected error occurred.'
-      toast.error('Delete Failed', { description: message })
-    }
+function handleDelete(user: User) {
+  userToDelete.value = user
+  isConfirmDialogOpen.value = true
+}
+
+async function onConfirmDelete() {
+  if (!userToDelete.value) return
+  try {
+    await usersStore.deleteUser(userToDelete.value.id)
+    toast.success('User Deleted', { description: `${userToDelete.value.name} has been deleted.` })
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'An unexpected error occurred.'
+    toast.error('Delete Failed', { description: message })
+  } finally {
+    userToDelete.value = null
   }
 }
 
@@ -307,5 +316,13 @@ function formatDate(dateString: string) {
         </form>
       </DialogContent>
     </Dialog>
+
+    <ConfirmationDialog
+      v-if="userToDelete"
+      v-model:open="isConfirmDialogOpen"
+      title="Are you sure?"
+      :description="`This will permanently delete the user '${userToDelete.name}'. This action cannot be undone.`"
+      @confirm="onConfirmDelete"
+    />
   </div>
 </template>

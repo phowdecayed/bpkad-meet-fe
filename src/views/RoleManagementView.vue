@@ -3,6 +3,7 @@ import { onMounted, ref, computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useUsersStore } from '@/stores/users'
 import type { Role, Permission } from '@/types/user'
+import ConfirmationDialog from '@/components/ConfirmationDialog.vue'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -28,14 +29,17 @@ import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'vue-sonner'
-import { PlusCircle, Trash2, Pencil } from 'lucide-vue-next'
+import { PlusCircle, Trash2, Pencil, LoaderCircle } from 'lucide-vue-next'
 
 const usersStore = useUsersStore()
 const { roles, permissions, isLoading } = storeToRefs(usersStore)
 
 const isDialogOpen = ref(false)
+const isConfirmDialogOpen = ref(false)
 const isEditing = ref(false)
+const isSaving = ref(false)
 const selectedRole = ref<Role | null>(null)
+const roleToDelete = ref<Role | null>(null)
 const selectedPermissions = ref<number[]>([])
 
 const form = ref({
@@ -48,7 +52,8 @@ onMounted(() => {
 })
 
 const groupedPermissions = computed(() => {
-  return permissions.value.reduce((acc, permission) => {
+  if (!permissions.value) return {}
+  return permissions.value.reduce((acc: Record<string, Permission[]>, permission: Permission) => {
     const group = permission.group_name || 'general'
     if (!acc[group]) {
       acc[group] = []
@@ -75,15 +80,46 @@ function openEditDialog(role: Role) {
 }
 
 async function handleSave() {
-  // This is a placeholder for the actual save logic.
-  // You would typically call a store action here to create or update a role.
-  toast.info('Save functionality not yet implemented.')
-  isDialogOpen.value = false
+  isSaving.value = true
+  try {
+    const roleData = {
+      name: form.value.name,
+      permissions: selectedPermissions.value,
+    }
+
+    if (isEditing.value && selectedRole.value) {
+      await usersStore.updateRole(selectedRole.value.id, roleData)
+      toast.success('Role Updated', { description: `${roleData.name} has been updated successfully.` })
+    }
+    else {
+      await usersStore.createRole(roleData)
+      toast.success('Role Created', { description: `${roleData.name} has been created successfully.` })
+    }
+    isDialogOpen.value = false
+  }
+  catch (error: any) {
+    toast.error('Save Failed', { description: error.message })
+  }
+  finally {
+    isSaving.value = false
+  }
 }
 
-async function handleDelete(role: Role) {
-  // This is a placeholder for the actual delete logic.
-  toast.info('Delete functionality not yet implemented.')
+function handleDelete(role: Role) {
+  roleToDelete.value = role
+  isConfirmDialogOpen.value = true
+}
+
+async function onConfirmDelete() {
+  if (!roleToDelete.value) return
+  try {
+    await usersStore.deleteRole(roleToDelete.value.id)
+    toast.success('Role Deleted', { description: `${roleToDelete.value.name} has been deleted.` })
+  } catch (error: any) {
+    toast.error('Delete Failed', { description: error.message })
+  } finally {
+    roleToDelete.value = null
+  }
 }
 </script>
 
@@ -149,7 +185,7 @@ async function handleDelete(role: Role) {
             {{ isEditing ? 'Update the details for this role.' : 'Enter the details for the new role.' }}
           </DialogDescription>
         </DialogHeader>
-        <form class="space-y-4" @submit.prevent="handleSave">
+        <form v-if="permissions" class="space-y-4" @submit.prevent="handleSave">
           <div class="grid gap-2">
             <Label for="name">Role Name</Label>
             <Input id="name" v-model="form.name" />
@@ -179,16 +215,25 @@ async function handleDelete(role: Role) {
           </div>
           <DialogFooter>
             <DialogClose as-child>
-              <Button type="button" variant="secondary">
+              <Button type="button" variant="secondary" :disabled="isSaving">
                 Cancel
               </Button>
             </DialogClose>
-            <Button type="submit">
+            <Button type="submit" :disabled="isSaving">
+              <LoaderCircle v-if="isSaving" class="mr-2 h-4 w-4 animate-spin" />
               Save
             </Button>
           </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
+
+    <ConfirmationDialog
+      v-if="roleToDelete"
+      v-model:open="isConfirmDialogOpen"
+      title="Are you sure?"
+      :description="`This will permanently delete the role '${roleToDelete.name}'. This action cannot be undone.`"
+      @confirm="onConfirmDelete"
+    />
   </div>
 </template>
