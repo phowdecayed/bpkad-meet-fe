@@ -1,161 +1,59 @@
 <script setup lang="ts">
-import { GalleryVerticalEnd } from 'lucide-vue-next'
+import type { SidebarProps } from '@/components/ui/sidebar'
+import { useAuthStore } from '@/stores/auth'
+
+import { Frame, GalleryVerticalEnd, Map, PieChart } from 'lucide-vue-next'
+import NavMain from '@/components/NavMain.vue'
+import NavProjects from '@/components/NavProjects.vue'
+import NavUser from '@/components/NavUser.vue'
+import TeamSwitcher from '@/components/TeamSwitcher.vue'
 
 import {
   Sidebar,
   SidebarContent,
-  SidebarGroup,
+  SidebarFooter,
   SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
-  type SidebarProps,
+  SidebarRail,
 } from '@/components/ui/sidebar'
 
 const props = withDefaults(defineProps<SidebarProps>(), {
-  variant: 'floating',
+  collapsible: 'icon',
 })
+
+const authStore = useAuthStore()
 
 // This is sample data.
 const data = {
+  teams: [
+    {
+      name: 'Acme Inc',
+      logo: GalleryVerticalEnd,
+      plan: 'Enterprise',
+    },
+  ],
   navMain: [
     {
-      title: 'Getting Started',
+      title: 'Dashboard',
+      url: '/app/dashboard',
+      icon: PieChart,
+      isActive: true,
+    },
+  ],
+  projects: [
+    {
+      name: 'Design Engineering',
       url: '#',
-      items: [
-        {
-          title: 'Installation',
-          url: '#',
-        },
-        {
-          title: 'Project Structure',
-          url: '#',
-        },
-      ],
+      icon: Frame,
     },
     {
-      title: 'Building Your Application',
+      name: 'Sales & Marketing',
       url: '#',
-      items: [
-        {
-          title: 'Routing',
-          url: '#',
-        },
-        {
-          title: 'Data Fetching',
-          url: '#',
-          isActive: true,
-        },
-        {
-          title: 'Rendering',
-          url: '#',
-        },
-        {
-          title: 'Caching',
-          url: '#',
-        },
-        {
-          title: 'Styling',
-          url: '#',
-        },
-        {
-          title: 'Optimizing',
-          url: '#',
-        },
-        {
-          title: 'Configuring',
-          url: '#',
-        },
-        {
-          title: 'Testing',
-          url: '#',
-        },
-        {
-          title: 'Authentication',
-          url: '#',
-        },
-        {
-          title: 'Deploying',
-          url: '#',
-        },
-        {
-          title: 'Upgrading',
-          url: '#',
-        },
-        {
-          title: 'Examples',
-          url: '#',
-        },
-      ],
+      icon: PieChart,
     },
     {
-      title: 'API Reference',
+      name: 'Travel',
       url: '#',
-      items: [
-        {
-          title: 'Components',
-          url: '#',
-        },
-        {
-          title: 'File Conventions',
-          url: '#',
-        },
-        {
-          title: 'Functions',
-          url: '#',
-        },
-        {
-          title: 'next.config.js Options',
-          url: '#',
-        },
-        {
-          title: 'CLI',
-          url: '#',
-        },
-        {
-          title: 'Edge Runtime',
-          url: '#',
-        },
-      ],
-    },
-    {
-      title: 'Architecture',
-      url: '#',
-      items: [
-        {
-          title: 'Accessibility',
-          url: '#',
-        },
-        {
-          title: 'Fast Refresh',
-          url: '#',
-        },
-        {
-          title: 'Next.js Compiler',
-          url: '#',
-        },
-        {
-          title: 'Supported Browsers',
-          url: '#',
-        },
-        {
-          title: 'Turbopack',
-          url: '#',
-        },
-      ],
-    },
-    {
-      title: 'Community',
-      url: '#',
-      items: [
-        {
-          title: 'Contribution Guide',
-          url: '#',
-        },
-      ],
+      icon: Map,
     },
   ],
 }
@@ -164,41 +62,15 @@ const data = {
 <template>
   <Sidebar v-bind="props">
     <SidebarHeader>
-      <SidebarMenu>
-        <SidebarMenuItem>
-          <SidebarMenuButton size="lg" as-child>
-            <a href="#">
-              <div class="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                <GalleryVerticalEnd class="size-4" />
-              </div>
-              <div class="flex flex-col gap-0.5 leading-none">
-                <span class="font-medium">Documentation</span>
-                <span class="">v1.0.0</span>
-              </div>
-            </a>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-      </SidebarMenu>
+      <TeamSwitcher :teams="data.teams" />
     </SidebarHeader>
     <SidebarContent>
-      <SidebarGroup>
-        <SidebarMenu class="gap-2">
-          <SidebarMenuItem v-for="item in data.navMain" :key="item.title">
-            <SidebarMenuButton as-child>
-              <a :href="item.url" class="font-medium">
-                {{ item.title }}
-              </a>
-            </SidebarMenuButton>
-            <SidebarMenuSub v-if="item.items.length" class="ml-0 border-l-0 px-1.5">
-              <SidebarMenuSubItem v-for="childItem in item.items" :key="childItem.title">
-                <SidebarMenuSubButton as-child :is-active="childItem.isActive">
-                  <a :href="childItem.url">{{ childItem.title }}</a>
-                </SidebarMenuSubButton>
-              </SidebarMenuSubItem>
-            </SidebarMenuSub>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarGroup>
+      <NavMain :items="data.navMain" />
+      <NavProjects :projects="data.projects" />
     </SidebarContent>
+    <SidebarFooter>
+      <NavUser v-if="authStore.user" :user="authStore.user" />
+    </SidebarFooter>
+    <SidebarRail />
   </Sidebar>
 </template>
