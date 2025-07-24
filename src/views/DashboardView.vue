@@ -17,8 +17,8 @@ const stats = computed(() => statisticsStore.dashboardStats)
 const meetingTypeChartData = computed(() => {
   if (!stats.value)
     return null
-  const labels = stats.value.meeting_trends.by_type.map((item: any) => item.type)
-  const data = stats.value.meeting_trends.by_type.map((item: any) => item.count)
+  const labels = stats.value.meeting_trends.by_type.map(item => item.type)
+  const data = stats.value.meeting_trends.by_type.map(item => item.count)
 
   return {
     labels,
@@ -35,8 +35,8 @@ const meetingTypeChartData = computed(() => {
 const meetingsByMonthChartData = computed(() => {
   if (!stats.value?.charts?.meetings_by_month)
     return null
-  const labels = stats.value.charts.meetings_by_month.map((item: any) => `${item.month} ${item.year}`)
-  const data = stats.value.charts.meetings_by_month.map((item: any) => item.count)
+  const labels = stats.value.charts.meetings_by_month.map(item => `${item.month} ${item.year}`)
+  const data = stats.value.charts.meetings_by_month.map(item => item.count)
 
   return {
     labels,
