@@ -28,7 +28,9 @@ import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/s
             <BreadcrumbSeparator class="hidden md:block" />
             <BreadcrumbItem>
               <BreadcrumbPage>{{
-                $route.name?.toString().charAt(0).toUpperCase() + $route.name?.toString().slice(1)
+                $route.name
+                  ? $route.name.toString().charAt(0).toUpperCase() + $route.name.toString().slice(1)
+                  : ''
               }}</BreadcrumbPage>
             </BreadcrumbItem>
           </BreadcrumbList>
