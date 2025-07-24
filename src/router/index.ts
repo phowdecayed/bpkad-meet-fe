@@ -56,6 +56,12 @@ const router = createRouter({
           name: 'about',
           component: () => import('../views/AboutView.vue'),
         },
+        {
+          path: 'settings',
+          name: 'settings',
+          component: () => import('../views/SettingsView.vue'),
+          meta: { requiresPermission: 'manage settings' },
+        },
       ],
     },
     // Catch-all route for 404 Not Found pages
@@ -72,14 +78,19 @@ router.beforeEach((to, from, next) => {
   const isAuthenticated = authStore.isAuthenticated
 
   if (to.meta.requiresAuth && !isAuthenticated) {
-    next({ name: 'login' })
+    return next({ name: 'login' })
   }
-  else if (['login', 'forgot-password', 'reset-password', 'verify-email'].includes(to.name as string) && isAuthenticated) {
-    next({ name: 'dashboard' })
+
+  if (to.meta.requiresPermission && !authStore.hasPermission(to.meta.requiresPermission as string)) {
+    // Optional: Redirect to a 'not-authorized' page or just the dashboard
+    return next({ name: 'dashboard' })
   }
-  else {
-    next()
+
+  if (['login', 'forgot-password', 'reset-password', 'verify-email'].includes(to.name as string) && isAuthenticated) {
+    return next({ name: 'dashboard' })
   }
+
+  next()
 })
 
 export default router

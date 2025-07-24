@@ -17,7 +17,7 @@ import LoginForm from '@/components/LoginForm.vue'
           >
             <GalleryVerticalEnd class-name="size-4" />
           </div>
-          Acme Inc.
+          BPKAD Meeting
         </a>
       </div>
       <div class="flex flex-1 items-center justify-center">

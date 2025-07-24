@@ -1,8 +1,9 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import type { SidebarProps } from '@/components/ui/sidebar'
 import { useAuthStore } from '@/stores/auth'
 
-import { Frame, GalleryVerticalEnd, Map, PieChart } from 'lucide-vue-next'
+import { Frame, GalleryVerticalEnd, Map, PieChart, Settings2 } from 'lucide-vue-next'
 import NavMain from '@/components/NavMain.vue'
 import NavProjects from '@/components/NavProjects.vue'
 import NavUser from '@/components/NavUser.vue'
@@ -22,21 +23,15 @@ const props = withDefaults(defineProps<SidebarProps>(), {
 
 const authStore = useAuthStore()
 
+const canManageSettings = computed(() => authStore.hasPermission('manage settings'))
+
 // This is sample data.
 const data = {
   teams: [
     {
-      name: 'Acme Inc',
+      name: 'BPKAD Meeting',
       logo: GalleryVerticalEnd,
       plan: 'Enterprise',
-    },
-  ],
-  navMain: [
-    {
-      title: 'Dashboard',
-      url: '/app/dashboard',
-      icon: PieChart,
-      isActive: true,
     },
   ],
   projects: [
@@ -57,6 +52,26 @@ const data = {
     },
   ],
 }
+
+const navMain = computed(() => {
+  const menu = [
+    {
+      title: 'Dashboard',
+      url: '/app/dashboard',
+      icon: PieChart,
+    },
+  ]
+
+  if (canManageSettings.value) {
+    menu.push({
+      title: 'Settings',
+      url: '/app/settings',
+      icon: Settings2,
+    })
+  }
+
+  return menu
+})
 </script>
 
 <template>
@@ -65,7 +80,7 @@ const data = {
       <TeamSwitcher :teams="data.teams" />
     </SidebarHeader>
     <SidebarContent>
-      <NavMain :items="data.navMain" />
+      <NavMain :items="navMain" />
       <NavProjects :projects="data.projects" />
     </SidebarContent>
     <SidebarFooter>

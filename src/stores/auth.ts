@@ -91,6 +91,16 @@ export const useAuthStore = defineStore('auth', () => {
     return axios.get(`/api/email/verify/${id}/${hash}?${queryString}`)
   }
 
+  const hasPermission = computed(() => {
+    return (permission: string) => {
+      if (!user.value || !user.value.roles)
+        return false
+      return user.value.roles.some((role: any) =>
+        role.permissions.some((p: any) => p.name === permission),
+      )
+    }
+  })
+
   // Set auth header on initial load if token exists
   if (token.value)
     axios.defaults.headers.common['Authorization'] = `Bearer ${token.value}`
@@ -108,5 +118,6 @@ export const useAuthStore = defineStore('auth', () => {
     forgotPassword,
     resetPassword,
     verifyEmail,
+    hasPermission,
   }
 })
