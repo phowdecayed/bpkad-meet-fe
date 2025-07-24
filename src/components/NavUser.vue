@@ -22,6 +22,7 @@ import {
 
 defineProps<{
   user: {
+    id: number | string
     name: string
     email: string
     avatar?: string
@@ -52,7 +53,11 @@ function goToProfile() {
             class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
           >
             <Avatar class="h-8 w-8 rounded-lg">
-              <AvatarImage v-if="user.avatar" :src="user.avatar" :alt="user.name" />
+              <AvatarImage
+                v-if="user.id"
+                :src="`https://avatar.iran.liara.run/public/${user.id}`"
+                :alt="user.name"
+              />
               <AvatarFallback class="rounded-lg">
                 {{ user.name?.charAt(0).toUpperCase() }}
               </AvatarFallback>
@@ -73,7 +78,11 @@ function goToProfile() {
           <DropdownMenuLabel class="p-0 font-normal">
             <div class="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
               <Avatar class="h-8 w-8 rounded-lg">
-                <AvatarImage v-if="user.avatar" :src="user.avatar" :alt="user.name" />
+                <AvatarImage
+                  v-if="user.id"
+                  :src="`https://avatar.iran.liara.run/public/${user.id}`"
+                  :alt="user.name"
+                />
                 <AvatarFallback class="rounded-lg">
                   {{ user.name?.charAt(0).toUpperCase() }}
                 </AvatarFallback>

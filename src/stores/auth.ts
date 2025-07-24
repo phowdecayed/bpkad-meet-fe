@@ -86,6 +86,10 @@ export const useAuthStore = defineStore('auth', () => {
     return axios.get(`/api/email/verify/${id}/${hash}?${queryString}`)
   }
 
+  async function resendVerificationEmail() {
+    return axios.post('/api/email/verification-notification')
+  }
+
   const hasPermission = computed(() => {
     return (permission: string) => {
       if (!user.value || !user.value.roles) return false
@@ -111,6 +115,7 @@ export const useAuthStore = defineStore('auth', () => {
     forgotPassword,
     resetPassword,
     verifyEmail,
+    resendVerificationEmail,
     hasPermission,
   }
 })

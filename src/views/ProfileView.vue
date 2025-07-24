@@ -1,31 +1,45 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { toast } from 'vue-sonner'
-import { Eye, EyeOff, AlertTriangle } from 'lucide-vue-next'
+import { Eye, EyeOff, AlertTriangle, LoaderCircle, Camera, MailWarning } from 'lucide-vue-next'
 import axios from 'axios'
+import ConfirmationDialog from '@/components/ConfirmationDialog.vue'
 
 const authStore = useAuthStore()
 const router = useRouter()
 const user = ref(authStore.user)
 
+// Profile form state
 const name = ref(user.value?.name || '')
 const email = ref(user.value?.email || '')
+const isUpdatingProfile = ref(false)
 
+// Password form state
 const current_password = ref('')
 const password = ref('')
 const password_confirmation = ref('')
+const isChangingPassword = ref(false)
 
+// UI state
 const showCurrentPassword = ref(false)
 const showPassword = ref(false)
 const showPasswordConfirmation = ref(false)
+const isConfirmDialogOpen = ref(false)
+const isResendingVerification = ref(false)
+
+// Avatar state
+const avatarPreview = ref<string | null>(null)
+const avatarFile = ref<File | null>(null)
+const fileInput = ref<HTMLInputElement | null>(null)
 
 onMounted(async () => {
   if (!authStore.user) {
@@ -36,16 +50,49 @@ onMounted(async () => {
   }
 })
 
+function triggerAvatarUpload() {
+  fileInput.value?.click()
+}
+
+function onFileChange(event: Event) {
+  const target = event.target as HTMLInputElement
+  if (target.files && target.files[0]) {
+    const file = target.files[0]
+    avatarFile.value = file
+    avatarPreview.value = URL.createObjectURL(file)
+  }
+}
+
 async function handleUpdateProfile() {
+  isUpdatingProfile.value = true
   try {
+    const profileUpdates = []
     if (name.value !== user.value?.name) {
-      await authStore.changeName(name.value)
+      profileUpdates.push(authStore.changeName(name.value))
     }
     if (email.value !== user.value?.email) {
-      await authStore.changeEmail(email.value)
+      profileUpdates.push(authStore.changeEmail(email.value))
     }
+    if (avatarFile.value) {
+      // Mock avatar upload. In a real app, you'd send this to your backend.
+      profileUpdates.push(
+        new Promise((resolve) => {
+          setTimeout(() => {
+            console.log('Uploading avatar:', avatarFile.value?.name)
+            // Assuming the store handles the API call and updates the user object
+            // For now, we just show a success message.
+            resolve(true)
+          }, 1000)
+        }),
+      )
+    }
+
+    await Promise.all(profileUpdates)
     await authStore.fetchUser()
     user.value = authStore.user
+    avatarPreview.value = null // Clear preview after successful "upload"
+    avatarFile.value = null
+
     toast.success('Success', {
       description: 'Profile updated successfully.',
     })
@@ -59,10 +106,17 @@ async function handleUpdateProfile() {
         description: 'An unexpected error occurred.',
       })
     }
+  } finally {
+    isUpdatingProfile.value = false
   }
 }
 
-async function handleChangePassword() {
+function handleChangePassword() {
+  isConfirmDialogOpen.value = true
+}
+
+async function onConfirmChangePassword() {
+  isChangingPassword.value = true
   try {
     await authStore.changePassword({
       current_password: current_password.value,
@@ -87,109 +141,228 @@ async function handleChangePassword() {
         description: 'An unexpected error occurred.',
       })
     }
+  } finally {
+    isChangingPassword.value = false
+  }
+}
+
+async function handleResendVerificationEmail() {
+  isResendingVerification.value = true
+  try {
+    await authStore.resendVerificationEmail()
+    toast.success('Verification Email Sent', {
+      description: 'A new verification link has been sent to your email address.',
+    })
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error) && error.response) {
+      toast.error('Error', {
+        description: error.response.data.message || 'Failed to send verification email.',
+      })
+    } else {
+      toast.error('Error', {
+        description: 'An unexpected error occurred.',
+      })
+    }
+  } finally {
+    isResendingVerification.value = false
   }
 }
 </script>
 
 <template>
-  <div class="container mx-auto p-4 space-y-8">
-    <h1 class="text-2xl font-bold">Profile</h1>
-    <Card v-if="user">
-      <CardHeader>
-        <div class="flex items-center gap-4">
-          <Avatar class="h-16 w-16">
-            <AvatarImage v-if="user.avatar" :src="user.avatar" :alt="user.name" />
-            <AvatarFallback class="text-2xl">
-              {{ user.name?.charAt(0).toUpperCase() }}
-            </AvatarFallback>
-          </Avatar>
-          <div>
+  <div class="flex-1 space-y-4 p-4 pt-6 md:p-8">
+    <h1 class="text-3xl font-bold tracking-tight">My Profile</h1>
+    <div v-if="user" class="grid grid-cols-1 gap-8 lg:grid-cols-4">
+      <div class="col-span-1 lg:col-span-1">
+        <Card class="overflow-hidden text-center">
+          <CardHeader class="relative bg-muted/20 p-0">
+            <div class="flex h-24 items-center justify-center bg-primary/10"></div>
+            <div
+              class="group relative mx-auto -mt-12 flex h-24 w-24 items-center justify-center rounded-full border-4 border-background"
+            >
+              <Avatar class="h-full w-full">
+                <AvatarImage
+                  v-if="avatarPreview || user.id"
+                  :src="avatarPreview || `https://avatar.iran.liara.run/public/${user.id}`"
+                  :alt="user.name"
+                />
+                <AvatarFallback class="text-4xl">
+                  {{ user.name?.charAt(0).toUpperCase() }}
+                </AvatarFallback>
+              </Avatar>
+              <div
+                class="absolute inset-0 flex cursor-pointer items-center justify-center rounded-full bg-black/50 opacity-0 transition-opacity group-hover:opacity-100"
+                @click="triggerAvatarUpload"
+              >
+                <Camera class="h-8 w-8 text-white" />
+              </div>
+              <input
+                ref="fileInput"
+                type="file"
+                class="hidden"
+                accept="image/png, image/jpeg, image/gif"
+                @change="onFileChange"
+              />
+            </div>
+          </CardHeader>
+          <CardContent class="p-4">
             <CardTitle class="text-xl">
               {{ user.name }}
             </CardTitle>
-            <CardDescription> Manage your profile settings. </CardDescription>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent class="space-y-6">
-        <form class="space-y-4" @submit.prevent="handleUpdateProfile">
-          <div class="grid gap-2">
-            <Label for="name">Name</Label>
-            <Input id="name" v-model="name" type="text" />
-          </div>
-          <div class="grid gap-2">
-            <Label for="email">Email</Label>
-            <Input id="email" v-model="email" type="email" />
-          </div>
-          <Button type="submit"> Save Changes </Button>
-        </form>
+            <CardDescription class="mt-1">
+              {{ user.email }}
+            </CardDescription>
+          </CardContent>
+        </Card>
+      </div>
 
-        <form class="space-y-4" @submit.prevent="handleChangePassword">
-          <h3 class="text-lg font-medium">Change Password</h3>
-          <div class="grid gap-2 relative">
-            <Label for="current_password">Current Password</Label>
-            <Input
-              id="current_password"
-              v-model="current_password"
-              :type="showCurrentPassword ? 'text' : 'password'"
-              placeholder="Enter Current Password"
-            />
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              class="absolute right-1 top-7 h-7 w-7"
-              @click="showCurrentPassword = !showCurrentPassword"
-            >
-              <component :is="showCurrentPassword ? EyeOff : Eye" class="h-4 w-4" />
-            </Button>
-          </div>
-          <div class="grid gap-2 relative">
-            <Label for="password">New Password</Label>
-            <Input
-              id="password"
-              v-model="password"
-              :type="showPassword ? 'text' : 'password'"
-              placeholder="Enter New Password"
-            />
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              class="absolute right-1 top-7 h-7 w-7"
-              @click="showPassword = !showPassword"
-            >
-              <component :is="showPassword ? EyeOff : Eye" class="h-4 w-4" />
-            </Button>
-          </div>
-          <div class="grid gap-2 relative">
-            <Label for="password_confirmation">Confirm New Password</Label>
-            <Input
-              id="password_confirmation"
-              v-model="password_confirmation"
-              :type="showPasswordConfirmation ? 'text' : 'password'"
-              placeholder="Enter Confirmation Password"
-            />
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              class="absolute right-1 top-7 h-7 w-7"
-              @click="showPasswordConfirmation = !showPasswordConfirmation"
-            >
-              <component :is="showPasswordConfirmation ? EyeOff : Eye" class="h-4 w-4" />
-            </Button>
-          </div>
-          <Alert variant="destructive" class="flex items-center gap-4">
-            <AlertTriangle class="h-5 w-5" />
-            <AlertDescription>
-              Changing your password will log you out from all devices.
-            </AlertDescription>
-          </Alert>
-          <Button type="submit"> Change Password </Button>
-        </form>
-      </CardContent>
-    </Card>
-    <div v-else>Loading profile...</div>
+      <div class="col-span-1 lg:col-span-3">
+        <Tabs default-value="profile" class="w-full">
+          <TabsList class="grid w-full grid-cols-2 md:w-[400px]">
+            <TabsTrigger value="profile"> Profile Settings </TabsTrigger>
+            <TabsTrigger value="security"> Security </TabsTrigger>
+          </TabsList>
+          <TabsContent value="profile">
+            <Card>
+              <CardHeader>
+                <CardTitle>Profile Information</CardTitle>
+                <CardDescription>Update your personal details here.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form class="space-y-6" @submit.prevent="handleUpdateProfile">
+                  <div class="grid gap-2">
+                    <Label for="name">Name</Label>
+                    <Input id="name" v-model="name" type="text" />
+                  </div>
+                  <div class="grid gap-2">
+                    <Label for="email">Email</Label>
+                    <Input id="email" v-model="email" type="email" />
+                  </div>
+                  <Button type="submit" :disabled="isUpdatingProfile">
+                    <LoaderCircle
+                      v-if="isUpdatingProfile"
+                      class="mr-2 h-4 w-4 animate-spin"
+                    />
+                    Save Changes
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="security" class="space-y-6">
+            <Card v-if="!user.email_verified_at">
+              <CardHeader>
+                <CardTitle class="flex items-center gap-2">
+                  <MailWarning class="h-5 w-5 text-destructive" />
+                  Email Verification
+                </CardTitle>
+                <CardDescription
+                  >Your email address is not verified. Please check your inbox for a
+                  verification link, or resend it below.</CardDescription
+                >
+              </CardHeader>
+              <CardContent>
+                <Button @click="handleResendVerificationEmail" :disabled="isResendingVerification">
+                  <LoaderCircle
+                    v-if="isResendingVerification"
+                    class="mr-2 h-4 w-4 animate-spin"
+                  />
+                  Resend Verification Email
+                </Button>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>Change Password</CardTitle>
+                <CardDescription
+                  >For security, you will be logged out after changing your
+                  password.</CardDescription
+                >
+              </CardHeader>
+              <CardContent>
+                <form class="space-y-6" @submit.prevent="handleChangePassword">
+                  <div class="grid gap-2 relative">
+                    <Label for="current_password">Current Password</Label>
+                    <Input
+                      id="current_password"
+                      v-model="current_password"
+                      :type="showCurrentPassword ? 'text' : 'password'"
+                      placeholder="Enter Current Password"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      class="absolute right-1 top-7 h-7 w-7"
+                      @click="showCurrentPassword = !showCurrentPassword"
+                    >
+                      <component :is="showCurrentPassword ? EyeOff : Eye" class="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <div class="grid gap-2 relative">
+                    <Label for="password">New Password</Label>
+                    <Input
+                      id="password"
+                      v-model="password"
+                      :type="showPassword ? 'text' : 'password'"
+                      placeholder="Enter New Password"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      class="absolute right-1 top-7 h-7 w-7"
+                      @click="showPassword = !showPassword"
+                    >
+                      <component :is="showPassword ? EyeOff : Eye" class="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <div class="grid gap-2 relative">
+                    <Label for="password_confirmation">Confirm New Password</Label>
+                    <Input
+                      id="password_confirmation"
+                      v-model="password_confirmation"
+                      :type="showPasswordConfirmation ? 'text' : 'password'"
+                      placeholder="Enter Confirmation Password"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      class="absolute right-1 top-7 h-7 w-7"
+                      @click="showPasswordConfirmation = !showPasswordConfirmation"
+                    >
+                      <component :is="showPasswordConfirmation ? EyeOff : Eye" class="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <Alert variant="destructive" class="flex items-center gap-4">
+                    <AlertTriangle class="h-5 w-5" />
+                    <AlertDescription>
+                      Changing your password will log you out from all devices.
+                    </AlertDescription>
+                  </Alert>
+                  <Button type="submit" :disabled="isChangingPassword">
+                    <LoaderCircle
+                      v-if="isChangingPassword"
+                      class="mr-2 h-4 w-4 animate-spin"
+                    />
+                    Change Password
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
+    <div v-else class="flex h-64 items-center justify-center">
+      <LoaderCircle class="h-8 w-8 animate-spin text-muted-foreground" />
+    </div>
+    <ConfirmationDialog
+      v-model:open="isConfirmDialogOpen"
+      title="Are you absolutely sure?"
+      description="This action will change your password and log you out from all devices. This cannot be undone."
+      @confirm="onConfirmChangePassword"
+    />
   </div>
 </template>
