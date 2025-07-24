@@ -2,6 +2,9 @@ import { createRouter, createWebHistory } from 'vue-router'
 import LoginView from '../views/LoginView.vue'
 import DashboardView from '../views/DashboardView.vue'
 import ProfileView from '../views/ProfileView.vue'
+import ForgotPasswordView from '../views/ForgotPasswordView.vue'
+import ResetPasswordView from '../views/ResetPasswordView.vue'
+import VerifyEmailView from '../views/VerifyEmailView.vue'
 import NotFoundView from '../views/NotFoundView.vue'
 import MainLayout from '../layouts/MainLayout.vue'
 import { useAuthStore } from '@/stores/auth'
@@ -13,6 +16,24 @@ const router = createRouter({
       path: '/',
       name: 'login',
       component: LoginView,
+      meta: { requiresAuth: false },
+    },
+    {
+      path: '/forgot-password',
+      name: 'forgot-password',
+      component: ForgotPasswordView,
+      meta: { requiresAuth: false },
+    },
+    {
+      path: '/reset-password',
+      name: 'reset-password',
+      component: ResetPasswordView,
+      meta: { requiresAuth: false },
+    },
+    {
+      path: '/email/verify',
+      name: 'verify-email',
+      component: VerifyEmailView,
       meta: { requiresAuth: false },
     },
     {
@@ -53,7 +74,7 @@ router.beforeEach((to, from, next) => {
   if (to.meta.requiresAuth && !isAuthenticated) {
     next({ name: 'login' })
   }
-  else if (to.name === 'login' && isAuthenticated) {
+  else if (['login', 'forgot-password', 'reset-password', 'verify-email'].includes(to.name as string) && isAuthenticated) {
     next({ name: 'dashboard' })
   }
   else {

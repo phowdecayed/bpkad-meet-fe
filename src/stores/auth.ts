@@ -66,6 +66,31 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  async function changeName(name: string) {
+    return axios.post('/api/user/change-name', { name })
+  }
+
+  async function changeEmail(email: string) {
+    return axios.post('/api/user/change-email', { email })
+  }
+
+  async function changePassword(payload: any) {
+    return axios.post('/api/user/change-password', payload)
+  }
+
+  async function forgotPassword(email: string) {
+    return axios.post('/api/forgot-password', { email })
+  }
+
+  async function resetPassword(payload: any) {
+    return axios.post('/api/reset-password', payload)
+  }
+
+  async function verifyEmail(id: string, hash: string, query: any) {
+    const queryString = new URLSearchParams(query).toString()
+    return axios.get(`/api/email/verify/${id}/${hash}?${queryString}`)
+  }
+
   // Set auth header on initial load if token exists
   if (token.value)
     axios.defaults.headers.common['Authorization'] = `Bearer ${token.value}`
@@ -77,5 +102,11 @@ export const useAuthStore = defineStore('auth', () => {
     login,
     logout,
     fetchUser,
+    changeName,
+    changeEmail,
+    changePassword,
+    forgotPassword,
+    resetPassword,
+    verifyEmail,
   }
 })

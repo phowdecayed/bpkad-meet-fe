@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Eye, EyeOff } from 'lucide-vue-next'
 
 const props = defineProps<{
   class?: HTMLAttributes['class']
@@ -14,6 +15,7 @@ const props = defineProps<{
 
 const email = ref('')
 const password = ref('')
+const showPassword = ref(false)
 const error = ref<string | null>(null)
 
 const authStore = useAuthStore()
@@ -48,11 +50,16 @@ async function handleSubmit() {
       <div class="grid gap-3">
         <div class="flex items-center">
           <Label for="password">Password</Label>
-          <a href="#" class="ml-auto text-sm underline-offset-4 hover:underline">
+          <RouterLink to="/forgot-password" class="ml-auto text-sm underline-offset-4 hover:underline">
             Forgot your password?
-          </a>
+          </RouterLink>
         </div>
-        <Input id="password" v-model="password" type="password" required placeholder="Enter your password" />
+        <div class="relative">
+          <Input id="password" v-model="password" :type="showPassword ? 'text' : 'password'" required placeholder="Enter your password" />
+          <Button type="button" variant="ghost" size="icon" class="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" @click="showPassword = !showPassword">
+            <component :is="showPassword ? EyeOff : Eye" class="h-4 w-4" />
+          </Button>
+        </div>
       </div>
       <div v-if="error" class="text-red-500 text-sm text-center">
         {{ error }}
