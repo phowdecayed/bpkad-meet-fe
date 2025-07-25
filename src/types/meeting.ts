@@ -14,7 +14,10 @@ export interface ZoomMeeting {
   id: number
   zoom_id: number
   uuid: string
-  [key: string]: any // For other Zoom-specific properties
+  join_url: string | null
+  start_url: string | null
+  password: string | null
+  [key: string]: unknown // For other Zoom-specific properties
 }
 
 export interface Meeting {
@@ -25,6 +28,8 @@ export interface Meeting {
   start_time: string
   duration: number
   type: 'online' | 'offline' | 'hybrid'
+  location_id: number | null
+  zoom_meeting_id: string | null
   host_key: string | null
   location: MeetingLocation | null
   zoom_meeting: ZoomMeeting | null

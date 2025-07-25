@@ -6,13 +6,14 @@ import type { Meeting } from '@/types/meeting'
 import { Button } from '@/components/ui/button'
 import CreateMeetingDialog from '@/components/meetings/CreateMeetingDialog.vue'
 import EditMeetingDialog from '@/components/meetings/EditMeetingDialog.vue'
+import MeetingDetailsDialog from '@/components/meetings/MeetingDetailsDialog.vue'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { MoreHorizontal } from 'lucide-vue-next'
+import { MoreHorizontal, Eye } from 'lucide-vue-next'
 import {
   Table,
   TableBody,
@@ -27,11 +28,17 @@ const meetingsStore = useMeetingsStore()
 const { meetings } = storeToRefs(meetingsStore)
 const showCreateDialog = ref(false)
 const showEditDialog = ref(false)
+const showDetailsDialog = ref(false)
 const selectedMeeting = ref<Meeting | null>(null)
 
 function openEditDialog(meeting: Meeting) {
   selectedMeeting.value = meeting
   showEditDialog.value = true
+}
+
+function openDetailsDialog(meeting: Meeting) {
+  selectedMeeting.value = meeting
+  showDetailsDialog.value = true
 }
 
 onMounted(() => {
@@ -68,19 +75,24 @@ onMounted(() => {
             <TableCell>{{ new Date(meeting.start_time).toLocaleString() }}</TableCell>
             <TableCell>{{ meeting.duration }} minutes</TableCell>
             <TableCell>{{ meeting.type }}</TableCell>
-            <TableCell>{{ meeting.location?.name || 'N/A' }}</TableCell>
+            <TableCell>{{ meeting.type === 'online' ? 'Online' : meeting.location?.name || 'N/A' }}</TableCell>
             <TableCell class="text-right">
-              <DropdownMenu>
-                <DropdownMenuTrigger as-child>
-                  <Button variant="ghost" size="icon">
-                    <MoreHorizontal class="w-4 h-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem @click="openEditDialog(meeting)">Edit</DropdownMenuItem>
-                  <DropdownMenuItem @click="meetingsStore.deleteMeeting(meeting.id)">Delete</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <div class="flex items-center justify-end space-x-2">
+                <Button variant="ghost" size="icon" @click="openDetailsDialog(meeting)">
+                  <Eye class="w-4 h-4" />
+                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger as-child>
+                    <Button variant="ghost" size="icon">
+                      <MoreHorizontal class="w-4 h-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem @click="openEditDialog(meeting)">Edit</DropdownMenuItem>
+                    <DropdownMenuItem @click="meetingsStore.deleteMeeting(meeting.id)">Delete</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </TableCell>
           </TableRow>
         </TableBody>
@@ -88,6 +100,7 @@ onMounted(() => {
     </div>
     <CreateMeetingDialog v-model:open="showCreateDialog" />
     <EditMeetingDialog v-model:open="showEditDialog" :meeting="selectedMeeting" />
+    <MeetingDetailsDialog v-model:open="showDetailsDialog" :meeting="selectedMeeting" />
   </div>
 </template>
 

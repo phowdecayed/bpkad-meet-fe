@@ -376,7 +376,14 @@ function handleConfirmClose() {
 
 <template>
   <Dialog :open="props.open" @update:open="handleClose">
-    <DialogContent class="sm:max-w-[650px] flex flex-col">
+    <DialogContent class="sm:max-w-[650px] flex flex-col relative">
+      <div v-if="isLoading" class="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-10 rounded-lg">
+        <div class="flex flex-col items-center gap-2">
+          <Loader2 class="h-8 w-8 animate-spin text-primary" />
+          <p class="text-lg font-semibold">Updating Meeting...</p>
+          <p class="text-sm text-muted-foreground">Communicating with Zoom API.</p>
+        </div>
+      </div>
       <DialogHeader>
         <DialogTitle class="flex items-center gap-2">
           <Type class="h-5 w-5" />
