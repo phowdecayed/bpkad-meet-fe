@@ -14,10 +14,26 @@ export const meetingBaseSchema = z.object({
     .or(z.literal('')),
   start_time: z
     .string()
-    .datetime('Please select a valid date and time')
-    .refine((date) => new Date(date) > new Date(), {
-      message: 'Meeting must be scheduled for a future date and time',
-    }),
+    .min(1, 'Please select a valid date and time')
+    .refine(
+      (dateStr) => {
+        // Handle datetime-local format (YYYY-MM-DDTHH:MM)
+        const date = new Date(dateStr)
+        return !isNaN(date.getTime())
+      },
+      {
+        message: 'Please select a valid date and time',
+      },
+    )
+    .refine(
+      (dateStr) => {
+        const date = new Date(dateStr)
+        return date > new Date()
+      },
+      {
+        message: 'Meeting must be scheduled for a future date and time',
+      },
+    ),
   duration: z
     .number()
     .min(1, 'Duration must be at least 1 minute')
@@ -84,8 +100,20 @@ export const meetingQuerySchema = z
     per_page: z.number().min(1).max(100).optional().default(10),
     search: z.string().optional(),
     type: z.enum(['online', 'offline', 'hybrid']).optional(),
-    start_date: z.string().datetime().optional(),
-    end_date: z.string().datetime().optional(),
+    start_date: z
+      .string()
+      .refine((dateStr) => {
+        const date = new Date(dateStr)
+        return !isNaN(date.getTime())
+      }, 'Invalid date format')
+      .optional(),
+    end_date: z
+      .string()
+      .refine((dateStr) => {
+        const date = new Date(dateStr)
+        return !isNaN(date.getTime())
+      }, 'Invalid date format')
+      .optional(),
     organizer_id: z.number().optional(),
   })
   .refine(

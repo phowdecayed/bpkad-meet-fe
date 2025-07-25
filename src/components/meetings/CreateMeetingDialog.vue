@@ -25,14 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import {
-  Stepper,
-  StepperItem,
-  StepperTrigger,
-  StepperTitle,
-  StepperDescription,
-  StepperSeparator,
-} from '@/components/ui/stepper'
+
 import {
   Command,
   CommandEmpty,
@@ -115,10 +108,14 @@ const formData = computed(() => ({
 
 // Validation functions
 function validateStep(step: number): boolean {
-  // Clear previous errors for this step
   const stepFields = getStepFields(step)
+
+  // Create a new errors object to avoid reactive mutations
+  const newErrors = { ...validationErrors.value }
+
+  // Clear previous errors for this step
   stepFields.forEach((field) => {
-    delete validationErrors.value[field]
+    delete newErrors[field]
   })
 
   let stepData: Record<string, unknown> = {}
@@ -150,13 +147,18 @@ function validateStep(step: number): boolean {
     // Only add errors for fields in this step
     Object.entries(result.fieldErrors).forEach(([field, message]) => {
       if (stepFields.includes(field)) {
-        validationErrors.value[field] = message
+        newErrors[field] = message
       }
     })
+
+    // Update validation errors and step validation in one go
+    validationErrors.value = newErrors
     stepValidation.value[step] = false
     return false
   }
 
+  // Update validation errors and step validation in one go
+  validationErrors.value = newErrors
   stepValidation.value[step] = true
   return true
 }
@@ -200,23 +202,6 @@ function nextStep() {
 function previousStep() {
   if (currentStep.value > 1) {
     currentStep.value--
-  }
-}
-
-function goToStep(step: number) {
-  if (step >= 1 && step <= 3) {
-    // Validate all previous steps before allowing navigation
-    let canNavigate = true
-    for (let i = 1; i < step; i++) {
-      if (!validateStep(i)) {
-        canNavigate = false
-        break
-      }
-    }
-
-    if (canNavigate) {
-      currentStep.value = step
-    }
   }
 }
 
@@ -312,6 +297,11 @@ watch(
       nextTick(() => {
         resetForm()
       })
+    } else {
+      // Validate current step when dialog opens
+      nextTick(() => {
+        validateStep(currentStep.value)
+      })
     }
   },
 )
@@ -321,26 +311,36 @@ watch(type, (newType) => {
   if (newType === 'online') {
     locationId.value = undefined
   }
-  // Re-validate current step when type changes
-  validateCurrentStep()
+  // Clear validation errors when type changes
+  validationErrors.value = {}
 })
 
 // Watch form fields for real-time validation
 watch([topic, description, startTime, duration], () => {
-  if (currentStep.value === 1 || currentStep.value === 2) {
-    validateCurrentStep()
+  if (currentStep.value === 1) {
+    // Validate step 1 when fields change
+    validateStep(1)
   }
 })
 
-watch([locationId, password], () => {
+watch([type, locationId, password], () => {
   if (currentStep.value === 2) {
-    validateCurrentStep()
+    // Validate step 2 when fields change
+    validateStep(2)
   }
+})
+
+// Watch for step changes to validate current step
+watch(currentStep, (newStep) => {
+  // Validate the current step when navigating to it
+  validateStep(newStep)
 })
 
 onMounted(() => {
   locationsStore.fetchLocations()
   usersStore.fetchUsers()
+  // Initial validation of step 1
+  validateStep(1)
 })
 </script>
 
@@ -353,33 +353,61 @@ onMounted(() => {
       </DialogHeader>
 
       <div class="flex flex-col gap-y-4">
-        <Stepper :model-value="currentStep" class="w-full">
-          <div class="flex">
-            <StepperItem :step="1" class="flex-1">
-              <StepperTrigger @click="goToStep(1)" :class="{ 'cursor-pointer': currentStep > 1 }">
-                <StepperTitle>Basic Info</StepperTitle>
-                <StepperDescription>Topic, description, and time.</StepperDescription>
-              </StepperTrigger>
-            </StepperItem>
-            <StepperSeparator />
-            <StepperItem :step="2" class="flex-1">
-              <StepperTrigger @click="goToStep(2)" :class="{ 'cursor-pointer': stepValidation[1] }">
-                <StepperTitle>Details</StepperTitle>
-                <StepperDescription>Type, location, and security.</StepperDescription>
-              </StepperTrigger>
-            </StepperItem>
-            <StepperSeparator />
-            <StepperItem :step="3" class="flex-1">
-              <StepperTrigger
-                @click="goToStep(3)"
-                :class="{ 'cursor-pointer': stepValidation[1] && stepValidation[2] }"
+        <!-- Step indicator -->
+        <div class="flex items-center justify-between mb-6">
+          <div class="flex items-center space-x-4">
+            <div class="flex items-center">
+              <div
+                :class="[
+                  'flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium',
+                  currentStep >= 1
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted text-muted-foreground',
+                ]"
               >
-                <StepperTitle>Participants</StepperTitle>
-                <StepperDescription>Invite users to the meeting.</StepperDescription>
-              </StepperTrigger>
-            </StepperItem>
+                1
+              </div>
+              <div class="ml-2">
+                <div class="text-sm font-medium">Basic Info</div>
+                <div class="text-xs text-muted-foreground">Topic, description, and time</div>
+              </div>
+            </div>
+            <div :class="['h-px w-12', currentStep > 1 ? 'bg-primary' : 'bg-muted']"></div>
+            <div class="flex items-center">
+              <div
+                :class="[
+                  'flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium',
+                  currentStep >= 2
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted text-muted-foreground',
+                ]"
+              >
+                2
+              </div>
+              <div class="ml-2">
+                <div class="text-sm font-medium">Details</div>
+                <div class="text-xs text-muted-foreground">Type, location, and security</div>
+              </div>
+            </div>
+            <div :class="['h-px w-12', currentStep > 2 ? 'bg-primary' : 'bg-muted']"></div>
+            <div class="flex items-center">
+              <div
+                :class="[
+                  'flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium',
+                  currentStep >= 3
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted text-muted-foreground',
+                ]"
+              >
+                3
+              </div>
+              <div class="ml-2">
+                <div class="text-sm font-medium">Participants</div>
+                <div class="text-xs text-muted-foreground">Invite users to the meeting</div>
+              </div>
+            </div>
           </div>
-        </Stepper>
+        </div>
 
         <!-- Global validation errors -->
         <Alert v-if="showValidationErrors" variant="destructive">

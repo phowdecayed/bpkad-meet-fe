@@ -18,7 +18,7 @@
   - Write unit tests for validation schemas with various input scenarios
   - _Requirements: 1.2, 1.3, 1.4, 3.3, 3.4, 7.3_
 
-- [ ] 3. Fix CreateMeetingDialog component with proper form handling
+- [x] 3. Fix CreateMeetingDialog component with proper form handling
 
   - Fix the participants array handling to send user IDs instead of User objects
   - Implement proper form validation using Zod schemas
@@ -29,7 +29,7 @@
   - Write component tests for form validation and submission scenarios
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6_
 
-- [ ] 4. Enhance EditMeetingDialog with complete meeting editing functionality
+- [x] 4. Enhance EditMeetingDialog with complete meeting editing functionality
 
   - Add location and participant management to edit dialog
   - Implement proper form pre-population with existing meeting data

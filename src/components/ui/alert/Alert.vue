@@ -1,16 +1,31 @@
 <script setup lang="ts">
-import type { HTMLAttributes } from 'vue'
+import { computed } from 'vue'
 import { cn } from '@/lib/utils'
-import { type AlertVariants, alertVariants } from '.'
 
-const props = defineProps<{
-  class?: HTMLAttributes['class']
-  variant?: AlertVariants['variant']
-}>()
+interface AlertProps {
+  variant?: 'default' | 'destructive'
+  class?: string
+}
+
+const props = withDefaults(defineProps<AlertProps>(), {
+  variant: 'default',
+})
+
+const alertClasses = computed(() =>
+  cn(
+    'relative w-full rounded-lg border p-4',
+    {
+      'border-border text-foreground': props.variant === 'default',
+      'border-destructive/50 text-destructive dark:border-destructive':
+        props.variant === 'destructive',
+    },
+    props.class,
+  ),
+)
 </script>
 
 <template>
-  <div data-slot="alert" :class="cn(alertVariants({ variant }), props.class)" role="alert">
+  <div :class="alertClasses">
     <slot />
   </div>
 </template>
