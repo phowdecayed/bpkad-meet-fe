@@ -243,7 +243,11 @@ async function createMeeting() {
       }
     }
 
-    toast.error(meetingsStore.error?.message || 'Failed to create meeting')
+    const errorMessage =
+      meetingsStore.error?.details?.zoom_api?.[0] ||
+      meetingsStore.error?.message ||
+      'Failed to create meeting'
+    toast.error(errorMessage)
   } finally {
     isSubmitting.value = false
   }
