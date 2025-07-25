@@ -11,6 +11,19 @@ import { useAuthStore } from './stores/auth'
 axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL
 axios.defaults.headers.common['Accept'] = 'application/json'
 
+// Add a response interceptor
+axios.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      const authStore = useAuthStore()
+      authStore.logout()
+      router.push({ name: 'login' })
+    }
+    return Promise.reject(error)
+  },
+)
+
 const app = createApp(App)
 const pinia = createPinia()
 
