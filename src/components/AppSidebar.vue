@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import type { SidebarProps } from '@/components/ui/sidebar'
 import { useAuthStore } from '@/stores/auth'
 
-import { GalleryVerticalEnd, PieChart, Settings2, Users, Shield, MapPin } from 'lucide-vue-next'
+import { GalleryVerticalEnd, PieChart, Settings2, Users, Shield, MapPin, CalendarDays } from 'lucide-vue-next'
 import NavMain from '@/components/NavMain.vue'
 import NavAdmin from '@/components/NavAdmin.vue'
 import NavUser from '@/components/NavUser.vue'
@@ -28,6 +28,8 @@ const canManageUsers = computed(() => authStore.hasPermission('manage users'))
 const canManageRoles = computed(() => authStore.hasPermission('manage roles'))
 const canEditMeetings = computed(() => authStore.hasPermission('edit meetings'))
 
+const canViewMeetings = computed(() => authStore.hasPermission('view meetings'))
+
 // This is sample data.
 const data = {
   teams: [
@@ -47,6 +49,14 @@ const navMain = computed(() => {
       icon: PieChart,
     },
   ]
+
+  if (canViewMeetings.value) {
+    menu.push({
+      title: 'Meetings',
+      url: '/app/meetings',
+      icon: CalendarDays,
+    })
+  }
 
   return menu
 })

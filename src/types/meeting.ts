@@ -29,4 +29,6 @@ export interface Meeting {
   location: MeetingLocation | null
   zoom_meeting: ZoomMeeting | null
   participants?: User[]
+  created_at: string
+  updated_at: string
 }

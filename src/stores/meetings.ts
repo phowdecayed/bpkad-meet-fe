@@ -1,55 +1,420 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
-import axios from 'axios'
+import axios, { type AxiosError } from 'axios'
 import type { Meeting } from '@/types/meeting'
+import type { User } from '@/types/user'
+
+// Enhanced TypeScript interfaces for payloads and responses
+export interface CreateMeetingPayload {
+  topic: string
+  description?: string
+  start_time: string
+  duration: number
+  type: 'online' | 'offline' | 'hybrid'
+  location_id?: number
+  password?: string
+  participants?: number[]
+  settings?: Record<string, unknown>
+}
+
+export interface UpdateMeetingPayload {
+  topic?: string
+  description?: string
+  start_time?: string
+  duration?: number
+  location_id?: number
+  settings?: Record<string, unknown>
+}
+
+export interface MeetingQueryParams {
+  page?: number
+  per_page?: number
+  start_date?: string
+  end_date?: string
+  type?: string
+  search?: string
+}
+
+export interface PaginationState {
+  currentPage: number
+  totalPages: number
+  totalItems: number
+  itemsPerPage: number
+  hasNextPage: boolean
+  hasPrevPage: boolean
+}
+
+export interface MeetingsResponse {
+  data: Meeting[]
+  meta: {
+    current_page: number
+    last_page: number
+    total: number
+    per_page: number
+    from: number
+    to: number
+  }
+}
+
+export interface ParticipantsResponse {
+  data: User[]
+}
+
+// Error types for better error handling
+export enum ErrorType {
+  VALIDATION = 'validation',
+  PERMISSION = 'permission',
+  NETWORK = 'network',
+  SERVER = 'server',
+  NOT_FOUND = 'not_found',
+}
+
+export interface ErrorState {
+  type: ErrorType
+  message: string
+  field?: string
+  retryable: boolean
+  details?: Record<string, string[]>
+}
 
 export const useMeetingsStore = defineStore('meetings', () => {
+  // State
   const meetings = ref<Meeting[]>([])
+  const currentMeeting = ref<Meeting | null>(null)
+  const participants = ref<User[]>([])
   const isLoading = ref(false)
-  const error = ref<string | null>(null)
+  const isLoadingParticipants = ref(false)
+  const error = ref<ErrorState | null>(null)
+  const pagination = ref<PaginationState>({
+    currentPage: 1,
+    totalPages: 1,
+    totalItems: 0,
+    itemsPerPage: 10,
+    hasNextPage: false,
+    hasPrevPage: false,
+  })
 
-  async function fetchMeetings(startDate?: string, endDate?: string) {
+  // Helper function to create error state
+  function createErrorState(err: unknown): ErrorState {
+    if (axios.isAxiosError(err)) {
+      const axiosError = err as AxiosError<{
+        message?: string
+        errors?: Record<string, string[]>
+      }>
+      const status = axiosError.response?.status
+      const data = axiosError.response?.data
+
+      switch (status) {
+        case 422:
+          return {
+            type: ErrorType.VALIDATION,
+            message: data?.message || 'Validation failed',
+            retryable: false,
+            details: data?.errors,
+          }
+        case 403:
+          return {
+            type: ErrorType.PERMISSION,
+            message: data?.message || 'Access denied',
+            retryable: false,
+          }
+        case 404:
+          return {
+            type: ErrorType.NOT_FOUND,
+            message: data?.message || 'Resource not found',
+            retryable: false,
+          }
+        case 500:
+        case 502:
+        case 503:
+          return {
+            type: ErrorType.SERVER,
+            message: data?.message || 'Server error occurred',
+            retryable: true,
+          }
+        default:
+          if (!axiosError.response) {
+            return {
+              type: ErrorType.NETWORK,
+              message: 'Network error. Please check your connection.',
+              retryable: true,
+            }
+          }
+          return {
+            type: ErrorType.SERVER,
+            message: data?.message || 'An unexpected error occurred',
+            retryable: true,
+          }
+      }
+    }
+
+    // Handle non-axios errors
+    const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred'
+    return {
+      type: ErrorType.SERVER,
+      message: errorMessage,
+      retryable: false,
+    }
+  }
+
+  // Helper function to update pagination state
+  function updatePaginationState(meta: MeetingsResponse['meta']) {
+    pagination.value = {
+      currentPage: meta.current_page,
+      totalPages: meta.last_page,
+      totalItems: meta.total,
+      itemsPerPage: meta.per_page,
+      hasNextPage: meta.current_page < meta.last_page,
+      hasPrevPage: meta.current_page > 1,
+    }
+  }
+
+  // Enhanced fetchMeetings with pagination and query parameters
+  async function fetchMeetings(params: MeetingQueryParams = {}) {
     isLoading.value = true
     error.value = null
-    try {
-      const params: Record<string, string> = {}
-      if (startDate) params.start_date = startDate
-      if (endDate) params.end_date = endDate
 
-      const endpoint = startDate && endDate ? '/api/calendar' : '/api/meetings'
-      const response = await axios.get(endpoint, { params })
+    try {
+      const queryParams: Record<string, string | number> = {
+        page: params.page || pagination.value.currentPage,
+        per_page: params.per_page || pagination.value.itemsPerPage,
+      }
+
+      if (params.start_date) queryParams.start_date = params.start_date
+      if (params.end_date) queryParams.end_date = params.end_date
+      if (params.type) queryParams.type = params.type
+      if (params.search) queryParams.search = params.search
+
+      const endpoint = params.start_date && params.end_date ? '/api/calendar' : '/api/meetings'
+      const response = await axios.get<MeetingsResponse>(endpoint, { params: queryParams })
+
       meetings.value = response.data.data
-    } catch (err: any) {
-      error.value = err.response?.data?.message || 'Failed to fetch meetings.'
+      if (response.data.meta) {
+        updatePaginationState(response.data.meta)
+      }
+    } catch (err: unknown) {
+      error.value = createErrorState(err)
+      meetings.value = []
     } finally {
       isLoading.value = false
     }
   }
 
-  async function createMeeting(meetingData: Partial<Meeting>) {
-    const response = await axios.post('/api/meetings', meetingData)
-    await fetchMeetings() // Refresh the list
-    return response.data
+  // Enhanced fetchMeeting for single meeting retrieval
+  async function fetchMeeting(id: number): Promise<Meeting> {
+    isLoading.value = true
+    error.value = null
+
+    try {
+      const response = await axios.get<{ data: Meeting }>(`/api/meetings/${id}`)
+      currentMeeting.value = response.data.data
+      return response.data.data
+    } catch (err: unknown) {
+      error.value = createErrorState(err)
+      throw err
+    } finally {
+      isLoading.value = false
+    }
   }
 
-  async function updateMeeting(id: number, meetingData: Partial<Meeting>) {
-    const response = await axios.patch(`/api/meetings/${id}`, meetingData)
-    await fetchMeetings() // Refresh the list
-    return response.data
+  // Enhanced createMeeting with proper payload typing
+  async function createMeeting(meetingData: CreateMeetingPayload): Promise<Meeting> {
+    isLoading.value = true
+    error.value = null
+
+    try {
+      const response = await axios.post<{ data: Meeting }>('/api/meetings', meetingData)
+      const newMeeting = response.data.data
+
+      // Add to current meetings list if it fits current filters
+      meetings.value.unshift(newMeeting)
+
+      return newMeeting
+    } catch (err: unknown) {
+      error.value = createErrorState(err)
+      throw err
+    } finally {
+      isLoading.value = false
+    }
   }
 
-  async function deleteMeeting(id: number) {
-    await axios.delete(`/api/meetings/${id}`)
-    await fetchMeetings() // Refresh the list
+  // Enhanced updateMeeting with proper payload typing
+  async function updateMeeting(id: number, meetingData: UpdateMeetingPayload): Promise<Meeting> {
+    isLoading.value = true
+    error.value = null
+
+    try {
+      const response = await axios.patch<{ data: Meeting }>(`/api/meetings/${id}`, meetingData)
+      const updatedMeeting = response.data.data
+
+      // Update in current meetings list
+      const index = meetings.value.findIndex((m) => m.id === id)
+      if (index !== -1) {
+        meetings.value[index] = updatedMeeting
+      }
+
+      // Update current meeting if it's the same
+      if (currentMeeting.value?.id === id) {
+        currentMeeting.value = updatedMeeting
+      }
+
+      return updatedMeeting
+    } catch (err: unknown) {
+      error.value = createErrorState(err)
+      throw err
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  // Enhanced deleteMeeting
+  async function deleteMeeting(id: number): Promise<void> {
+    isLoading.value = true
+    error.value = null
+
+    try {
+      await axios.delete(`/api/meetings/${id}`)
+
+      // Remove from current meetings list
+      meetings.value = meetings.value.filter((m) => m.id !== id)
+
+      // Clear current meeting if it's the deleted one
+      if (currentMeeting.value?.id === id) {
+        currentMeeting.value = null
+      }
+
+      // Update pagination if needed
+      pagination.value.totalItems = Math.max(0, pagination.value.totalItems - 1)
+    } catch (err: unknown) {
+      error.value = createErrorState(err)
+      throw err
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  // Participant management methods
+  async function fetchParticipants(meetingId: number): Promise<User[]> {
+    isLoadingParticipants.value = true
+    error.value = null
+
+    try {
+      const response = await axios.get<ParticipantsResponse>(
+        `/api/meetings/${meetingId}/participants`,
+      )
+      participants.value = response.data.data
+      return response.data.data
+    } catch (err: unknown) {
+      error.value = createErrorState(err)
+      participants.value = []
+      throw err
+    } finally {
+      isLoadingParticipants.value = false
+    }
+  }
+
+  async function addParticipant(meetingId: number, userId: number): Promise<void> {
+    isLoadingParticipants.value = true
+    error.value = null
+
+    try {
+      await axios.post(`/api/meetings/${meetingId}/participants`, { user_id: userId })
+
+      // Refresh participants list
+      await fetchParticipants(meetingId)
+    } catch (err: unknown) {
+      error.value = createErrorState(err)
+      throw err
+    } finally {
+      isLoadingParticipants.value = false
+    }
+  }
+
+  async function removeParticipant(meetingId: number, userId: number): Promise<void> {
+    isLoadingParticipants.value = true
+    error.value = null
+
+    try {
+      await axios.delete(`/api/meetings/${meetingId}/participants/${userId}`)
+
+      // Remove from current participants list
+      participants.value = participants.value.filter((p) => p.id !== userId)
+    } catch (err: unknown) {
+      error.value = createErrorState(err)
+      throw err
+    } finally {
+      isLoadingParticipants.value = false
+    }
+  }
+
+  // Utility methods
+  function clearError() {
+    error.value = null
+  }
+
+  function resetState() {
+    meetings.value = []
+    currentMeeting.value = null
+    participants.value = []
+    error.value = null
+    pagination.value = {
+      currentPage: 1,
+      totalPages: 1,
+      totalItems: 0,
+      itemsPerPage: 10,
+      hasNextPage: false,
+      hasPrevPage: false,
+    }
+  }
+
+  // Pagination helpers
+  async function nextPage() {
+    if (pagination.value.hasNextPage) {
+      await fetchMeetings({ page: pagination.value.currentPage + 1 })
+    }
+  }
+
+  async function prevPage() {
+    if (pagination.value.hasPrevPage) {
+      await fetchMeetings({ page: pagination.value.currentPage - 1 })
+    }
+  }
+
+  async function goToPage(page: number) {
+    if (page >= 1 && page <= pagination.value.totalPages) {
+      await fetchMeetings({ page })
+    }
   }
 
   return {
+    // State
     meetings,
+    currentMeeting,
+    participants,
     isLoading,
+    isLoadingParticipants,
     error,
+    pagination,
+
+    // Actions
     fetchMeetings,
+    fetchMeeting,
     createMeeting,
     updateMeeting,
     deleteMeeting,
+
+    // Participant Management
+    fetchParticipants,
+    addParticipant,
+    removeParticipant,
+
+    // Utility
+    clearError,
+    resetState,
+
+    // Pagination
+    nextPage,
+    prevPage,
+    goToPage,
   }
 })

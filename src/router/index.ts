@@ -75,6 +75,12 @@ const router = createRouter({
           meta: { requiresPermission: 'manage roles' },
         },
         {
+          path: 'meetings',
+          name: 'meetings',
+          component: () => import('../views/MeetingsView.vue'),
+          meta: { requiresPermission: 'view meetings' },
+        },
+        {
           path: 'locations',
           name: 'locations',
           component: () => import('../views/MeetingLocationsView.vue'),
