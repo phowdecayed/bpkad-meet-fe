@@ -1,6 +1,9 @@
 <script setup lang="ts">
+import { ref, computed } from 'vue'
 import { RouterView } from 'vue-router'
 import AppSidebar from '@/components/AppSidebar.vue'
+import CreateMeetingDialog from '@/components/meetings/CreateMeetingDialog.vue'
+import { useAuthStore } from '@/stores/auth'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -9,8 +12,14 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb'
+import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
+import { Plus } from 'lucide-vue-next'
+
+const authStore = useAuthStore()
+const canCreateMeetings = computed(() => authStore.hasPermission('edit meetings'))
+const isCreateMeetingDialogOpen = ref(false)
 </script>
 
 <template>
@@ -35,10 +44,22 @@ import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/s
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
+
+        <div class="ml-auto">
+          <Button
+            v-if="canCreateMeetings"
+            size="sm"
+            @click="isCreateMeetingDialogOpen = true"
+          >
+            <Plus class="mr-2 h-4 w-4" />
+            Create Meeting
+          </Button>
+        </div>
       </header>
       <main class="flex-1 overflow-y-auto">
         <RouterView />
       </main>
     </SidebarInset>
+    <CreateMeetingDialog v-model:open="isCreateMeetingDialogOpen" />
   </SidebarProvider>
 </template>

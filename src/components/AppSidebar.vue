@@ -3,7 +3,15 @@ import { computed } from 'vue'
 import type { SidebarProps } from '@/components/ui/sidebar'
 import { useAuthStore } from '@/stores/auth'
 
-import { GalleryVerticalEnd, PieChart, Settings2, Users, Shield, MapPin, CalendarDays } from 'lucide-vue-next'
+import {
+  GalleryVerticalEnd,
+  PieChart,
+  Settings2,
+  Users,
+  Shield,
+  MapPin,
+  CalendarDays,
+} from 'lucide-vue-next'
 import NavMain from '@/components/NavMain.vue'
 import NavAdmin from '@/components/NavAdmin.vue'
 import NavUser from '@/components/NavUser.vue'
@@ -36,7 +44,7 @@ const data = {
     {
       name: 'BPKAD Meeting',
       logo: GalleryVerticalEnd,
-      plan: 'Enterprise',
+      plan: `v${import.meta.env.PACKAGE_VERSION}`,
     },
   ],
 }
