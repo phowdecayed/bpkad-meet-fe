@@ -8,7 +8,7 @@ interface Props {
   fallbackMessage?: string
 }
 
-const props = withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<Props>(), {
   fallbackTitle: 'Something went wrong',
   fallbackMessage: 'An error occurred while loading this settings section.',
 })
@@ -54,6 +54,12 @@ const handleRetry = () => {
   emit('retry')
 }
 
+const handleReload = () => {
+  if (typeof window !== 'undefined') {
+    window.location.reload()
+  }
+}
+
 const emit = defineEmits<{
   retry: []
 }>()
@@ -82,7 +88,7 @@ const emit = defineEmits<{
             <RefreshCw class="mr-2 h-4 w-4" />
             Try Again
           </Button>
-          <Button @click="() => window.location.reload()" variant="secondary"> Reload Page </Button>
+          <Button @click="handleReload" variant="secondary"> Reload Page </Button>
         </div>
       </div>
     </div>
