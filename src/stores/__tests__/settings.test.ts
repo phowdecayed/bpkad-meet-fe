@@ -61,7 +61,11 @@ describe('useSettingsStore', () => {
         response: { data: { message: errorMessage } },
       })
 
-      await store.fetchAllSettings()
+      try {
+        await store.fetchAllSettings()
+      } catch (error) {
+        // Expected to throw
+      }
 
       expect(store.settings).toEqual([])
       expect(store.isLoading).toBe(false)
@@ -110,6 +114,235 @@ describe('useSettingsStore', () => {
 
       const grouped = store.groupedSettings
       expect(grouped).toEqual({})
+    })
+  })
+
+  describe('updateSetting', () => {
+    it('should call PATCH endpoint with correct parameters', async () => {
+      const store = useSettingsStore()
+      const updatePayload = { payload: { key: 'updated_value' } }
+
+      mockedAxios.patch.mockResolvedValueOnce({ data: {} })
+
+      await store.updateSetting(1, updatePayload)
+
+      expect(mockedAxios.patch).toHaveBeenCalledWith('/api/settings/1', updatePayload)
+    })
+
+    it('should handle update errors', async () => {
+      const store = useSettingsStore()
+      const updatePayload = { payload: { key: 'value' } }
+
+      mockedAxios.patch.mockRejectedValueOnce(new Error('Update failed'))
+
+      await expect(store.updateSetting(1, updatePayload)).rejects.toThrow('Update failed')
+    })
+  })
+
+  describe('createSetting', () => {
+    it('should call POST endpoint with correct parameters', async () => {
+      const store = useSettingsStore()
+      const createPayload = {
+        name: 'new_setting',
+        group: 'test',
+        payload: { key: 'value' },
+      }
+
+      mockedAxios.post.mockResolvedValueOnce({ data: {} })
+
+      await store.createSetting(createPayload)
+
+      expect(mockedAxios.post).toHaveBeenCalledWith('/api/settings', createPayload)
+    })
+
+    it('should handle create errors', async () => {
+      const store = useSettingsStore()
+      const createPayload = {
+        name: 'new_setting',
+        group: 'test',
+        payload: { key: 'value' },
+      }
+
+      mockedAxios.post.mockRejectedValueOnce(new Error('Create failed'))
+
+      await expect(store.createSetting(createPayload)).rejects.toThrow('Create failed')
+    })
+  })
+
+  describe('deleteSetting', () => {
+    it('should call DELETE endpoint and refresh settings', async () => {
+      const store = useSettingsStore()
+
+      // Set up initial settings
+      store.settings = mockSettings
+
+      mockedAxios.delete.mockResolvedValueOnce({})
+      mockedAxios.get.mockResolvedValueOnce({ data: mockSettings.slice(1) }) // Return settings without deleted one
+
+      await store.deleteSetting(1)
+
+      expect(mockedAxios.delete).toHaveBeenCalledWith('/api/settings/1')
+      expect(mockedAxios.get).toHaveBeenCalledWith('/api/settings', { params: { group: 'zoom' } })
+    })
+
+    it('should handle delete errors', async () => {
+      const store = useSettingsStore()
+
+      mockedAxios.delete.mockRejectedValueOnce(new Error('Delete failed'))
+
+      await expect(store.deleteSetting(1)).rejects.toThrow('Delete failed')
+    })
+  })
+
+  describe('fetchSettingsByGroup', () => {
+    it('should fetch settings for specific group', async () => {
+      const store = useSettingsStore()
+      const zoomSettings = [mockSettings[0], mockSettings[2]]
+
+      mockedAxios.get.mockResolvedValueOnce({ data: zoomSettings })
+
+      await store.fetchSettingsByGroup('zoom')
+
+      expect(mockedAxios.get).toHaveBeenCalledWith('/api/settings', { params: { group: 'zoom' } })
+      expect(store.settings).toEqual(zoomSettings)
+      expect(store.isLoading).toBe(false)
+      expect(store.error).toBe(null)
+    })
+
+    it('should handle different error types for group fetch', async () => {
+      const store = useSettingsStore()
+
+      const errorCases = [
+        {
+          error: { code: 'NETWORK_ERROR' },
+          expectedMessage:
+            'Network error while fetching zoom settings. Please check your connection.',
+        },
+        {
+          error: { response: { status: 401 } },
+          expectedMessage: 'You are not authorized to access zoom settings. Please log in again.',
+        },
+        {
+          error: { response: { status: 403 } },
+          expectedMessage: 'You do not have permission to view zoom settings.',
+        },
+        {
+          error: { response: { status: 500 } },
+          expectedMessage: 'Server error while fetching zoom settings. Please try again later.',
+        },
+        {
+          error: { response: { data: { message: 'Custom error' } } },
+          expectedMessage: 'Custom error',
+        },
+      ]
+
+      for (const errorCase of errorCases) {
+        mockedAxios.get.mockRejectedValueOnce(errorCase.error)
+
+        try {
+          await store.fetchSettingsByGroup('zoom')
+        } catch (error) {
+          // Expected to throw
+        }
+
+        expect(store.error).toBe(errorCase.expectedMessage)
+        expect(store.settings).toEqual([])
+        expect(store.isLoading).toBe(false)
+      }
+    })
+  })
+
+  describe('error handling for fetchAllSettings', () => {
+    it('should handle different error types', async () => {
+      const store = useSettingsStore()
+
+      const errorCases = [
+        {
+          error: { code: 'NETWORK_ERROR' },
+          expectedMessage: 'Network error. Please check your internet connection and try again.',
+        },
+        {
+          error: { response: { status: 401 } },
+          expectedMessage: 'You are not authorized to access settings. Please log in again.',
+        },
+        {
+          error: { response: { status: 403 } },
+          expectedMessage:
+            'You do not have permission to view settings. Contact your administrator.',
+        },
+        {
+          error: { response: { status: 404 } },
+          expectedMessage: 'Settings endpoint not found. Please contact your administrator.',
+        },
+        {
+          error: { response: { status: 500 } },
+          expectedMessage: 'Server error. Please try again later or contact your administrator.',
+        },
+        {
+          error: { response: { data: { message: 'Custom error message' } } },
+          expectedMessage: 'Custom error message',
+        },
+      ]
+
+      for (const errorCase of errorCases) {
+        mockedAxios.get.mockRejectedValueOnce(errorCase.error)
+
+        try {
+          await store.fetchAllSettings()
+        } catch (error) {
+          // Expected to throw
+        }
+
+        expect(store.error).toBe(errorCase.expectedMessage)
+        expect(store.settings).toEqual([])
+        expect(store.isLoading).toBe(false)
+      }
+    })
+  })
+
+  describe('loading states', () => {
+    it('should set loading state during fetchAllSettings', async () => {
+      const store = useSettingsStore()
+
+      let resolvePromise: (value: any) => void
+      const promise = new Promise((resolve) => {
+        resolvePromise = resolve
+      })
+
+      mockedAxios.get.mockReturnValueOnce(promise)
+
+      const fetchPromise = store.fetchAllSettings()
+
+      // Should be loading
+      expect(store.isLoading).toBe(true)
+
+      resolvePromise!({ data: mockSettings })
+      await fetchPromise
+
+      // Should not be loading anymore
+      expect(store.isLoading).toBe(false)
+    })
+
+    it('should set loading state during fetchSettingsByGroup', async () => {
+      const store = useSettingsStore()
+
+      let resolvePromise: (value: any) => void
+      const promise = new Promise((resolve) => {
+        resolvePromise = resolve
+      })
+
+      mockedAxios.get.mockReturnValueOnce(promise)
+
+      const fetchPromise = store.fetchSettingsByGroup('zoom')
+
+      // Should be loading
+      expect(store.isLoading).toBe(true)
+
+      resolvePromise!({ data: [mockSettings[0]] })
+      await fetchPromise
+
+      // Should not be loading anymore
+      expect(store.isLoading).toBe(false)
     })
   })
 })

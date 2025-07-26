@@ -82,9 +82,7 @@ const emit = defineEmits<{
             <RefreshCw class="mr-2 h-4 w-4" />
             Try Again
           </Button>
-          <Button @click="() => window.location.reload()" variant="secondary">
-            Reload Page
-          </Button>
+          <Button @click="() => window.location.reload()" variant="secondary"> Reload Page </Button>
         </div>
       </div>
     </div>
@@ -93,4 +91,3 @@ const emit = defineEmits<{
     <slot v-else />
   </div>
 </template>
-</script>

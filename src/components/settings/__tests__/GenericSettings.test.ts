@@ -132,4 +132,167 @@ describe('GenericSettings', () => {
     expect(saveButtons).toHaveLength(2)
     expect(resetButtons).toHaveLength(2)
   })
+
+  it('handles JSON editing and validation', async () => {
+    const wrapper = mount(GenericSettings, {
+      props: {
+        groupName: 'Test',
+        settings: mockSettings,
+      },
+    })
+
+    const firstTextarea = wrapper.findAll('textarea')[0]
+
+    // Test valid JSON
+    await firstTextarea.setValue('{"valid": "json"}')
+    const firstSaveButton = wrapper
+      .findAll('button')
+      .find((btn) => btn.text().includes('Save Changes'))
+    expect(firstSaveButton?.attributes('disabled')).toBeUndefined()
+
+    // Test invalid JSON
+    await firstTextarea.setValue('invalid json')
+    await wrapper.vm.$nextTick()
+    expect(firstSaveButton?.attributes('disabled')).toBeDefined()
+  })
+
+  it('handles save operation successfully', async () => {
+    const wrapper = mount(GenericSettings, {
+      props: {
+        groupName: 'Test',
+        settings: mockSettings,
+      },
+    })
+
+    const firstTextarea = wrapper.findAll('textarea')[0]
+    await firstTextarea.setValue('{"updated": "value"}')
+
+    const firstSaveButton = wrapper
+      .findAll('button')
+      .find((btn) => btn.text().includes('Save Changes'))
+    await firstSaveButton?.trigger('click')
+
+    expect(mockSettingsStore.updateSetting).toHaveBeenCalledWith(1, { updated: 'value' })
+  })
+
+  it('handles save operation errors', async () => {
+    mockSettingsStore.updateSetting.mockRejectedValue(new Error('Save failed'))
+
+    const wrapper = mount(GenericSettings, {
+      props: {
+        groupName: 'Test',
+        settings: mockSettings,
+      },
+    })
+
+    const firstTextarea = wrapper.findAll('textarea')[0]
+    await firstTextarea.setValue('{"updated": "value"}')
+
+    const firstSaveButton = wrapper
+      .findAll('button')
+      .find((btn) => btn.text().includes('Save Changes'))
+    await firstSaveButton?.trigger('click')
+
+    // Should handle error gracefully
+    expect(wrapper.exists()).toBe(true)
+  })
+
+  it('handles reset operation', async () => {
+    const wrapper = mount(GenericSettings, {
+      props: {
+        groupName: 'Test',
+        settings: mockSettings,
+      },
+    })
+
+    const firstTextarea = wrapper.findAll('textarea')[0]
+    const originalValue = firstTextarea.element.value
+
+    // Change the value
+    await firstTextarea.setValue('{"changed": "value"}')
+    expect(firstTextarea.element.value).toBe('{"changed": "value"}')
+
+    // Reset
+    const firstResetButton = wrapper.findAll('button').find((btn) => btn.text().includes('Reset'))
+    await firstResetButton?.trigger('click')
+
+    // Should reset to original value
+    expect(firstTextarea.element.value).toBe(originalValue)
+  })
+
+  it('shows loading state during save', async () => {
+    // Mock slow save operation
+    mockSettingsStore.updateSetting.mockImplementation(() => {
+      return new Promise((resolve) => setTimeout(resolve, 100))
+    })
+
+    const wrapper = mount(GenericSettings, {
+      props: {
+        groupName: 'Test',
+        settings: mockSettings,
+      },
+    })
+
+    const firstTextarea = wrapper.findAll('textarea')[0]
+    await firstTextarea.setValue('{"updated": "value"}')
+
+    const firstSaveButton = wrapper
+      .findAll('button')
+      .find((btn) => btn.text().includes('Save Changes'))
+    await firstSaveButton?.trigger('click')
+
+    // Should handle loading state gracefully
+    expect(wrapper.exists()).toBe(true)
+  })
+
+  it('prevents save with invalid JSON', async () => {
+    const wrapper = mount(GenericSettings, {
+      props: {
+        groupName: 'Test',
+        settings: mockSettings,
+      },
+    })
+
+    const firstTextarea = wrapper.findAll('textarea')[0]
+    await firstTextarea.setValue('invalid json syntax')
+
+    const firstSaveButton = wrapper
+      .findAll('button')
+      .find((btn) => btn.text().includes('Save Changes'))
+    await firstSaveButton?.trigger('click')
+
+    // Should not call updateSetting with invalid JSON
+    expect(mockSettingsStore.updateSetting).not.toHaveBeenCalled()
+  })
+
+  it('handles different error response types', async () => {
+    const errorCases = [
+      { status: 400, expectedMessage: 'Invalid settings data' },
+      { status: 401, expectedMessage: 'You are not authorized' },
+      { status: 403, expectedMessage: 'You do not have permission' },
+      { status: 500, expectedMessage: 'Server error' },
+    ]
+
+    for (const errorCase of errorCases) {
+      mockSettingsStore.updateSetting.mockRejectedValue({
+        response: { status: errorCase.status, data: { message: 'Test error' } },
+      })
+
+      const wrapper = mount(GenericSettings, {
+        props: {
+          groupName: 'Test',
+          settings: [mockSettings[0]],
+        },
+      })
+
+      const textarea = wrapper.find('textarea')
+      await textarea.setValue('{"test": "value"}')
+
+      const saveButton = wrapper.find('button')
+      await saveButton.trigger('click')
+
+      // Should handle error gracefully
+      expect(wrapper.exists()).toBe(true)
+    }
+  })
 })

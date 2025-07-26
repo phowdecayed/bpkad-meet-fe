@@ -50,7 +50,8 @@ const isInitialized = ref(false)
 
 // Computed
 const generalSetting = computed(() => {
-  return props.settings.find((setting) => setting.name === 'apps_name') || null
+  // Look for a setting that has apps_name in its payload
+  return props.settings.find((setting) => setting.payload?.apps_name !== undefined) || null
 })
 
 const hasChanges = computed(() => {
@@ -104,7 +105,7 @@ const onSubmit = handleSubmit(async (formData) => {
     } else {
       // Create new setting
       await settingsStore.createSetting({
-        name: 'apps_name',
+        name: 'Application Name',
         group: 'General',
         payload: payload.payload,
       })

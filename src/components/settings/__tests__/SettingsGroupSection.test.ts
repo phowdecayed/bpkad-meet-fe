@@ -80,4 +80,112 @@ describe('SettingsGroupSection', () => {
     expect(zoomComponent.props('settings')).toEqual(mockSettings)
     expect(zoomComponent.props('groupName')).toBeUndefined()
   })
+
+  it('renders GeneralSettings component for General group', () => {
+    vi.mock('../GeneralSettings.vue', () => ({
+      default: {
+        name: 'GeneralSettings',
+        props: ['settings'],
+        template: '<div data-testid="general-settings">General Settings Component</div>',
+      },
+    }))
+
+    const wrapper = mount(SettingsGroupSection, {
+      props: {
+        groupName: 'General',
+        settings: mockSettings,
+      },
+    })
+
+    expect(wrapper.find('[data-testid="general-settings"]').exists()).toBe(true)
+  })
+
+  it('passes correct props to GeneralSettings component', () => {
+    vi.mock('../GeneralSettings.vue', () => ({
+      default: {
+        name: 'GeneralSettings',
+        props: ['settings'],
+        template: '<div data-testid="general-settings">General Settings Component</div>',
+      },
+    }))
+
+    const wrapper = mount(SettingsGroupSection, {
+      props: {
+        groupName: 'General',
+        settings: mockSettings,
+      },
+    })
+
+    const generalComponent = wrapper.findComponent({ name: 'GeneralSettings' })
+    expect(generalComponent.props('settings')).toEqual(mockSettings)
+    expect(generalComponent.props('groupName')).toBeUndefined()
+  })
+
+  it('wraps components in SettingsErrorBoundary', () => {
+    const wrapper = mount(SettingsGroupSection, {
+      props: {
+        groupName: 'zoom',
+        settings: mockSettings,
+      },
+      global: {
+        stubs: {
+          SettingsErrorBoundary: {
+            template: '<div data-testid="error-boundary"><slot /></div>',
+            props: ['fallbackTitle', 'fallbackMessage'],
+          },
+        },
+      },
+    })
+
+    expect(wrapper.find('[data-testid="error-boundary"]').exists()).toBe(true)
+  })
+
+  it('emits retry event when error boundary retries', async () => {
+    const wrapper = mount(SettingsGroupSection, {
+      props: {
+        groupName: 'test',
+        settings: mockSettings,
+      },
+      global: {
+        stubs: {
+          SettingsErrorBoundary: {
+            template: '<div><button @click="$emit(\'retry\')">Retry</button><slot /></div>',
+            props: ['fallbackTitle', 'fallbackMessage'],
+            emits: ['retry'],
+          },
+        },
+      },
+    })
+
+    const retryButton = wrapper.find('button')
+    await retryButton.trigger('click')
+
+    expect(wrapper.emitted('retry')).toBeTruthy()
+    expect(wrapper.emitted('retry')?.[0]).toEqual(['test'])
+  })
+
+  it('handles empty settings array', () => {
+    const wrapper = mount(SettingsGroupSection, {
+      props: {
+        groupName: 'empty',
+        settings: [],
+      },
+    })
+
+    const genericComponent = wrapper.findComponent({ name: 'GenericSettings' })
+    expect(genericComponent.props('settings')).toEqual([])
+    expect(genericComponent.props('groupName')).toBe('empty')
+  })
+
+  it('handles case-sensitive group names', () => {
+    const wrapper = mount(SettingsGroupSection, {
+      props: {
+        groupName: 'ZOOM', // Different case
+        settings: mockSettings,
+      },
+    })
+
+    // Should fall back to GenericSettings for case-sensitive mismatch
+    expect(wrapper.find('[data-testid="generic-settings"]').exists()).toBe(true)
+  })
 })
