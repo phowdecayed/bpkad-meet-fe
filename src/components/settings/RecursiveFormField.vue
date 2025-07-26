@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import type { FieldValue } from '@/types/settings'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
@@ -11,8 +12,6 @@ import { Eye, EyeOff } from 'lucide-vue-next'
 defineOptions({
   name: 'RecursiveFormField',
 })
-
-type FieldValue = string | number | boolean | { [key: string]: FieldValue }
 
 const props = defineProps<{
   id: string | number
@@ -97,7 +96,7 @@ function updateNestedValue(key: string, newValue: FieldValue) {
       </Label>
     </div>
     <div v-else class="relative">
-      <Input :id="`${id}-${fieldKey}`" v-model="localValue" :type="inputType" />
+      <Input :id="`${id}-${fieldKey}`" v-model="localValue as string | number" :type="inputType" />
       <Button
         v-if="isSecretField"
         type="button"

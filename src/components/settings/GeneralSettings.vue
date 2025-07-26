@@ -59,10 +59,17 @@ const hasChanges = computed(() => {
   return appsName.value !== generalSetting.value.payload.apps_name
 })
 
+function getString(value: any): string {
+  if (typeof value === 'string') {
+    return value
+  }
+  return ''
+}
+
 // Initialize form with existing data
 function initializeForm() {
   if (generalSetting.value?.payload?.apps_name) {
-    setFieldValue('apps_name', generalSetting.value.payload.apps_name ?? '')
+    setFieldValue('apps_name', getString(generalSetting.value.payload.apps_name))
   }
   isInitialized.value = true
 }
@@ -157,7 +164,7 @@ const onSubmit = handleSubmit(async (formData) => {
 
 function handleReset() {
   if (generalSetting.value?.payload?.apps_name) {
-    setFieldValue('apps_name', generalSetting.value.payload.apps_name ?? '')
+    setFieldValue('apps_name', getString(generalSetting.value.payload.apps_name))
   } else {
     resetForm()
   }

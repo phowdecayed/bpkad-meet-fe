@@ -45,7 +45,6 @@ function onDelete() {
       field-key="payload"
       v-model="form.payload"
       :is-root="true"
-      :model-value="form.payload as any"
     />
 
     <div class="flex justify-between pt-4">

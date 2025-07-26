@@ -135,17 +135,46 @@ const invitationText = computed(() => {
   return text
 })
 
-async function copyToClipboard(text: string, type: string) {
+const zoomMeeting = computed(() => {
+  return detailedMeeting.value?.zoom_meeting || null
+})
+
+const joinUrl = computed(() => {
+  if (zoomMeeting.value && typeof zoomMeeting.value.join_url === 'string') {
+    return zoomMeeting.value.join_url
+  }
+  return ''
+})
+
+const password = computed(() => {
+  if (zoomMeeting.value && typeof zoomMeeting.value.password === 'string') {
+    return zoomMeeting.value.password
+  }
+  return ''
+})
+
+const hostKey = computed(() => {
+  if (detailedMeeting.value && typeof detailedMeeting.value.host_key === 'string') {
+    return detailedMeeting.value.host_key
+  }
+  return ''
+})
+
+function copyInvitation() {
+  copyToClipboard(invitationText.value, 'Invitation')
+}
+
+function copyToClipboard(text: unknown, type: string) {
+  if (typeof text !== 'string' || !text) {
+    toast.error(`No ${type} to copy.`)
+    return
+  }
   try {
-    await navigator.clipboard.writeText(text)
+    navigator.clipboard.writeText(text)
     toast.success(`${type} copied to clipboard!`)
   } catch {
     toast.error(`Failed to copy ${type}.`)
   }
-}
-
-function copyInvitation() {
-  copyToClipboard(invitationText.value, 'Invitation')
 }
 </script>
 
@@ -224,7 +253,7 @@ function copyInvitation() {
           <!-- Connection Details -->
           <div
             v-if="
-              detailedMeeting.zoom_meeting &&
+              zoomMeeting &&
               (detailedMeeting.type === 'online' || detailedMeeting.type === 'hybrid')
             "
           >
@@ -233,47 +262,38 @@ function copyInvitation() {
               <h3 class="text-lg font-semibold">Connection</h3>
             </div>
             <div class="space-y-3 text-sm pl-[32px]">
-              <div v-if="detailedMeeting.zoom_meeting.join_url" class="flex items-center gap-2">
+              <div v-if="zoomMeeting.join_url" class="flex items-center gap-2">
                 <Button asChild>
-                  <a
-                    :href="detailedMeeting.zoom_meeting.join_url"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
+                  <a :href="joinUrl" target="_blank" rel="noopener noreferrer">
                     <Video class="mr-2 h-4 w-4" />
                     Join Meeting
                   </a>
                 </Button>
                 <Button
+                  v-if="zoomMeeting.join_url"
                   size="icon"
                   variant="outline"
-                  @click="
-                    copyToClipboard(detailedMeeting.zoom_meeting?.join_url ?? '', 'Join URL')
-                  "
+                  @click="copyToClipboard(joinUrl, 'Join URL')"
                 >
                   <ClipboardCopy class="h-4 w-4" />
                   <span class="sr-only">Copy Join URL</span>
                 </Button>
               </div>
 
-              <div v-if="detailedMeeting.zoom_meeting.password" class="flex items-center gap-2">
+              <div v-if="zoomMeeting.password" class="flex items-center gap-2">
                 <KeyRound class="h-5 w-5 text-muted-foreground flex-shrink-0" />
                 <span class="text-muted-foreground">Password:</span>
                 <span class="font-mono text-sm text-foreground">
-                  {{ showPassword ? detailedMeeting.zoom_meeting.password : '••••••••' }}
+                  {{ showPassword ? zoomMeeting.password : '••••••••' }}
                 </span>
                 <Button size="sm" variant="ghost" @click="showPassword = !showPassword">
                   <component :is="showPassword ? EyeOff : Eye" class="h-4 w-4" />
                 </Button>
                 <Button
+                  v-if="zoomMeeting.password"
                   size="sm"
                   variant="ghost"
-                  @click="
-                    copyToClipboard(
-                      detailedMeeting.zoom_meeting?.password ?? '',
-                      'Password',
-                    )
-                  "
+                  @click="copyToClipboard(password, 'Password')"
                 >
                   <ClipboardCopy class="h-4 w-4" />
                 </Button>
@@ -292,23 +312,22 @@ function copyInvitation() {
                   <component :is="showHostKey ? EyeOff : Eye" class="h-4 w-4" />
                 </Button>
                 <Button
+                  v-if="detailedMeeting.host_key"
                   size="sm"
                   variant="ghost"
-                  @click="copyToClipboard(detailedMeeting.host_key ?? '', 'Host Key')"
+                  @click="copyToClipboard(hostKey, 'Host Key')"
                 >
                   <ClipboardCopy class="h-4 w-4" />
                 </Button>
               </div>
             </div>
           </div>
-
           <Separator
             v-if="
-              detailedMeeting.zoom_meeting &&
+              zoomMeeting &&
               (detailedMeeting.type === 'online' || detailedMeeting.type === 'hybrid')
             "
           />
-
           <!-- Description -->
           <div>
             <div class="flex items-center mb-2">
