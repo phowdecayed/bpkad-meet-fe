@@ -19,7 +19,7 @@ const mockMeetingsStore = {
   addParticipant: vi.fn(),
   removeParticipant: vi.fn(),
   clearError: vi.fn(),
-  error: null,
+  error: null as any,
   isLoadingParticipants: false,
 }
 

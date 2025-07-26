@@ -32,6 +32,8 @@ const mockMeeting: Meeting = {
   start_time: '2024-01-01T10:00:00Z',
   duration: 60,
   type: 'online',
+  join_url: 'https://zoom.us/j/1234567890',
+  password: 'password',
   host_key: 'test-key',
   location: null,
   zoom_meeting: null,

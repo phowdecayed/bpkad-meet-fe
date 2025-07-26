@@ -24,7 +24,10 @@ export const useSettingsStore = defineStore('settings', () => {
     } catch (err: unknown) {
       console.error('[Settings Store] API Response Error:', err)
 
-      const errorObj = err as { code?: string; response?: { status: number; data?: { message?: string } } }
+      const errorObj = err as {
+        code?: string
+        response?: { status: number; data?: { message?: string } }
+      }
 
       // Provide more specific error messages based on error type
       if (errorObj && errorObj.code === 'NETWORK_ERROR') {
@@ -57,7 +60,10 @@ export const useSettingsStore = defineStore('settings', () => {
     } catch (err: unknown) {
       console.error('[Settings Store] API Response Error:', err)
 
-      const errorObj = err as { code?: string; response?: { status: number; data?: { message?: string } } }
+      const errorObj = err as {
+        code?: string
+        response?: { status: number; data?: { message?: string } }
+      }
 
       // Provide more specific error messages based on error type
       if (errorObj && errorObj.code === 'NETWORK_ERROR') {
@@ -71,7 +77,8 @@ export const useSettingsStore = defineStore('settings', () => {
       } else if (errorObj && errorObj.response && errorObj.response.status >= 500) {
         error.value = 'Server error. Please try again later or contact your administrator.'
       } else {
-        error.value = errorObj.response?.data?.message || 'Failed to fetch settings. Please try again.'
+        error.value =
+          errorObj.response?.data?.message || 'Failed to fetch settings. Please try again.'
       }
 
       settings.value = []

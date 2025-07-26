@@ -54,8 +54,8 @@ describe('GeneralSettings', () => {
     settingsStore = useSettingsStore()
 
     // Mock store methods
-    vi.spyOn(settingsStore, 'updateSetting').mockResolvedValue({})
-    vi.spyOn(settingsStore, 'createSetting').mockResolvedValue({})
+    vi.spyOn(settingsStore, 'updateSetting').mockResolvedValue({ data: mockGeneralSetting } as any)
+    vi.spyOn(settingsStore, 'createSetting').mockResolvedValue({ data: mockGeneralSetting } as any)
     vi.spyOn(settingsStore, 'fetchAllSettings').mockResolvedValue()
   })
 
@@ -258,7 +258,7 @@ describe('GeneralSettings', () => {
     await resetButton.trigger('click')
 
     // Should reset to original value
-    expect(input.element.value).toBe('Test Application')
+    expect((input.element as HTMLInputElement).value).toBe('Test Application')
   })
 
   it('shows loading state during save', async () => {

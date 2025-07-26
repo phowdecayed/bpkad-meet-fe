@@ -62,7 +62,7 @@ const handleSave = async (setting: Setting) => {
     console.error('Failed to save generic setting:', error)
 
     let errorMessage = 'Failed to save settings. Please try again.'
-    if (axios.isAxiosError(error)) {
+    if (axios.isAxiosError(error) && error.response) {
       if (error.response?.status === 400) {
         errorMessage = 'Invalid settings data. Please check your JSON syntax and try again.'
       } else if (error.response?.status === 401) {

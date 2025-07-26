@@ -53,6 +53,10 @@ const handleGroupRetry = async (groupName: string) => {
   })
   await retryFetch()
 }
+
+function reloadPage() {
+  window.location.reload()
+}
 </script>
 
 <template>
@@ -88,7 +92,7 @@ const handleGroupRetry = async (groupName: string) => {
           <RefreshCw class="mr-2 h-4 w-4" :class="{ 'animate-spin': isRetrying }" />
           {{ isRetrying ? 'Retrying...' : 'Try Again' }}
         </Button>
-        <Button @click="() => window.location.reload()" variant="secondary"> Reload Page </Button>
+        <Button @click="reloadPage" variant="secondary"> Reload Page </Button>
       </div>
     </div>
 

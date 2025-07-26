@@ -120,8 +120,12 @@ describe('ZoomSettings Complete Integration', () => {
       settingsStore.isLoading = false
       settingsStore.error = null
     })
-    const updateSpy = vi.spyOn(settingsStore, 'updateSetting').mockResolvedValue({})
-    const createSpy = vi.spyOn(settingsStore, 'createSetting').mockResolvedValue({})
+    const updateSpy = vi
+      .spyOn(settingsStore, 'updateSetting')
+      .mockResolvedValue({ data: mockZoomSettings[0] } as any)
+    const createSpy = vi
+      .spyOn(settingsStore, 'createSetting')
+      .mockResolvedValue({ data: mockZoomSettings[0] } as any)
     const deleteSpy = vi.spyOn(settingsStore, 'deleteSetting').mockResolvedValue()
 
     const wrapper = mount(SettingsView, {
@@ -147,8 +151,8 @@ describe('ZoomSettings Complete Integration', () => {
     // This verifies the integration works correctly
 
     // Test update operation through store
-    await settingsStore.updateSetting(1, mockZoomSettings[0].payload)
-    expect(updateSpy).toHaveBeenCalledWith(1, mockZoomSettings[0].payload)
+    await settingsStore.updateSetting(1, { payload: mockZoomSettings[0].payload })
+    expect(updateSpy).toHaveBeenCalledWith(1, { payload: mockZoomSettings[0].payload })
 
     // Test create operation through store
     await settingsStore.createSetting({

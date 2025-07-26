@@ -44,7 +44,7 @@ describe('useSettingsStore', () => {
   describe('fetchAllSettings', () => {
     it('should fetch all settings successfully', async () => {
       const store = useSettingsStore()
-      mockedAxios.get.mockResolvedValueOnce({ data: mockSettings })
+      vi.spyOn(axios, 'get').mockResolvedValueOnce({ data: mockSettings })
 
       await store.fetchAllSettings()
 
@@ -57,7 +57,7 @@ describe('useSettingsStore', () => {
     it('should handle fetch errors', async () => {
       const store = useSettingsStore()
       const errorMessage = 'Network error'
-      mockedAxios.get.mockRejectedValueOnce({
+      vi.spyOn(axios, 'get').mockRejectedValueOnce({
         response: { data: { message: errorMessage } },
       })
 
@@ -76,7 +76,7 @@ describe('useSettingsStore', () => {
   describe('groupedSettings computed property', () => {
     it('should group settings by their group property', async () => {
       const store = useSettingsStore()
-      mockedAxios.get.mockResolvedValueOnce({ data: mockSettings })
+      vi.spyOn(axios, 'get').mockResolvedValueOnce({ data: mockSettings })
 
       await store.fetchAllSettings()
 
@@ -122,7 +122,7 @@ describe('useSettingsStore', () => {
       const store = useSettingsStore()
       const updatePayload = { payload: { key: 'updated_value' } }
 
-      mockedAxios.patch.mockResolvedValueOnce({ data: {} })
+      vi.spyOn(axios, 'patch').mockResolvedValueOnce({ data: {} })
 
       await store.updateSetting(1, updatePayload)
 
@@ -133,7 +133,7 @@ describe('useSettingsStore', () => {
       const store = useSettingsStore()
       const updatePayload = { payload: { key: 'value' } }
 
-      mockedAxios.patch.mockRejectedValueOnce(new Error('Update failed'))
+      vi.spyOn(axios, 'patch').mockRejectedValueOnce(new Error('Update failed'))
 
       await expect(store.updateSetting(1, updatePayload)).rejects.toThrow('Update failed')
     })
@@ -148,7 +148,7 @@ describe('useSettingsStore', () => {
         payload: { key: 'value' },
       }
 
-      mockedAxios.post.mockResolvedValueOnce({ data: {} })
+      vi.spyOn(axios, 'post').mockResolvedValueOnce({ data: {} })
 
       await store.createSetting(createPayload)
 
@@ -163,7 +163,7 @@ describe('useSettingsStore', () => {
         payload: { key: 'value' },
       }
 
-      mockedAxios.post.mockRejectedValueOnce(new Error('Create failed'))
+      vi.spyOn(axios, 'post').mockRejectedValueOnce(new Error('Create failed'))
 
       await expect(store.createSetting(createPayload)).rejects.toThrow('Create failed')
     })
@@ -176,8 +176,8 @@ describe('useSettingsStore', () => {
       // Set up initial settings
       store.settings = mockSettings
 
-      mockedAxios.delete.mockResolvedValueOnce({})
-      mockedAxios.get.mockResolvedValueOnce({ data: mockSettings.slice(1) }) // Return settings without deleted one
+      vi.spyOn(axios, 'delete').mockResolvedValueOnce({})
+      vi.spyOn(axios, 'get').mockResolvedValueOnce({ data: mockSettings.slice(1) }) // Return settings without deleted one
 
       await store.deleteSetting(1)
 
@@ -188,7 +188,7 @@ describe('useSettingsStore', () => {
     it('should handle delete errors', async () => {
       const store = useSettingsStore()
 
-      mockedAxios.delete.mockRejectedValueOnce(new Error('Delete failed'))
+      vi.spyOn(axios, 'delete').mockRejectedValueOnce(new Error('Delete failed'))
 
       await expect(store.deleteSetting(1)).rejects.toThrow('Delete failed')
     })
@@ -199,7 +199,7 @@ describe('useSettingsStore', () => {
       const store = useSettingsStore()
       const zoomSettings = [mockSettings[0], mockSettings[2]]
 
-      mockedAxios.get.mockResolvedValueOnce({ data: zoomSettings })
+      vi.spyOn(axios, 'get').mockResolvedValueOnce({ data: zoomSettings })
 
       await store.fetchSettingsByGroup('zoom')
 
@@ -309,7 +309,7 @@ describe('useSettingsStore', () => {
         resolvePromise = resolve
       })
 
-      mockedAxios.get.mockReturnValueOnce(promise)
+      vi.spyOn(axios, 'get').mockReturnValueOnce(promise as any)
 
       const fetchPromise = store.fetchAllSettings()
 
@@ -331,7 +331,7 @@ describe('useSettingsStore', () => {
         resolvePromise = resolve
       })
 
-      mockedAxios.get.mockReturnValueOnce(promise)
+      vi.spyOn(axios, 'get').mockReturnValueOnce(promise as any)
 
       const fetchPromise = store.fetchSettingsByGroup('zoom')
 

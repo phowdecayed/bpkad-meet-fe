@@ -81,7 +81,7 @@ function updateNestedValue(key: string, newValue: FieldValue) {
       :id="`${id}-${key}`"
       :key="key"
       :field-key="key"
-      :model-value="modelValue[key]"
+      :model-value="(modelValue as { [key: string]: FieldValue })[key]"
       @update:model-value="(newValue) => updateNestedValue(key, newValue)"
     />
   </div>
@@ -90,7 +90,12 @@ function updateNestedValue(key: string, newValue: FieldValue) {
   <div v-else class="grid gap-2">
     <Label :for="`${id}-${fieldKey}`">{{ formattedLabel }}</Label>
     <div class="relative">
-      <Input :id="`${id}-${fieldKey}`" v-model="localValue" :type="inputType" />
+      <Input
+        :id="`${id}-${fieldKey}`"
+        v-model="localValue"
+        :type="inputType"
+        :checked="typeof localValue === 'boolean' ? localValue : undefined"
+      />
       <Button
         v-if="isSecretField"
         type="button"

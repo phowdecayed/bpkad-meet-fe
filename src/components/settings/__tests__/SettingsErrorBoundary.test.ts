@@ -29,7 +29,7 @@ describe('SettingsErrorBoundary', () => {
 
     // Simulate error by directly setting the error state
     await wrapper.vm.$nextTick()
-    const component = wrapper.vm as InstanceType<typeof SettingsErrorBoundary>
+    const component = wrapper.vm as any
     component.hasError = true
     component.errorMessage = 'Test error message'
     await wrapper.vm.$nextTick()
@@ -52,7 +52,7 @@ describe('SettingsErrorBoundary', () => {
     })
 
     // Simulate error
-    const component = wrapper.vm as InstanceType<typeof SettingsErrorBoundary>
+    const component = wrapper.vm as any
     component.hasError = true
     component.errorMessage = 'Test error message'
     await wrapper.vm.$nextTick()
@@ -69,7 +69,7 @@ describe('SettingsErrorBoundary', () => {
     })
 
     // Simulate error with details
-    const component = wrapper.vm as InstanceType<typeof SettingsErrorBoundary>
+    const component = wrapper.vm as any
     component.hasError = true
     component.errorMessage = 'Test error message'
     component.errorDetails = 'Error context details'
@@ -88,7 +88,7 @@ describe('SettingsErrorBoundary', () => {
     })
 
     // Simulate error
-    const component = wrapper.vm as InstanceType<typeof SettingsErrorBoundary>
+    const component = wrapper.vm as any
     component.hasError = true
     await wrapper.vm.$nextTick()
 
@@ -108,7 +108,7 @@ describe('SettingsErrorBoundary', () => {
     })
 
     // Simulate error
-    const component = wrapper.vm as InstanceType<typeof SettingsErrorBoundary>
+    const component = wrapper.vm as any
     component.hasError = true
     component.errorMessage = 'Test error'
     component.errorDetails = 'Test details'
@@ -135,7 +135,7 @@ describe('SettingsErrorBoundary', () => {
       },
     })
 
-    const component = wrapper.vm as InstanceType<typeof SettingsErrorBoundary>
+    const component = wrapper.vm as any
     expect(typeof component.reportError).toBe('function')
 
     // Test reportError function

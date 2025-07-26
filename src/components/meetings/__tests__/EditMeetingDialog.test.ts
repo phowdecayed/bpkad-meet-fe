@@ -90,6 +90,8 @@ const mockMeeting: Meeting = {
   start_time: '2024-12-25T10:00:00Z',
   duration: 60,
   type: 'online',
+  join_url: 'https://zoom.us/j/1234567890',
+  password: 'password',
   host_key: null,
   location: null,
   zoom_meeting: null,
@@ -137,22 +139,55 @@ describe('EditMeetingDialog', () => {
     setActivePinia(createPinia())
 
     meetingsStore = {
+      meetings: [],
+      isLoading: false,
+      error: null,
+      pagination: {
+        currentPage: 1,
+        totalPages: 1,
+        totalItems: 0,
+        itemsPerPage: 10,
+        hasNextPage: false,
+        hasPrevPage: false,
+      },
+      fetchMeetings: vi.fn(),
       fetchMeeting: vi.fn().mockResolvedValue(mockMeeting),
+      createMeeting: vi.fn(),
       updateMeeting: vi.fn(),
+      deleteMeeting: vi.fn(),
       fetchParticipants: vi.fn().mockResolvedValue([]),
       addParticipant: vi.fn(),
       removeParticipant: vi.fn(),
       participants: [],
+      clearError: vi.fn(),
     }
 
     locationsStore = {
       locations: mockLocations,
+      isLoading: false,
+      error: null,
       fetchLocations: vi.fn(),
+      createLocation: vi.fn(),
+      updateLocation: vi.fn(),
+      deleteLocation: vi.fn(),
     }
 
     usersStore = {
       users: mockUsers,
+      isLoading: false,
+      error: null,
       fetchUsers: vi.fn(),
+      createUser: vi.fn(),
+      updateUser: vi.fn(),
+      deleteUser: vi.fn(),
+      fetchUser: vi.fn(),
+      updateProfile: vi.fn(),
+      updatePassword: vi.fn(),
+      fetchRoles: vi.fn(),
+      assignRoles: vi.fn(),
+      fetchPermissions: vi.fn(),
+      assignPermissions: vi.fn(),
+      removeRole: vi.fn(),
     }
 
     vi.mocked(useMeetingsStore).mockReturnValue(meetingsStore)
@@ -408,7 +443,7 @@ describe('EditMeetingDialog', () => {
 
     // Select a participant
     const participantCheckbox = wrapper.find(`#user-${mockUsers[0].id}`)
-    await participantCheckbox.setChecked(true)
+    await participantCheckbox.setValue(true)
 
     await wrapper.vm.$nextTick()
 
@@ -481,9 +516,7 @@ describe('EditMeetingDialog', () => {
   })
 
   it('handles loading state correctly', async () => {
-    meetingsStore.updateMeeting.mockImplementation(
-      () => new Promise((resolve) => setTimeout(resolve, 100)),
-    )
+    meetingsStore.updateMeeting.mockResolvedValue({ ...mockMeeting, topic: 'Updated Meeting' })
 
     const wrapper = mount(EditMeetingDialog, {
       props: {

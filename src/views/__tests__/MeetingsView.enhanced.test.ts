@@ -51,10 +51,10 @@ const mockUser: User = {
       id: 1,
       name: 'admin',
       permissions: [
-        { id: 1, name: 'create meetings' },
-        { id: 2, name: 'edit meetings' },
-        { id: 3, name: 'delete meetings' },
-        { id: 4, name: 'view meetings' },
+        { id: 1, name: 'create meetings', group_name: 'meetings' },
+        { id: 2, name: 'edit meetings', group_name: 'meetings' },
+        { id: 3, name: 'delete meetings', group_name: 'meetings' },
+        { id: 4, name: 'view meetings', group_name: 'meetings' },
       ],
     },
   ],
@@ -70,6 +70,8 @@ const mockMeeting: Meeting = {
   start_time: '2024-12-01T10:00:00Z',
   duration: 60,
   type: 'online',
+  join_url: 'https://zoom.us/j/1234567890',
+  password: 'password',
   host_key: 'test-key',
   location: null,
   zoom_meeting: null,
@@ -199,10 +201,10 @@ describe('MeetingsView Enhanced', () => {
       const searchInput = wrapper.find('input[placeholder*="Search"]')
       await searchInput.setValue('test')
 
-      const clearButton = wrapper.findAll('button').find(b => b.text() === 'Clear')
+      const clearButton = wrapper.findAll('button').find((b) => b.text() === 'Clear')
       await clearButton!.trigger('click')
 
-      expect(searchInput.element.value).toBe('')
+      expect((searchInput.element as HTMLInputElement).value).toBe('')
     })
   })
 
@@ -237,7 +239,7 @@ describe('MeetingsView Enhanced', () => {
   describe('Error Handling', () => {
     it('displays error message when there is an error', () => {
       meetingsStore.error = {
-        type: 'network' as const,
+        type: 'server' as const,
         message: 'Network error occurred',
         retryable: true,
       }
@@ -254,7 +256,7 @@ describe('MeetingsView Enhanced', () => {
 
     it('calls retryFetch when retry button is clicked', async () => {
       meetingsStore.error = {
-        type: 'network' as const,
+        type: 'server' as const,
         message: 'Network error occurred',
         retryable: true,
       }
@@ -268,8 +270,10 @@ describe('MeetingsView Enhanced', () => {
         },
       })
 
-      const retryButton = wrapper.findAll('button').find(b => b.text() === 'Retry')
-      await retryButton.trigger('click')
+      const retryButton = wrapper.findAll('button').find((b) => b.text() === 'Retry')
+      if (retryButton) {
+        await retryButton.trigger('click')
+      }
 
       expect(clearErrorSpy).toHaveBeenCalled()
       expect(fetchMeetingsSpy).toHaveBeenCalled()
@@ -421,8 +425,10 @@ describe('MeetingsView Enhanced', () => {
         },
       })
 
-      const createButton = wrapper.findAll('button').find(b => b.text() === 'Create Meeting')
-      await createButton.trigger('click')
+      const createButton = wrapper.findAll('button').find((b) => b.text() === 'Create Meeting')
+      if (createButton) {
+        await createButton.trigger('click')
+      }
 
       expect(wrapper.find('[data-testid="create-meeting-dialog"]').exists()).toBe(true)
     })
@@ -435,7 +441,7 @@ describe('MeetingsView Enhanced', () => {
       })
 
       // Simulate clicking edit from dropdown
-      const vm = wrapper.vm as InstanceType<typeof MeetingsView>
+      const vm = wrapper.vm as any
       vm.openEditDialog(mockMeeting)
       await wrapper.vm.$nextTick()
 
@@ -450,7 +456,7 @@ describe('MeetingsView Enhanced', () => {
       })
 
       // Simulate clicking delete from dropdown
-      const vm = wrapper.vm as InstanceType<typeof MeetingsView>
+      const vm = wrapper.vm as any
       vm.openDeleteDialog(mockMeeting)
       await wrapper.vm.$nextTick()
 
@@ -468,7 +474,7 @@ describe('MeetingsView Enhanced', () => {
         },
       })
 
-      const vm = wrapper.vm as InstanceType<typeof MeetingsView>
+      const vm = wrapper.vm as any
       vm.selectedMeeting = mockMeeting
       await vm.handleDeleteMeeting()
 
@@ -485,7 +491,7 @@ describe('MeetingsView Enhanced', () => {
         },
       })
 
-      const vm = wrapper.vm as InstanceType<typeof MeetingsView>
+      const vm = wrapper.vm as any
       vm.selectedMeeting = mockMeeting
       await vm.handleDeleteMeeting()
 
@@ -507,7 +513,7 @@ describe('MeetingsView Enhanced', () => {
         },
       })
 
-      const vm = wrapper.vm as InstanceType<typeof MeetingsView>
+      const vm = wrapper.vm as any
       vm.selectedMeeting = mockMeeting
       await vm.handleDeleteMeeting()
 

@@ -22,11 +22,11 @@ describe('SettingsView', () => {
       fetchAllSettings: vi.fn(),
     }
 
-    vi.mocked(useSettingsStore).mockReturnValue(mockSettingsStore)
+    vi.mocked(useSettingsStore).mockReturnValue(mockSettingsStore as any)
   })
 
   it('renders loading state correctly', () => {
-    mockSettingsStore.isLoading = true
+    ;(mockSettingsStore as any).isLoading = true
 
     const wrapper = mount(SettingsView, {
       global: {
@@ -43,7 +43,7 @@ describe('SettingsView', () => {
   })
 
   it('renders error state correctly', () => {
-    mockSettingsStore.error = 'Failed to fetch settings'
+    ;(mockSettingsStore as any).error = 'Failed to fetch settings'
 
     const wrapper = mount(SettingsView)
 
@@ -54,7 +54,7 @@ describe('SettingsView', () => {
   })
 
   it('renders empty state when no settings are available', () => {
-    mockSettingsStore.groupedSettings = {}
+    ;(mockSettingsStore as any).groupedSettings = {}
 
     const wrapper = mount(SettingsView)
 
@@ -64,7 +64,7 @@ describe('SettingsView', () => {
   })
 
   it('renders settings groups when data is available', () => {
-    mockSettingsStore.groupedSettings = {
+    ;(mockSettingsStore as any).groupedSettings = {
       zoom: [
         { id: 1, name: 'zoom_setting', group: 'zoom', payload: {}, created_at: '', updated_at: '' },
       ],
@@ -92,11 +92,11 @@ describe('SettingsView', () => {
   it('calls fetchAllSettings on mount', () => {
     mount(SettingsView)
 
-    expect(mockSettingsStore.fetchAllSettings).toHaveBeenCalledOnce()
+    expect((mockSettingsStore as any).fetchAllSettings).toHaveBeenCalledTimes(1)
   })
 
   it('calls fetchAllSettings when retry button is clicked', async () => {
-    mockSettingsStore.error = 'Network error'
+    ;(mockSettingsStore as any).error = 'Network error'
 
     const wrapper = mount(SettingsView)
 
@@ -107,11 +107,12 @@ describe('SettingsView', () => {
   })
 
   it('handles group retry correctly', async () => {
-    const fetchAllSettingsSpy = vi.fn().mockResolvedValue()
-    mockSettingsStore.fetchAllSettings = fetchAllSettingsSpy
-    mockSettingsStore.groupedSettings = {
-      zoom: [{ id: 1, name: 'test', group: 'zoom', payload: {} }],
-    }
+    const fetchAllSettingsSpy =
+      (vi.fn().mockResolvedValue()(mockSettingsStore as any).fetchAllSettings =
+      fetchAllSettingsSpy(mockSettingsStore as any).groupedSettings =
+        {
+          zoom: [{ id: 1, name: 'test', group: 'zoom', payload: {} }],
+        })
 
     const wrapper = mount(SettingsView)
     await wrapper.vm.$nextTick()
@@ -127,7 +128,7 @@ describe('SettingsView', () => {
   })
 
   it('shows enhanced error state with troubleshooting tips', () => {
-    mockSettingsStore.error = 'Network error occurred'
+    ;(mockSettingsStore as any).error = 'Network error occurred'
 
     const wrapper = mount(SettingsView)
 
@@ -140,11 +141,10 @@ describe('SettingsView', () => {
   })
 
   it('shows retry loading state', async () => {
-    mockSettingsStore.error = 'Test error'
-    const fetchAllSettingsSpy = vi.fn().mockImplementation(() => {
+    ;(mockSettingsStore as any).error = 'Test error'
+    const fetchAllSettingsSpy = (vi.fn().mockImplementation(() => {
       return new Promise((resolve) => setTimeout(resolve, 100))
-    })
-    mockSettingsStore.fetchAllSettings = fetchAllSettingsSpy
+    })(mockSettingsStore as any).fetchAllSettings = fetchAllSettingsSpy)
 
     const wrapper = mount(SettingsView)
     await wrapper.vm.$nextTick()
@@ -158,9 +158,10 @@ describe('SettingsView', () => {
   })
 
   it('handles successful retry with toast notification', async () => {
-    mockSettingsStore.error = 'Network error'
-    const fetchAllSettingsSpy = vi.fn().mockResolvedValue()
-    mockSettingsStore.fetchAllSettings = fetchAllSettingsSpy
+    ;(mockSettingsStore as any).error = 'Network error'
+    const fetchAllSettingsSpy = (vi.fn().mockResolvedValue()(
+      mockSettingsStore as any,
+    ).fetchAllSettings = fetchAllSettingsSpy)
 
     const wrapper = mount(SettingsView)
     await wrapper.vm.$nextTick()
@@ -173,9 +174,10 @@ describe('SettingsView', () => {
   })
 
   it('handles failed retry with error toast', async () => {
-    mockSettingsStore.error = 'Network error'
-    const fetchAllSettingsSpy = vi.fn().mockRejectedValue(new Error('Still failing'))
-    mockSettingsStore.fetchAllSettings = fetchAllSettingsSpy
+    ;(mockSettingsStore as any).error = 'Network error'
+    const fetchAllSettingsSpy = (vi.fn().mockRejectedValue(new Error('Still failing'))(
+      mockSettingsStore as any,
+    ).fetchAllSettings = fetchAllSettingsSpy)
 
     const wrapper = mount(SettingsView)
     await wrapper.vm.$nextTick()
@@ -188,7 +190,7 @@ describe('SettingsView', () => {
   })
 
   it('shows reload page button in error state', () => {
-    mockSettingsStore.error = 'Test error'
+    ;(mockSettingsStore as any).error = 'Test error'
 
     const wrapper = mount(SettingsView)
 
@@ -198,7 +200,7 @@ describe('SettingsView', () => {
   })
 
   it('renders multiple settings groups in correct order', () => {
-    mockSettingsStore.groupedSettings = {
+    ;(mockSettingsStore as any).groupedSettings = {
       General: [
         { id: 1, name: 'app_name', group: 'General', payload: {}, created_at: '', updated_at: '' },
       ],
@@ -239,7 +241,7 @@ describe('SettingsView', () => {
   })
 
   it('passes correct props to SettingsGroupSection components', () => {
-    const testSettings = [
+    const testSettings = ([
       {
         id: 1,
         name: 'test_setting',
@@ -248,11 +250,9 @@ describe('SettingsView', () => {
         created_at: '',
         updated_at: '',
       },
-    ]
-
-    mockSettingsStore.groupedSettings = {
+    ](mockSettingsStore as any).groupedSettings = {
       test: testSettings,
-    }
+    })
 
     const wrapper = mount(SettingsView, {
       global: {

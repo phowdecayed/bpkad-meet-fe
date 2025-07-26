@@ -475,7 +475,7 @@ onMounted(() => {
         :sibling-count="1"
         show-edges
         @update:page="goToPage"
-        v-slot="{ page, pages }"
+        v-slot="{ page }"
       >
         <PaginationContent>
           <PaginationPrevious
@@ -484,18 +484,15 @@ onMounted(() => {
             data-testid="pagination-previous"
           />
 
-          <template v-for="(item, index) in pages" :key="index">
-            <PaginationItem v-if="item.type === 'page'" :value="item.value" as-child>
-              <Button
-                class="w-10 h-10 p-0"
-                :variant="item.value === page ? 'default' : 'outline'"
-                @click="() => goToPage(item.value)"
-              >
-                {{ item.value }}
-              </Button>
-            </PaginationItem>
-            <PaginationEllipsis v-else :key="item.type" :index="index" />
-          </template>
+          <PaginationItem v-for="item in pagination.totalPages" :key="item" :value="item" as-child>
+            <Button
+              class="w-10 h-10 p-0"
+              :variant="item === page ? 'default' : 'outline'"
+              @click="() => goToPage(item)"
+            >
+              {{ item }}
+            </Button>
+          </PaginationItem>
 
           <PaginationNext
             @click="nextPage"

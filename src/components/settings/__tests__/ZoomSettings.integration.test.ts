@@ -122,7 +122,9 @@ describe('ZoomSettings Integration', () => {
     it('should refresh all settings when using props and performing CRUD operations', async () => {
       const settingsStore = useSettingsStore()
       const fetchAllSpy = vi.spyOn(settingsStore, 'fetchAllSettings').mockResolvedValue()
-      const updateSpy = vi.spyOn(settingsStore, 'updateSetting').mockResolvedValue({})
+      const updateSpy = vi
+        .spyOn(settingsStore, 'updateSetting')
+        .mockResolvedValue({ data: mockZoomSettings[0] } as any)
 
       const wrapper = mount(ZoomSettings, {
         props: {
@@ -134,7 +136,7 @@ describe('ZoomSettings Integration', () => {
       })
 
       // Access the component instance to call methods directly
-      const component = wrapper.vm as InstanceType<typeof ZoomSettings>
+      const component = wrapper.vm as any
 
       // Test update operation
       await component.handleUpdate(mockZoomSettings[0])
@@ -146,7 +148,9 @@ describe('ZoomSettings Integration', () => {
     it('should refresh group settings when not using props and performing CRUD operations', async () => {
       const settingsStore = useSettingsStore()
       const fetchGroupSpy = vi.spyOn(settingsStore, 'fetchSettingsByGroup').mockResolvedValue()
-      const updateSpy = vi.spyOn(settingsStore, 'updateSetting').mockResolvedValue({})
+      const updateSpy = vi
+        .spyOn(settingsStore, 'updateSetting')
+        .mockResolvedValue({ data: mockZoomSettings[0] } as any)
       settingsStore.settings = mockZoomSettings
 
       const wrapper = mount(ZoomSettings, {
@@ -159,7 +163,7 @@ describe('ZoomSettings Integration', () => {
       fetchGroupSpy.mockClear()
 
       // Access the component instance to call methods directly
-      const component = wrapper.vm as InstanceType<typeof ZoomSettings>
+      const component = wrapper.vm as any
 
       // Test update operation
       await component.handleUpdate(mockZoomSettings[0])

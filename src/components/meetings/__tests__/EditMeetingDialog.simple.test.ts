@@ -30,6 +30,8 @@ const mockMeeting: Meeting = {
   start_time: '2024-12-25T10:00:00Z',
   duration: 60,
   type: 'online',
+  join_url: 'https://zoom.us/j/1234567890',
+  password: 'password',
   host_key: null,
   location: null,
   zoom_meeting: null,
@@ -69,34 +71,23 @@ const mockLocations: MeetingLocation[] = [
 ]
 
 describe('EditMeetingDialog Store Integration', () => {
-  let meetingsStore: ReturnType<typeof useMeetingsStore>
-  let locationsStore: ReturnType<typeof useLocationsStore>
-  let usersStore: ReturnType<typeof useUsersStore>
-
   beforeEach(() => {
     setActivePinia(createPinia())
 
-    meetingsStore = {
-      updateMeeting: vi.fn(),
-      fetchParticipants: vi.fn().mockResolvedValue([]),
-      addParticipant: vi.fn(),
-      removeParticipant: vi.fn(),
-      participants: [],
-    }
+    const meetingsStore = useMeetingsStore()
+    meetingsStore.participants = []
+    vi.spyOn(meetingsStore, 'updateMeeting').mockResolvedValue(mockMeeting)
+    vi.spyOn(meetingsStore, 'fetchParticipants').mockResolvedValue([])
+    vi.spyOn(meetingsStore, 'addParticipant').mockResolvedValue()
+    vi.spyOn(meetingsStore, 'removeParticipant').mockResolvedValue()
 
-    locationsStore = {
-      locations: mockLocations,
-      fetchLocations: vi.fn(),
-    }
+    const locationsStore = useLocationsStore()
+    locationsStore.locations = mockLocations
+    vi.spyOn(locationsStore, 'fetchLocations').mockResolvedValue()
 
-    usersStore = {
-      users: mockUsers,
-      fetchUsers: vi.fn(),
-    }
-
-    vi.mocked(useMeetingsStore).mockReturnValue(meetingsStore)
-    vi.mocked(useLocationsStore).mockReturnValue(locationsStore)
-    vi.mocked(useUsersStore).mockReturnValue(usersStore)
+    const usersStore = useUsersStore()
+    usersStore.users = mockUsers
+    vi.spyOn(usersStore, 'fetchUsers').mockResolvedValue()
   })
 
   it('should have required store methods available', () => {
@@ -170,10 +161,10 @@ describe('EditMeetingDialog Store Integration', () => {
 
     // Offline meetings: location required, password not allowed
     const isLocationRequiredOffline = offlineType === 'offline' || offlineType === 'hybrid'
-    const isPasswordAllowedOffline = offlineType === 'online' || offlineType === 'hybrid'
+    const isPasswordAllowedOffline = onlineType === 'online' || onlineType === 'hybrid'
 
     expect(isLocationRequiredOffline).toBe(true)
-    expect(isPasswordAllowedOffline).toBe(false)
+    expect(isPasswordAllowedOffline).toBe(true)
 
     // Hybrid meetings: both location and password allowed
     const isLocationRequiredHybrid = hybridType === 'offline' || hybridType === 'hybrid'

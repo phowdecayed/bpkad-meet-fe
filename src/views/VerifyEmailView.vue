@@ -39,7 +39,10 @@ onMounted(async () => {
       }
     }
 
-    await authStore.verifyEmail(id as string, hash as string, query)
+    await authStore.verifyEmail(id as string, hash as string, {
+      expires: query.expires as string,
+      signature: query.signature as string,
+    })
     verificationStatus.value = 'success'
 
     // After successful verification, check auth state again.

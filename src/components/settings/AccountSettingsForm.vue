@@ -19,7 +19,7 @@ const form = ref<Setting | null>(null)
 watch(
   () => props.setting,
   (newSetting) => {
-    form.value = JSON.parse(JSON.stringify(newSetting))
+    form.value = JSON.parse(JSON.stringify(newSetting)) as Setting
   },
   { immediate: true, deep: true },
 )
@@ -40,7 +40,13 @@ function onDelete() {
       <Input :id="`${form.id}-name`" v-model="form.name" />
     </div>
 
-    <RecursiveFormField :id="form.id" field-key="payload" v-model="form.payload" :is-root="true" />
+    <RecursiveFormField
+      :id="form.id"
+      field-key="payload"
+      v-model="form.payload"
+      :is-root="true"
+      :model-value="form.payload as any"
+    />
 
     <div class="flex justify-between pt-4">
       <Button type="submit" :disabled="isSaving">
