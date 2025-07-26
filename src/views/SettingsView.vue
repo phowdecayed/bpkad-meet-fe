@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { AlertCircle, Settings, RefreshCw } from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 const settingsStore = useSettingsStore()
 const isRetrying = ref(false)
@@ -93,13 +94,29 @@ const handleGroupRetry = async (groupName: string) => {
 
     <!-- Settings Groups -->
     <div v-else-if="Object.keys(settingsStore.groupedSettings).length > 0" class="space-y-8">
-      <SettingsGroupSection
-        v-for="(groupSettings, groupName) in settingsStore.groupedSettings"
-        :key="groupName"
-        :group-name="String(groupName)"
-        :settings="groupSettings"
-        @retry="handleGroupRetry"
-      />
+      <Tabs :default-value="Object.keys(settingsStore.groupedSettings)[0].toString()" class="w-full">
+        <TabsList>
+          <TabsTrigger
+            v-for="groupName in Object.keys(settingsStore.groupedSettings)"
+            :key="groupName"
+            :value="String(groupName)"
+          >
+            {{ String(groupName) }}
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent
+          v-for="(groupSettings, groupName) in settingsStore.groupedSettings"
+          :key="groupName"
+          :value="String(groupName)"
+          class="mt-4"
+        >
+          <SettingsGroupSection
+            :group-name="String(groupName)"
+            :settings="groupSettings"
+            @retry="handleGroupRetry"
+          />
+        </TabsContent>
+      </Tabs>
     </div>
 
     <!-- Empty State -->
