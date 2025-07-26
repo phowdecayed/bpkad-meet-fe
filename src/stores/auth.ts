@@ -41,8 +41,18 @@ export const useAuthStore = defineStore('auth', () => {
     delete axios.defaults.headers.common['Authorization']
   }
 
+  async function getCsrfCookie() {
+    try {
+      await axios.get('/sanctum/csrf-cookie')
+    } catch (error) {
+      console.error('Failed to get CSRF cookie:', error)
+      throw error
+    }
+  }
+
   async function login(credentials: { email: string; password: string }) {
     try {
+      await getCsrfCookie()
       const response = await axios.post('/api/login', credentials)
       const { access_token } = response.data
       setToken(access_token)
