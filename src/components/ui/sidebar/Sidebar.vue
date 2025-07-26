@@ -9,6 +9,7 @@ import { SIDEBAR_WIDTH_MOBILE, useSidebar } from './utils'
 
 defineOptions({
   inheritAttrs: false,
+  name: 'BaseSidebar',
 })
 
 const props = withDefaults(defineProps<SidebarProps>(), {

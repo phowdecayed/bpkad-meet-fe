@@ -24,6 +24,10 @@ const emits = defineEmits<ToggleEmits>()
 
 const delegatedProps = reactiveOmit(props, 'class', 'size', 'variant')
 const forwarded = useForwardPropsEmits(delegatedProps, emits)
+
+defineOptions({
+  name: 'BaseToggle',
+})
 </script>
 
 <template>

@@ -10,6 +10,10 @@ const emits = defineEmits<TabsRootEmits>()
 
 const delegatedProps = reactiveOmit(props, 'class')
 const forwarded = useForwardPropsEmits(delegatedProps, emits)
+
+defineOptions({
+  name: 'BaseTabs',
+})
 </script>
 
 <template>

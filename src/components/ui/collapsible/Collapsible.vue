@@ -6,6 +6,10 @@ const props = defineProps<CollapsibleRootProps>()
 const emits = defineEmits<CollapsibleRootEmits>()
 
 const forwarded = useForwardPropsEmits(props, emits)
+
+defineOptions({
+  name: 'BaseCollapsible',
+})
 </script>
 
 <template>

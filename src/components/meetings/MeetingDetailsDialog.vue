@@ -175,12 +175,7 @@ function copyInvitation() {
         <AlertTriangle class="h-4 w-4" />
         <AlertDescription class="flex items-center justify-between">
           <span>{{ error }}</span>
-          <Button
-            variant="outline"
-            size="sm"
-            @click="loadMeetingDetails"
-            :disabled="isLoading"
-          >
+          <Button variant="outline" size="sm" @click="loadMeetingDetails" :disabled="isLoading">
             <Loader2 v-if="isLoading" class="mr-2 h-4 w-4 animate-spin" />
             Retry
           </Button>
@@ -206,7 +201,11 @@ function copyInvitation() {
               </div>
               <div class="flex items-center gap-4">
                 <component
-                  :is="detailedMeeting.type === 'online' || detailedMeeting.type === 'hybrid' ? Video : MapPin"
+                  :is="
+                    detailedMeeting.type === 'online' || detailedMeeting.type === 'hybrid'
+                      ? Video
+                      : MapPin
+                  "
                   class="h-5 w-5 text-muted-foreground flex-shrink-0"
                 />
                 <span class="text-muted-foreground">
@@ -236,7 +235,11 @@ function copyInvitation() {
             <div class="space-y-3 text-sm pl-[32px]">
               <div v-if="detailedMeeting.zoom_meeting.join_url" class="flex items-center gap-2">
                 <Button asChild>
-                  <a :href="detailedMeeting.zoom_meeting.join_url" target="_blank" rel="noopener noreferrer">
+                  <a
+                    :href="detailedMeeting.zoom_meeting.join_url"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
                     <Video class="mr-2 h-4 w-4" />
                     Join Meeting
                   </a>
@@ -337,14 +340,9 @@ function copyInvitation() {
             <div>
               <div class="flex items-center mb-3">
                 <Users class="h-5 w-5 mr-3 flex-shrink-0" />
-                <h3 class="text-lg font-semibold">
-                  Participants ({{ participants.length }})
-                </h3>
+                <h3 class="text-lg font-semibold">Participants ({{ participants.length }})</h3>
               </div>
-              <div
-                v-if="participants.length > 0"
-                class="flex -space-x-2 overflow-hidden pl-[32px]"
-              >
+              <div v-if="participants.length > 0" class="flex -space-x-2 overflow-hidden pl-[32px]">
                 <Avatar
                   v-for="participant in participants.slice(0, 5)"
                   :key="participant.id"

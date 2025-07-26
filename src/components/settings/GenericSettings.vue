@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -7,6 +7,7 @@ import { AlertTriangle, LoaderCircle } from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
 import { useSettingsStore } from '@/stores/settings'
 import type { Setting } from '@/types/settings'
+import axios from 'axios'
 
 interface Props {
   groupName: string
@@ -57,20 +58,22 @@ const handleSave = async (setting: Setting) => {
     toast.success('Settings Saved', {
       description: `${setting.name} has been updated successfully.`,
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Failed to save generic setting:', error)
 
     let errorMessage = 'Failed to save settings. Please try again.'
-    if (error.response?.status === 400) {
-      errorMessage = 'Invalid settings data. Please check your JSON syntax and try again.'
-    } else if (error.response?.status === 401) {
-      errorMessage = 'You are not authorized to update settings. Please log in again.'
-    } else if (error.response?.status === 403) {
-      errorMessage = 'You do not have permission to update this setting.'
-    } else if (error.response?.status >= 500) {
-      errorMessage = 'Server error. Please try again later.'
-    } else if (error.response?.data?.message) {
-      errorMessage = error.response.data.message
+    if (axios.isAxiosError(error)) {
+      if (error.response?.status === 400) {
+        errorMessage = 'Invalid settings data. Please check your JSON syntax and try again.'
+      } else if (error.response?.status === 401) {
+        errorMessage = 'You are not authorized to update settings. Please log in again.'
+      } else if (error.response?.status === 403) {
+        errorMessage = 'You do not have permission to update this setting.'
+      } else if (error.response?.status >= 500) {
+        errorMessage = 'Server error. Please try again later.'
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message
+      }
     }
 
     toast.error('Save Failed', {

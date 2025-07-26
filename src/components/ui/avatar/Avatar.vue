@@ -6,6 +6,10 @@ import { cn } from '@/lib/utils'
 const props = defineProps<{
   class?: HTMLAttributes['class']
 }>()
+
+defineOptions({
+  name: 'BaseAvatar',
+})
 </script>
 
 <template>

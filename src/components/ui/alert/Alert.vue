@@ -22,6 +22,10 @@ const alertClasses = computed(() =>
     props.class,
   ),
 )
+
+defineOptions({
+  name: 'BaseAlert',
+})
 </script>
 
 <template>

@@ -1,10 +1,24 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import axios from 'axios'
+import type { User, Role, Permission } from '@/types/user'
+
+interface ChangePasswordPayload {
+  current_password?: string
+  password?: string
+  password_confirmation?: string
+}
+
+interface ResetPasswordPayload {
+  token: string
+  email: string
+  password?: string
+  password_confirmation?: string
+}
 
 export const useAuthStore = defineStore('auth', () => {
   const token = ref(localStorage.getItem('token') || null)
-  const user = ref(JSON.parse(localStorage.getItem('user') || 'null'))
+  const user = ref<User | null>(JSON.parse(localStorage.getItem('user') || 'null'))
 
   const isAuthenticated = computed(() => !!token.value)
 
@@ -14,7 +28,7 @@ export const useAuthStore = defineStore('auth', () => {
     axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`
   }
 
-  function setUser(newUser: any) {
+  function setUser(newUser: User) {
     user.value = newUser
     localStorage.setItem('user', JSON.stringify(newUser))
   }
@@ -27,7 +41,7 @@ export const useAuthStore = defineStore('auth', () => {
     delete axios.defaults.headers.common['Authorization']
   }
 
-  async function login(credentials: { email: any; password: any }) {
+  async function login(credentials: { email: string; password: string }) {
     try {
       const response = await axios.post('/api/login', credentials)
       const { access_token } = response.data
@@ -69,7 +83,7 @@ export const useAuthStore = defineStore('auth', () => {
     return axios.post('/api/user/change-email', { email })
   }
 
-  async function changePassword(payload: any) {
+  async function changePassword(payload: ChangePasswordPayload) {
     return axios.post('/api/user/change-password', payload)
   }
 
@@ -77,12 +91,16 @@ export const useAuthStore = defineStore('auth', () => {
     return axios.post('/api/forgot-password', { email })
   }
 
-  async function resetPassword(payload: any) {
+  async function resetPassword(payload: ResetPasswordPayload) {
     return axios.post('/api/reset-password', payload)
   }
 
-  async function verifyEmail(id: string, hash: string, query: any) {
-    const queryString = new URLSearchParams(query).toString()
+  async function verifyEmail(
+    id: string,
+    hash: string,
+    query: { expires: string; signature: string },
+  ) {
+    const queryString = new URLSearchParams(query as Record<string, string>).toString()
     return axios.get(`/api/email/verify/${id}/${hash}?${queryString}`)
   }
 
@@ -93,8 +111,8 @@ export const useAuthStore = defineStore('auth', () => {
   const hasPermission = computed(() => {
     return (permission: string) => {
       if (!user.value || !user.value.roles) return false
-      return user.value.roles.some((role: any) =>
-        role.permissions.some((p: any) => p.name === permission),
+      return user.value.roles.some((role: Role) =>
+        role.permissions?.some((p: Permission) => p.name === permission),
       )
     }
   })

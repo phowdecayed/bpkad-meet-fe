@@ -46,11 +46,7 @@ const isCreateMeetingDialogOpen = ref(false)
         </Breadcrumb>
 
         <div class="ml-auto">
-          <Button
-            v-if="canCreateMeetings"
-            size="sm"
-            @click="isCreateMeetingDialogOpen = true"
-          >
+          <Button v-if="canCreateMeetings" size="sm" @click="isCreateMeetingDialogOpen = true">
             <Plus class="mr-2 h-4 w-4" />
             Create Meeting
           </Button>

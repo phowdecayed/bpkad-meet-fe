@@ -15,10 +15,11 @@ import {
   DialogClose,
 } from '@/components/ui/dialog'
 import { toast } from 'vue-sonner'
-import { LoaderCircle, Trash2, PlusCircle, Settings, ChevronRight } from 'lucide-vue-next'
+import { LoaderCircle, PlusCircle, Settings, ChevronRight } from 'lucide-vue-next'
 import { Skeleton } from '@/components/ui/skeleton'
 import AccountSettingsForm from './AccountSettingsForm.vue'
 import type { Setting } from '@/types/settings'
+import axios from 'axios'
 
 // Props interface for when used within SettingsGroupSection
 interface Props {
@@ -72,7 +73,7 @@ function selectAccount(id: number) {
   selectedAccountId.value = id
 }
 
-async function handleUpdate(setting: any) {
+async function handleUpdate(setting: Setting) {
   isSaving.value[setting.id] = true
   try {
     await settingsStore.updateSetting(setting.id, setting.payload)
@@ -86,20 +87,22 @@ async function handleUpdate(setting: any) {
     toast.success('Settings Saved', {
       description: `${setting.name} has been updated successfully.`,
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Failed to update zoom setting:', error)
 
     let errorMessage = 'Failed to save settings. Please try again.'
-    if (error.response?.status === 400) {
-      errorMessage = 'Invalid settings data. Please check your input and try again.'
-    } else if (error.response?.status === 401) {
-      errorMessage = 'You are not authorized to update settings. Please log in again.'
-    } else if (error.response?.status === 403) {
-      errorMessage = 'You do not have permission to update this setting.'
-    } else if (error.response?.status >= 500) {
-      errorMessage = 'Server error. Please try again later.'
-    } else if (error.response?.data?.message) {
-      errorMessage = error.response.data.message
+    if (axios.isAxiosError(error)) {
+      if (error.response?.status === 400) {
+        errorMessage = 'Invalid settings data. Please check your input and try again.'
+      } else if (error.response?.status === 401) {
+        errorMessage = 'You are not authorized to update settings. Please log in again.'
+      } else if (error.response?.status === 403) {
+        errorMessage = 'You do not have permission to update this setting.'
+      } else if (error.response?.status >= 500) {
+        errorMessage = 'Server error. Please try again later.'
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message
+      }
     }
 
     toast.error('Save Failed', {
@@ -114,12 +117,10 @@ async function handleUpdate(setting: any) {
   }
 }
 
-async function handleDelete(setting: any) {
+async function handleDelete(setting: Setting) {
   if (
     confirm(`Are you sure you want to delete "${setting.name}"?\n\nThis action cannot be undone.`)
   ) {
-    const isDeleting = ref(true)
-
     try {
       await settingsStore.deleteSetting(setting.id)
       // Only refetch if we're managing our own data (not using passed-in settings)
@@ -135,20 +136,22 @@ async function handleDelete(setting: any) {
       if (selectedAccountId.value === setting.id) {
         selectedAccountId.value = null
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to delete zoom setting:', error)
 
       let errorMessage = 'Failed to delete setting. Please try again.'
-      if (error.response?.status === 401) {
-        errorMessage = 'You are not authorized to delete settings. Please log in again.'
-      } else if (error.response?.status === 403) {
-        errorMessage = 'You do not have permission to delete this setting.'
-      } else if (error.response?.status === 404) {
-        errorMessage = 'Setting not found. It may have already been deleted.'
-      } else if (error.response?.status >= 500) {
-        errorMessage = 'Server error. Please try again later.'
-      } else if (error.response?.data?.message) {
-        errorMessage = error.response.data.message
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 401) {
+          errorMessage = 'You are not authorized to delete settings. Please log in again.'
+        } else if (error.response?.status === 403) {
+          errorMessage = 'You do not have permission to delete this setting.'
+        } else if (error.response?.status === 404) {
+          errorMessage = 'Setting not found. It may have already been deleted.'
+        } else if (error.response?.status >= 500) {
+          errorMessage = 'Server error. Please try again later.'
+        } else if (error.response?.data?.message) {
+          errorMessage = error.response.data.message
+        }
       }
 
       toast.error('Delete Failed', {
@@ -197,22 +200,24 @@ async function handleCreate() {
       group: 'zoom',
       payload: { client_id: '', client_secret: '', account_id: '', host_key: '' },
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Failed to create zoom setting:', error)
 
     let errorMessage = 'Failed to create account. Please try again.'
-    if (error.response?.status === 400) {
-      errorMessage = 'Invalid account data. Please check your input and try again.'
-    } else if (error.response?.status === 401) {
-      errorMessage = 'You are not authorized to create settings. Please log in again.'
-    } else if (error.response?.status === 403) {
-      errorMessage = 'You do not have permission to create settings.'
-    } else if (error.response?.status === 409) {
-      errorMessage = 'An account with this name already exists. Please choose a different name.'
-    } else if (error.response?.status >= 500) {
-      errorMessage = 'Server error. Please try again later.'
-    } else if (error.response?.data?.message) {
-      errorMessage = error.response.data.message
+    if (axios.isAxiosError(error)) {
+      if (error.response?.status === 400) {
+        errorMessage = 'Invalid account data. Please check your input and try again.'
+      } else if (error.response?.status === 401) {
+        errorMessage = 'You are not authorized to create settings. Please log in again.'
+      } else if (error.response?.status === 403) {
+        errorMessage = 'You do not have permission to create settings.'
+      } else if (error.response?.status === 409) {
+        errorMessage = 'An account with this name already exists. Please choose a different name.'
+      } else if (error.response?.status >= 500) {
+        errorMessage = 'Server error. Please try again later.'
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message
+      }
     }
 
     toast.error('Creation Failed', {

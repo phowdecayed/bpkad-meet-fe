@@ -10,6 +10,10 @@ const props = defineProps<ComboboxRootProps>()
 const emits = defineEmits<ComboboxRootEmits>()
 
 const forwarded = useForwardPropsEmits(props, emits)
+
+defineOptions({
+  name: 'BaseCombobox',
+})
 </script>
 
 <template>

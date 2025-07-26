@@ -422,13 +422,18 @@ onMounted(() => {
                     <Button
                       variant="ghost"
                       size="icon"
-                      :disabled="isLoading || !(canEditMeeting(meeting) || canDeleteMeeting(meeting))"
+                      :disabled="
+                        isLoading || !(canEditMeeting(meeting) || canDeleteMeeting(meeting))
+                      "
                       :data-testid="`meeting-actions-${meeting.id}`"
                     >
                       <MoreHorizontal class="w-4 h-4" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent v-if="canEditMeeting(meeting) || canDeleteMeeting(meeting)" align="end">
+                  <DropdownMenuContent
+                    v-if="canEditMeeting(meeting) || canDeleteMeeting(meeting)"
+                    align="end"
+                  >
                     <DropdownMenuItem
                       v-if="canEditMeeting(meeting)"
                       @click="openEditDialog(meeting)"

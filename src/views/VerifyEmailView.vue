@@ -27,11 +27,7 @@ onMounted(async () => {
 
   try {
     // Security Check: If a user is logged in, ensure they are the correct user OR an admin.
-    if (
-      authStore.isAuthenticated &&
-      authStore.user &&
-      String(authStore.user.id) !== id
-    ) {
+    if (authStore.isAuthenticated && authStore.user && String(authStore.user.id) !== id) {
       if (authStore.hasPermission('manage users')) {
         isAdminAction.value = true
       } else {
@@ -48,7 +44,7 @@ onMounted(async () => {
     // After successful verification, check auth state again.
     if (authStore.isAuthenticated) {
       await authStore.fetchUser() // Refresh current user's data
-      
+
       if (isAdminAction.value) {
         toast.success('Verification Successful', {
           description: "The user's email address has been verified.",

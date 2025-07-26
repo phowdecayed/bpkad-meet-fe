@@ -17,6 +17,10 @@ const emits = defineEmits<SwitchRootEmits>()
 const delegatedProps = reactiveOmit(props, 'class')
 
 const forwarded = useForwardPropsEmits(delegatedProps, emits)
+
+defineOptions({
+  name: 'BaseSwitch',
+})
 </script>
 
 <template>

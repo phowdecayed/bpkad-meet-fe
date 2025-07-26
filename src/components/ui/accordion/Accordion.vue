@@ -10,6 +10,10 @@ const props = defineProps<AccordionRootProps>()
 const emits = defineEmits<AccordionRootEmits>()
 
 const forwarded = useForwardPropsEmits(props, emits)
+
+defineOptions({
+  name: 'BaseAccordion',
+})
 </script>
 
 <template>

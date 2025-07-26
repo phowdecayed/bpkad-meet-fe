@@ -11,10 +11,12 @@ defineOptions({
   name: 'RecursiveFormField',
 })
 
+type FieldValue = string | number | boolean | { [key: string]: FieldValue }
+
 const props = defineProps<{
   id: string | number
   fieldKey: string
-  modelValue: any
+  modelValue: FieldValue
   isRoot?: boolean
 }>()
 
@@ -59,6 +61,13 @@ const inputType = computed(() => {
 function toggleSecretVisibility() {
   isSecretVisible.value = !isSecretVisible.value
 }
+
+function updateNestedValue(key: string, newValue: FieldValue) {
+  if (typeof props.modelValue === 'object' && props.modelValue !== null) {
+    const updatedValue = { ...props.modelValue, [key]: newValue }
+    emit('update:modelValue', updatedValue)
+  }
+}
 </script>
 
 <template>
@@ -72,7 +81,8 @@ function toggleSecretVisibility() {
       :id="`${id}-${key}`"
       :key="key"
       :field-key="key"
-      v-model="modelValue[key]"
+      :model-value="modelValue[key]"
+      @update:model-value="(newValue) => updateNestedValue(key, newValue)"
     />
   </div>
 

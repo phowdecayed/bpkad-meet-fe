@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { onMounted, ref, nextTick } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { storeToRefs } from 'pinia'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -16,11 +17,11 @@ import ConfirmationDialog from '@/components/ConfirmationDialog.vue'
 
 const authStore = useAuthStore()
 const router = useRouter()
-const user = ref(authStore.user)
+const { user } = storeToRefs(authStore)
 
 // Profile form state
-const name = ref(user.value?.name || '')
-const email = ref(user.value?.email || '')
+const name = ref('')
+const email = ref('')
 const isUpdatingProfile = ref(false)
 
 // Password form state
@@ -41,12 +42,23 @@ const avatarPreview = ref<string | null>(null)
 const avatarFile = ref<File | null>(null)
 const fileInput = ref<HTMLInputElement | null>(null)
 
+watch(
+  user,
+  (newUser) => {
+    if (newUser) {
+      name.value = newUser.name
+      email.value = newUser.email
+    } else {
+      name.value = ''
+      email.value = ''
+    }
+  },
+  { immediate: true },
+)
+
 onMounted(async () => {
-  if (!authStore.user) {
+  if (!user.value) {
     await authStore.fetchUser()
-    user.value = authStore.user
-    name.value = user.value?.name || ''
-    email.value = user.value?.email || ''
   }
 })
 
@@ -89,7 +101,6 @@ async function handleUpdateProfile() {
 
     await Promise.all(profileUpdates)
     await authStore.fetchUser()
-    user.value = authStore.user
     avatarPreview.value = null // Clear preview after successful "upload"
     avatarFile.value = null
 
@@ -239,10 +250,7 @@ async function handleResendVerificationEmail() {
                     <Input id="email" v-model="email" type="email" />
                   </div>
                   <Button type="submit" :disabled="isUpdatingProfile">
-                    <LoaderCircle
-                      v-if="isUpdatingProfile"
-                      class="mr-2 h-4 w-4 animate-spin"
-                    />
+                    <LoaderCircle v-if="isUpdatingProfile" class="mr-2 h-4 w-4 animate-spin" />
                     Save Changes
                   </Button>
                 </form>
@@ -257,16 +265,13 @@ async function handleResendVerificationEmail() {
                   Email Verification
                 </CardTitle>
                 <CardDescription
-                  >Your email address is not verified. Please check your inbox for a
-                  verification link, or resend it below.</CardDescription
+                  >Your email address is not verified. Please check your inbox for a verification
+                  link, or resend it below.</CardDescription
                 >
               </CardHeader>
               <CardContent>
                 <Button @click="handleResendVerificationEmail" :disabled="isResendingVerification">
-                  <LoaderCircle
-                    v-if="isResendingVerification"
-                    class="mr-2 h-4 w-4 animate-spin"
-                  />
+                  <LoaderCircle v-if="isResendingVerification" class="mr-2 h-4 w-4 animate-spin" />
                   Resend Verification Email
                 </Button>
               </CardContent>
@@ -342,10 +347,7 @@ async function handleResendVerificationEmail() {
                     </AlertDescription>
                   </Alert>
                   <Button type="submit" :disabled="isChangingPassword">
-                    <LoaderCircle
-                      v-if="isChangingPassword"
-                      class="mr-2 h-4 w-4 animate-spin"
-                    />
+                    <LoaderCircle v-if="isChangingPassword" class="mr-2 h-4 w-4 animate-spin" />
                     Change Password
                   </Button>
                 </form>
