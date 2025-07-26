@@ -4,7 +4,6 @@ import { useMeetingsStore } from '@/stores/meetings'
 import { storeToRefs } from 'pinia'
 import type { Meeting } from '@/types/meeting'
 import { Button } from '@/components/ui/button'
-import CreateMeetingDialog from '@/components/meetings/CreateMeetingDialog.vue'
 import EditMeetingDialog from '@/components/meetings/EditMeetingDialog.vue'
 import {
   DropdownMenu,
@@ -22,16 +21,57 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { Badge } from '@/components/ui/badge'
+import type { BadgeVariants } from '@/components/ui/badge'
 
 const meetingsStore = useMeetingsStore()
 const { meetings } = storeToRefs(meetingsStore)
-const showCreateDialog = ref(false)
 const showEditDialog = ref(false)
 const selectedMeeting = ref<Meeting | null>(null)
 
 function openEditDialog(meeting: Meeting) {
   selectedMeeting.value = meeting
   showEditDialog.value = true
+}
+
+const getMeetingStatus = (startTime: string, duration: number) => {
+  const now = new Date()
+  const start = new Date(startTime)
+  const end = new Date(start.getTime() + duration * 60000)
+
+  if (now < start) {
+    return 'Upcoming'
+  } else if (now >= start && now <= end) {
+    return 'Ongoing'
+  } else {
+    return 'Past'
+  }
+}
+
+const getStatusVariant = (status: string): BadgeVariants['variant'] => {
+  switch (status) {
+    case 'Ongoing':
+      return 'default'
+    case 'Upcoming':
+      return 'secondary'
+    case 'Past':
+      return 'destructive'
+    default:
+      return 'outline'
+  }
+}
+
+const getTypeVariant = (type: string): BadgeVariants['variant'] => {
+  switch (type) {
+    case 'online':
+      return 'default'
+    case 'offline':
+      return 'secondary'
+    case 'hybrid':
+      return 'outline'
+    default:
+      return 'outline'
+  }
 }
 
 onMounted(() => {
@@ -48,17 +88,16 @@ onMounted(() => {
           Manage your existing meetings or create new ones.
         </p>
       </div>
-      <Button @click="showCreateDialog = true">Create Meeting</Button>
     </div>
     <div class="border rounded-lg">
       <Table>
         <TableHeader>
           <TableRow>
             <TableHead>Topic</TableHead>
-            <TableHead>Description</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Type</TableHead>
             <TableHead>Start Time</TableHead>
             <TableHead>Duration</TableHead>
-            <TableHead>Type</TableHead>
             <TableHead>Location</TableHead>
             <TableHead class="text-right">Actions</TableHead>
           </TableRow>
@@ -68,12 +107,22 @@ onMounted(() => {
             No meetings found.
           </TableEmpty>
           <TableRow v-for="meeting in meetings" :key="meeting.id">
-            <TableCell>{{ meeting.topic }}</TableCell>
-            <TableCell>{{ meeting.description }}</TableCell>
+            <TableCell>
+              <span class="block max-w-xs truncate">{{ meeting.topic }}</span>
+            </TableCell>
+            <TableCell>
+              <Badge :variant="getStatusVariant(getMeetingStatus(meeting.start_time, meeting.duration))">
+                {{ getMeetingStatus(meeting.start_time, meeting.duration) }}
+              </Badge>
+            </TableCell>
+            <TableCell>
+              <Badge :variant="getTypeVariant(meeting.type)">
+                {{ meeting.type }}
+              </Badge>
+            </TableCell>
             <TableCell>{{ new Date(meeting.start_time).toLocaleString() }}</TableCell>
             <TableCell>{{ meeting.duration }} minutes</TableCell>
-            <TableCell>{{ meeting.type }}</TableCell>
-            <TableCell>{{ meeting.location?.name || 'N/A' }}</TableCell>
+            <TableCell>{{ meeting.type === 'online' ? 'Zoom Meeting' : meeting.location?.name || 'N/A' }}</TableCell>
             <TableCell class="text-right">
               <DropdownMenu>
                 <DropdownMenuTrigger as-child>
@@ -91,8 +140,6 @@ onMounted(() => {
         </TableBody>
       </Table>
     </div>
-    <CreateMeetingDialog v-model:open="showCreateDialog" />
     <EditMeetingDialog v-model:open="showEditDialog" :meeting="selectedMeeting" />
   </div>
 </template>
-

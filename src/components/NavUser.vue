@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { User, ChevronsUpDown, LogOut } from 'lucide-vue-next'
+import { User, ChevronsUpDown, LogOut, Sun, Moon } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useDark, useToggle } from '@vueuse/core'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
@@ -32,6 +33,9 @@ defineProps<{
 const { isMobile } = useSidebar()
 const authStore = useAuthStore()
 const router = useRouter()
+
+const isDark = useDark()
+const toggleDark = useToggle(isDark)
 
 async function handleLogout() {
   await authStore.logout()
@@ -98,6 +102,12 @@ function goToProfile() {
             <DropdownMenuItem @click="goToProfile">
               <User />
               Profile
+            </DropdownMenuItem>
+            <DropdownMenuItem @click="toggleDark()">
+              <Sun class="dark:hidden" />
+              <Moon class="hidden dark:inline" />
+              <span class="dark:hidden">Dark mode</span>
+              <span class="hidden dark:inline">Light mode</span>
             </DropdownMenuItem>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
