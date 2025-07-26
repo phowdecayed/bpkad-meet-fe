@@ -11,7 +11,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -24,7 +23,6 @@ import {
   Video,
   User as UserIcon,
   Mail,
-  Info,
   FileText,
   AlertTriangle,
   Loader2,
@@ -76,7 +74,7 @@ async function loadMeetingDetails() {
   try {
     const fetchedMeeting = await meetingsStore.fetchMeeting(props.meeting.id)
     detailedMeeting.value = fetchedMeeting
-  } catch (e) {
+  } catch {
     error.value = 'Failed to load meeting details.'
   } finally {
     isLoading.value = false
@@ -193,8 +191,11 @@ function copyInvitation() {
         <div class="space-y-6">
           <!-- Details Section -->
           <div>
-            <h3 class="text-lg font-semibold mb-3">Details</h3>
-            <div class="space-y-4 text-sm">
+            <div class="flex items-center mb-3">
+              <Link class="h-5 w-5 mr-3 flex-shrink-0" />
+              <h3 class="text-lg font-semibold">Details</h3>
+            </div>
+            <div class="space-y-4 text-sm pl-[32px]">
               <div class="flex items-center gap-4">
                 <Calendar class="h-5 w-5 text-muted-foreground flex-shrink-0" />
                 <span class="text-muted-foreground">{{ formattedStartTime }}</span>
@@ -228,8 +229,11 @@ function copyInvitation() {
               (detailedMeeting.type === 'online' || detailedMeeting.type === 'hybrid')
             "
           >
-            <h3 class="text-lg font-semibold mb-3">Connection</h3>
-            <div class="space-y-3 text-sm pl-[36px]">
+            <div class="flex items-center mb-3">
+              <Link class="h-5 w-5 mr-3 flex-shrink-0" />
+              <h3 class="text-lg font-semibold">Connection</h3>
+            </div>
+            <div class="space-y-3 text-sm pl-[32px]">
               <div v-if="detailedMeeting.zoom_meeting.join_url" class="flex items-center gap-2">
                 <Button asChild>
                   <a :href="detailedMeeting.zoom_meeting.join_url" target="_blank" rel="noopener noreferrer">
@@ -248,6 +252,7 @@ function copyInvitation() {
               </div>
 
               <div v-if="detailedMeeting.zoom_meeting.password" class="flex items-center gap-2">
+                <KeyRound class="h-5 w-5 text-muted-foreground flex-shrink-0" />
                 <span class="text-muted-foreground">Password:</span>
                 <span class="font-mono text-sm text-foreground">
                   {{ showPassword ? detailedMeeting.zoom_meeting.password : '••••••••' }}
@@ -268,6 +273,7 @@ function copyInvitation() {
                 v-if="canViewHostKey && detailedMeeting.host_key"
                 class="flex items-center gap-2"
               >
+                <KeyRound class="h-5 w-5 text-muted-foreground flex-shrink-0" />
                 <span class="text-muted-foreground">Host Key:</span>
                 <span class="font-mono text-sm text-foreground">
                   {{ showHostKey ? detailedMeeting.host_key : '••••••' }}
@@ -295,8 +301,11 @@ function copyInvitation() {
 
           <!-- Description -->
           <div>
-            <h3 class="text-lg font-semibold mb-2">Description</h3>
-            <p class="text-sm text-muted-foreground">
+            <div class="flex items-center mb-2">
+              <FileText class="h-5 w-5 mr-3 flex-shrink-0" />
+              <h3 class="text-lg font-semibold">Description</h3>
+            </div>
+            <p class="text-sm text-muted-foreground pl-[32px]">
               {{ detailedMeeting.description || 'No description provided.' }}
             </p>
           </div>
@@ -306,8 +315,11 @@ function copyInvitation() {
           <!-- Organizer & Participants -->
           <div class="grid grid-cols-2 gap-6">
             <div>
-              <h3 class="text-lg font-semibold mb-3">Organizer</h3>
-              <div class="flex items-center gap-3">
+              <div class="flex items-center mb-3">
+                <UserIcon class="h-5 w-5 mr-3 flex-shrink-0" />
+                <h3 class="text-lg font-semibold">Organizer</h3>
+              </div>
+              <div class="flex items-center gap-3 pl-[32px]">
                 <Avatar class="h-10 w-10">
                   <AvatarFallback>{{
                     getInitials(detailedMeeting.organizer.name || '')
@@ -323,12 +335,15 @@ function copyInvitation() {
               </div>
             </div>
             <div>
-              <h3 class="text-lg font-semibold mb-3">
-                Participants ({{ participants.length }})
-              </h3>
+              <div class="flex items-center mb-3">
+                <Users class="h-5 w-5 mr-3 flex-shrink-0" />
+                <h3 class="text-lg font-semibold">
+                  Participants ({{ participants.length }})
+                </h3>
+              </div>
               <div
                 v-if="participants.length > 0"
-                class="flex -space-x-2 overflow-hidden"
+                class="flex -space-x-2 overflow-hidden pl-[32px]"
               >
                 <Avatar
                   v-for="participant in participants.slice(0, 5)"
@@ -341,7 +356,7 @@ function copyInvitation() {
                   <AvatarFallback>+{{ participants.length - 5 }}</AvatarFallback>
                 </Avatar>
               </div>
-              <p v-else class="text-sm text-muted-foreground">No participants.</p>
+              <p v-else class="text-sm text-muted-foreground pl-[32px]">No participants.</p>
             </div>
           </div>
         </div>
