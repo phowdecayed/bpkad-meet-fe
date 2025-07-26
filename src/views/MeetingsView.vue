@@ -40,9 +40,14 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="p-4">
-    <div class="flex justify-between items-center mb-4">
-      <h1 class="text-2xl font-bold">Meetings</h1>
+  <div class="flex-1 space-y-8 p-4 pt-6 md:p-8">
+    <div class="flex items-center justify-between">
+      <div>
+        <h2 class="text-2xl font-bold tracking-tight">Meetings</h2>
+        <p class="text-muted-foreground">
+          Manage your existing meetings or create new ones.
+        </p>
+      </div>
       <Button @click="showCreateDialog = true">Create Meeting</Button>
     </div>
     <div class="border rounded-lg">
