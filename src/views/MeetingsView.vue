@@ -26,6 +26,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Skeleton } from '@/components/ui/skeleton'
 import EditMeetingDialog from '@/components/meetings/EditMeetingDialog.vue'
 import CreateMeetingDialog from '@/components/meetings/CreateMeetingDialog.vue'
+import MeetingDetailsDialog from '@/components/meetings/MeetingDetailsDialog.vue'
 import ConfirmationDialog from '@/components/ConfirmationDialog.vue'
 import {
   DropdownMenu,
@@ -33,7 +34,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { MoreHorizontal, Plus, Search, RefreshCw, AlertCircle } from 'lucide-vue-next'
+import { MoreHorizontal, Plus, Search, RefreshCw, AlertCircle, Eye } from 'lucide-vue-next'
 import {
   Table,
   TableBody,
@@ -57,6 +58,7 @@ const { hasPermission } = storeToRefs(authStore)
 const showEditDialog = ref(false)
 const showCreateDialog = ref(false)
 const showDeleteDialog = ref(false)
+const showDetailsDialog = ref(false)
 const selectedMeeting = ref<Meeting | null>(null)
 
 // Search and filter states
@@ -84,6 +86,11 @@ function openCreateDialog() {
 function openDeleteDialog(meeting: Meeting) {
   selectedMeeting.value = meeting
   showDeleteDialog.value = true
+}
+
+function openDetailsDialog(meeting: Meeting) {
+  selectedMeeting.value = meeting
+  showDetailsDialog.value = true
 }
 
 async function handleDeleteMeeting() {
@@ -400,30 +407,44 @@ onMounted(() => {
               </span>
             </TableCell>
             <TableCell class="text-right">
-              <DropdownMenu v-if="canEditMeeting(meeting) || canDeleteMeeting(meeting)">
-                <DropdownMenuTrigger as-child>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    :disabled="isLoading"
-                    :data-testid="`meeting-actions-${meeting.id}`"
-                  >
-                    <MoreHorizontal class="w-4 h-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem v-if="canEditMeeting(meeting)" @click="openEditDialog(meeting)">
-                    Edit
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    v-if="canDeleteMeeting(meeting)"
-                    @click="openDeleteDialog(meeting)"
-                    class="text-destructive focus:text-destructive"
-                  >
-                    Delete
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <div class="flex items-center justify-end gap-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  :disabled="isLoading"
+                  @click="openDetailsDialog(meeting)"
+                  :data-testid="`view-details-${meeting.id}`"
+                >
+                  <Eye class="w-4 h-4" />
+                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger as-child>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      :disabled="isLoading || !(canEditMeeting(meeting) || canDeleteMeeting(meeting))"
+                      :data-testid="`meeting-actions-${meeting.id}`"
+                    >
+                      <MoreHorizontal class="w-4 h-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent v-if="canEditMeeting(meeting) || canDeleteMeeting(meeting)" align="end">
+                    <DropdownMenuItem
+                      v-if="canEditMeeting(meeting)"
+                      @click="openEditDialog(meeting)"
+                    >
+                      Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      v-if="canDeleteMeeting(meeting)"
+                      @click="openDeleteDialog(meeting)"
+                      class="text-destructive focus:text-destructive"
+                    >
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </TableCell>
           </TableRow>
         </TableBody>
@@ -483,6 +504,7 @@ onMounted(() => {
     <!-- Dialogs -->
     <CreateMeetingDialog v-model:open="showCreateDialog" />
     <EditMeetingDialog v-model:open="showEditDialog" :meeting="selectedMeeting" />
+    <MeetingDetailsDialog v-model:open="showDetailsDialog" :meeting="selectedMeeting" />
     <ConfirmationDialog
       v-model:open="showDeleteDialog"
       title="Delete Meeting"
