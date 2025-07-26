@@ -1,6 +1,6 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
-import axios from 'axios'
+import axios, { type AxiosResponse } from 'axios'
 import type {
   Setting,
   GroupedSettings,
@@ -21,20 +21,22 @@ export const useSettingsStore = defineStore('settings', () => {
       const response = await axios.get('/api/settings', { params: { group } })
       console.log('[Settings Store] API Response Success:', response.data)
       settings.value = response.data
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('[Settings Store] API Response Error:', err)
 
+      const errorObj = err as { code?: string; response?: { status: number; data?: { message?: string } } }
+
       // Provide more specific error messages based on error type
-      if (err.code === 'NETWORK_ERROR' || !err.response) {
+      if (errorObj && errorObj.code === 'NETWORK_ERROR') {
         error.value = `Network error while fetching ${group} settings. Please check your connection.`
-      } else if (err.response?.status === 401) {
+      } else if (errorObj && errorObj.response && errorObj.response.status === 401) {
         error.value = `You are not authorized to access ${group} settings. Please log in again.`
-      } else if (err.response?.status === 403) {
+      } else if (errorObj && errorObj.response && errorObj.response.status === 403) {
         error.value = `You do not have permission to view ${group} settings.`
-      } else if (err.response?.status >= 500) {
+      } else if (errorObj && errorObj.response && errorObj.response.status >= 500) {
         error.value = `Server error while fetching ${group} settings. Please try again later.`
       } else {
-        error.value = err.response?.data?.message || `Failed to fetch ${group} settings.`
+        error.value = errorObj.response?.data?.message || `Failed to fetch ${group} settings.`
       }
 
       settings.value = []
@@ -52,22 +54,24 @@ export const useSettingsStore = defineStore('settings', () => {
       const response = await axios.get('/api/settings')
       console.log('[Settings Store] API Response Success:', response.data)
       settings.value = response.data
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('[Settings Store] API Response Error:', err)
 
+      const errorObj = err as { code?: string; response?: { status: number; data?: { message?: string } } }
+
       // Provide more specific error messages based on error type
-      if (err.code === 'NETWORK_ERROR' || !err.response) {
+      if (errorObj && errorObj.code === 'NETWORK_ERROR') {
         error.value = 'Network error. Please check your internet connection and try again.'
-      } else if (err.response?.status === 401) {
+      } else if (errorObj && errorObj.response && errorObj.response.status === 401) {
         error.value = 'You are not authorized to access settings. Please log in again.'
-      } else if (err.response?.status === 403) {
+      } else if (errorObj && errorObj.response && errorObj.response.status === 403) {
         error.value = 'You do not have permission to view settings. Contact your administrator.'
-      } else if (err.response?.status === 404) {
+      } else if (errorObj && errorObj.response && errorObj.response.status === 404) {
         error.value = 'Settings endpoint not found. Please contact your administrator.'
-      } else if (err.response?.status >= 500) {
+      } else if (errorObj && errorObj.response && errorObj.response.status >= 500) {
         error.value = 'Server error. Please try again later or contact your administrator.'
       } else {
-        error.value = err.response?.data?.message || 'Failed to fetch settings. Please try again.'
+        error.value = errorObj.response?.data?.message || 'Failed to fetch settings. Please try again.'
       }
 
       settings.value = []
@@ -77,11 +81,14 @@ export const useSettingsStore = defineStore('settings', () => {
     }
   }
 
-  async function updateSetting(id: number, payload: SettingUpdatePayload): Promise<any> {
+  async function updateSetting(
+    id: number,
+    payload: SettingUpdatePayload,
+  ): Promise<AxiosResponse<Setting>> {
     return axios.patch(`/api/settings/${id}`, payload)
   }
 
-  async function createSetting(payload: SettingCreationPayload): Promise<any> {
+  async function createSetting(payload: SettingCreationPayload): Promise<AxiosResponse<Setting>> {
     return axios.post('/api/settings', payload)
   }
 

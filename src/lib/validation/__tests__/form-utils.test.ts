@@ -56,7 +56,7 @@ describe('Form Validation Utils', () => {
         parse: () => {
           throw new Error('Generic error')
         },
-      } as any
+      } as unknown as z.ZodType<unknown>
 
       const result = validateWithSchema(invalidSchema, {})
 

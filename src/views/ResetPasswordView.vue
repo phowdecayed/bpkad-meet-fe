@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { toast } from 'vue-sonner'
 import { Eye, EyeOff, LoaderCircle } from 'lucide-vue-next'
+import axios from 'axios'
 
 const route = useRoute()
 const router = useRouter()
@@ -49,13 +50,17 @@ async function handleSubmit() {
       description: 'Your password has been reset. You can now log in.',
     })
     router.push({ name: 'login' })
-  } catch (error: any) {
+  } catch (error: unknown) {
     let errorMessage = 'An unknown error occurred. Please try again.'
-    if (error.response?.data?.errors) {
-      const errorKey = Object.keys(error.response.data.errors)[0]
-      errorMessage = error.response.data.errors[errorKey][0]
-    } else if (error.response?.data?.message) {
-      errorMessage = error.response.data.message
+    if (axios.isAxiosError(error) && error.response?.data) {
+      if (error.response.data.errors) {
+        const errorKey = Object.keys(error.response.data.errors)[0]
+        errorMessage = error.response.data.errors[errorKey][0]
+      } else if (error.response.data.message) {
+        errorMessage = error.response.data.message
+      }
+    } else if (error instanceof Error) {
+      errorMessage = error.message
     }
 
     toast.error('Reset Failed', {

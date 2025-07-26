@@ -453,7 +453,7 @@ describe('SettingsGroupSection Integration Tests', () => {
       const wrapper = mount(SettingsGroupSection, {
         props: {
           groupName: 'zoom',
-          settings: null as any,
+          settings: null as unknown as Setting[],
         },
         global: {
           plugins: [pinia],
@@ -481,7 +481,7 @@ describe('SettingsGroupSection Integration Tests', () => {
           id: 2,
           // Missing required fields
           payload: {},
-        } as any,
+        } as Setting,
       ]
 
       const wrapper = mount(SettingsGroupSection, {

@@ -5,15 +5,16 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { LoaderCircle, Trash2 } from 'lucide-vue-next'
 import RecursiveFormField from './RecursiveFormField.vue'
+import type { Setting } from '@/types/settings'
 
 const props = defineProps<{
-  setting: any
+  setting: Setting
   isSaving: boolean
 }>()
 
 const emit = defineEmits(['update', 'delete'])
 
-const form = ref<any>(null)
+const form = ref<Setting | null>(null)
 
 watch(
   () => props.setting,

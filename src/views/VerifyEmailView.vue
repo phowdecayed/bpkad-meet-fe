@@ -6,6 +6,7 @@ import { toast } from 'vue-sonner'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { LoaderCircle, CircleCheck, CircleX } from 'lucide-vue-next'
+import axios from 'axios'
 
 const route = useRoute()
 const router = useRouter()
@@ -62,10 +63,15 @@ onMounted(async () => {
         description: 'Your email has been verified. You can now log in.',
       })
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     verificationStatus.value = 'error'
-    errorMessage.value =
-      error.response?.data?.message || 'Verification failed. The link may be invalid or expired.'
+    if (axios.isAxiosError(error) && error.response?.data?.message) {
+      errorMessage.value = error.response.data.message
+    } else if (error instanceof Error) {
+      errorMessage.value = error.message
+    } else {
+      errorMessage.value = 'Verification failed. The link may be invalid or expired.'
+    }
     toast.error('Error', {
       description: errorMessage.value,
     })

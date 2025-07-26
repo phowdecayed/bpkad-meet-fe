@@ -375,7 +375,7 @@ function handleConfirmClose() {
 </script>
 
 <template>
-  <Dialog :open="props.open" @update:open="handleClose">
+  <Dialog :open="props.open" @update:open="handleClose" data-testid="edit-meeting-dialog">
     <DialogContent class="sm:max-w-[650px] flex flex-col">
       <DialogHeader>
         <DialogTitle class="flex items-center gap-2">

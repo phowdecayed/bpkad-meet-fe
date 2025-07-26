@@ -14,7 +14,7 @@ export interface ZoomMeeting {
   id: number
   zoom_id: number
   uuid: string
-  [key: string]: any // For other Zoom-specific properties
+  [key: string]: unknown // For other Zoom-specific properties
 }
 
 export interface Meeting {

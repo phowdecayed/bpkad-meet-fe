@@ -199,8 +199,8 @@ describe('MeetingsView Enhanced', () => {
       const searchInput = wrapper.find('input[placeholder*="Search"]')
       await searchInput.setValue('test')
 
-      const clearButton = wrapper.find('button:contains("Clear")')
-      await clearButton.trigger('click')
+      const clearButton = wrapper.findAll('button').find(b => b.text() === 'Clear')
+      await clearButton!.trigger('click')
 
       expect(searchInput.element.value).toBe('')
     })
@@ -268,7 +268,7 @@ describe('MeetingsView Enhanced', () => {
         },
       })
 
-      const retryButton = wrapper.find('button:contains("Retry")')
+      const retryButton = wrapper.findAll('button').find(b => b.text() === 'Retry')
       await retryButton.trigger('click')
 
       expect(clearErrorSpy).toHaveBeenCalled()
@@ -421,7 +421,7 @@ describe('MeetingsView Enhanced', () => {
         },
       })
 
-      const createButton = wrapper.find('button:contains("Create Meeting")')
+      const createButton = wrapper.findAll('button').find(b => b.text() === 'Create Meeting')
       await createButton.trigger('click')
 
       expect(wrapper.find('[data-testid="create-meeting-dialog"]').exists()).toBe(true)
@@ -435,7 +435,7 @@ describe('MeetingsView Enhanced', () => {
       })
 
       // Simulate clicking edit from dropdown
-      const vm = wrapper.vm as any
+      const vm = wrapper.vm as InstanceType<typeof MeetingsView>
       vm.openEditDialog(mockMeeting)
       await wrapper.vm.$nextTick()
 
@@ -450,7 +450,7 @@ describe('MeetingsView Enhanced', () => {
       })
 
       // Simulate clicking delete from dropdown
-      const vm = wrapper.vm as any
+      const vm = wrapper.vm as InstanceType<typeof MeetingsView>
       vm.openDeleteDialog(mockMeeting)
       await wrapper.vm.$nextTick()
 
@@ -468,7 +468,7 @@ describe('MeetingsView Enhanced', () => {
         },
       })
 
-      const vm = wrapper.vm as any
+      const vm = wrapper.vm as InstanceType<typeof MeetingsView>
       vm.selectedMeeting = mockMeeting
       await vm.handleDeleteMeeting()
 
@@ -485,7 +485,7 @@ describe('MeetingsView Enhanced', () => {
         },
       })
 
-      const vm = wrapper.vm as any
+      const vm = wrapper.vm as InstanceType<typeof MeetingsView>
       vm.selectedMeeting = mockMeeting
       await vm.handleDeleteMeeting()
 
@@ -507,7 +507,7 @@ describe('MeetingsView Enhanced', () => {
         },
       })
 
-      const vm = wrapper.vm as any
+      const vm = wrapper.vm as InstanceType<typeof MeetingsView>
       vm.selectedMeeting = mockMeeting
       await vm.handleDeleteMeeting()
 

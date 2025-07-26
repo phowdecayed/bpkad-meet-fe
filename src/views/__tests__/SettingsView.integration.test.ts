@@ -181,7 +181,7 @@ describe('SettingsView Integration Tests', () => {
 
     it('should show loading state during API fetch', async () => {
       // Create a promise that we can control
-      let resolvePromise: (value: any) => void
+      let resolvePromise: (value: unknown) => void
       const apiPromise = new Promise((resolve) => {
         resolvePromise = resolve
       })
@@ -251,7 +251,6 @@ describe('SettingsView Integration Tests', () => {
       expect(zoomGroup.text()).toContain('zoom Settings')
 
       // Verify correct props are passed
-      const groupComponent = wrapper.findComponent({ name: 'SettingsGroupSection' })
       const zoomComponent = wrapper
         .findAllComponents({ name: 'SettingsGroupSection' })
         .find((comp) => comp.props('groupName') === 'zoom')
@@ -372,7 +371,7 @@ describe('SettingsView Integration Tests', () => {
     })
 
     it('should maintain store state consistency during operations', async () => {
-      const wrapper = mount(SettingsView, {
+      mount(SettingsView, {
         global: {
           plugins: [pinia],
         },
@@ -432,7 +431,7 @@ describe('SettingsView Integration Tests', () => {
         data: legacyZoomSettings,
       })
 
-      const wrapper = mount(SettingsView, {
+      mount(SettingsView, {
         global: {
           plugins: [pinia],
         },

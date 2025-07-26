@@ -134,7 +134,7 @@ describe('ZoomSettings Integration', () => {
       })
 
       // Access the component instance to call methods directly
-      const component = wrapper.vm as any
+      const component = wrapper.vm as InstanceType<typeof ZoomSettings>
 
       // Test update operation
       await component.handleUpdate(mockZoomSettings[0])
@@ -159,7 +159,7 @@ describe('ZoomSettings Integration', () => {
       fetchGroupSpy.mockClear()
 
       // Access the component instance to call methods directly
-      const component = wrapper.vm as any
+      const component = wrapper.vm as InstanceType<typeof ZoomSettings>
 
       // Test update operation
       await component.handleUpdate(mockZoomSettings[0])

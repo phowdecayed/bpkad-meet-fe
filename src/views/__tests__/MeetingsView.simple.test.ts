@@ -507,7 +507,7 @@ describe('MeetingsView Simple Tests', () => {
         },
       })
 
-      const vm = wrapper.vm as any
+      const vm = wrapper.vm as InstanceType<typeof MeetingsView>
       vm.selectedMeeting = mockMeeting
       await vm.handleDeleteMeeting()
 
@@ -538,7 +538,7 @@ describe('MeetingsView Simple Tests', () => {
         },
       })
 
-      const vm = wrapper.vm as any
+      const vm = wrapper.vm as InstanceType<typeof MeetingsView>
       vm.selectedMeeting = mockMeeting
       await vm.handleDeleteMeeting()
 

@@ -69,9 +69,9 @@ const mockLocations: MeetingLocation[] = [
 ]
 
 describe('EditMeetingDialog Store Integration', () => {
-  let meetingsStore: any
-  let locationsStore: any
-  let usersStore: any
+  let meetingsStore: ReturnType<typeof useMeetingsStore>
+  let locationsStore: ReturnType<typeof useLocationsStore>
+  let usersStore: ReturnType<typeof useUsersStore>
 
   beforeEach(() => {
     setActivePinia(createPinia())

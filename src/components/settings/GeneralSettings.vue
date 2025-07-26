@@ -116,20 +116,31 @@ const onSubmit = handleSubmit(async (formData) => {
 
     // Refresh settings to get updated data
     await settingsStore.fetchAllSettings()
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Failed to save general settings:', error)
 
     let errorMessage = 'Failed to save general settings. Please try again.'
-    if (error.response?.status === 400) {
-      errorMessage = 'Invalid settings data. Please check your input and try again.'
-    } else if (error.response?.status === 401) {
-      errorMessage = 'You are not authorized to update settings. Please log in again.'
-    } else if (error.response?.status === 403) {
-      errorMessage = 'You do not have permission to update general settings.'
-    } else if (error.response?.status >= 500) {
-      errorMessage = 'Server error. Please try again later.'
-    } else if (error.response?.data?.message) {
-      errorMessage = error.response.data.message
+    if (
+      error &&
+      typeof error === 'object' &&
+      'response' in error &&
+      error.response &&
+      typeof error.response === 'object' &&
+      'status' in error.response &&
+      typeof error.response.status === 'number'
+    ) {
+      const response = error.response as { status: number; data?: { message?: string } }
+      if (response.status === 400) {
+        errorMessage = 'Invalid settings data. Please check your input and try again.'
+      } else if (response.status === 401) {
+        errorMessage = 'You are not authorized to update settings. Please log in again.'
+      } else if (response.status === 403) {
+        errorMessage = 'You do not have permission to update general settings.'
+      } else if (response.status >= 500) {
+        errorMessage = 'Server error. Please try again later.'
+      } else if (response.data?.message) {
+        errorMessage = response.data.message
+      }
     }
 
     toast.error('Save Failed', {

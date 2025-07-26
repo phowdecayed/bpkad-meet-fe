@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi, type Mock } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import axios from 'axios'
 import {
@@ -12,7 +12,7 @@ import type { User } from '@/types/user'
 
 // Mock axios
 vi.mock('axios')
-const mockedAxios = axios as any
+const mockedAxios = vi.mocked(axios, true)
 
 // Mock data
 const mockUser: User = {

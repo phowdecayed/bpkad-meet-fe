@@ -513,7 +513,7 @@ describe('Settings Store Integration Tests', () => {
         {
           id: 7,
           name: 'Null Group Setting',
-          group: null as any, // Null group
+          group: null as unknown as string, // Null group
           payload: {},
           created_at: '2024-01-01T00:00:00Z',
           updated_at: '2024-01-01T00:00:00Z',
@@ -539,7 +539,7 @@ describe('Settings Store Integration Tests', () => {
       const settingsStore = useSettingsStore()
 
       // Create a controllable promise
-      let resolvePromise: (value: any) => void
+      let resolvePromise: (value: unknown) => void
       const controllablePromise = new Promise((resolve) => {
         resolvePromise = resolve
       })

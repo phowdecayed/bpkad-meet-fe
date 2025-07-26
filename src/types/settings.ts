@@ -9,7 +9,7 @@ export interface Setting {
   id: number
   name: string
   group: string
-  payload: Record<string, any>
+  payload: Record<string, unknown>
   created_at: string
   updated_at: string
 }
@@ -28,12 +28,12 @@ export interface GroupedSettings {
 export interface SettingCreationPayload {
   name: string
   group: string
-  payload: Record<string, any>
+  payload: Record<string, unknown>
 }
 
 /**
  * Payload interface for updating an existing setting
  */
 export interface SettingUpdatePayload {
-  payload: Record<string, any>
+  payload: Record<string, unknown>
 }

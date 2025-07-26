@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { mount, shallowMount } from '@vue/test-utils'
+import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import EditMeetingDialog from '../EditMeetingDialog.vue'
 import { useMeetingsStore } from '@/stores/meetings'
@@ -19,7 +19,10 @@ vi.mock('@/stores/users')
 
 // Mock UI components to avoid Reka UI issues in tests
 vi.mock('@/components/ui/dialog', () => ({
-  Dialog: { template: '<div data-testid="dialog"><slot /></div>' },
+  Dialog: {
+    props: ['open'],
+    template: '<div v-if="open" v-bind="$attrs"><slot /></div>',
+  },
   DialogContent: { template: '<div data-testid="dialog-content"><slot /></div>' },
   DialogHeader: { template: '<div data-testid="dialog-header"><slot /></div>' },
   DialogTitle: { template: '<div data-testid="dialog-title"><slot /></div>' },
@@ -126,14 +129,15 @@ const mockLocations: MeetingLocation[] = [
 ]
 
 describe('EditMeetingDialog', () => {
-  let meetingsStore: any
-  let locationsStore: any
-  let usersStore: any
+  let meetingsStore: ReturnType<typeof useMeetingsStore>
+  let locationsStore: ReturnType<typeof useLocationsStore>
+  let usersStore: ReturnType<typeof useUsersStore>
 
   beforeEach(() => {
     setActivePinia(createPinia())
 
     meetingsStore = {
+      fetchMeeting: vi.fn().mockResolvedValue(mockMeeting),
       updateMeeting: vi.fn(),
       fetchParticipants: vi.fn().mockResolvedValue([]),
       addParticipant: vi.fn(),

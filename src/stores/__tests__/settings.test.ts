@@ -63,7 +63,7 @@ describe('useSettingsStore', () => {
 
       try {
         await store.fetchAllSettings()
-      } catch (error) {
+      } catch {
         // Expected to throw
       }
 
@@ -241,7 +241,7 @@ describe('useSettingsStore', () => {
 
         try {
           await store.fetchSettingsByGroup('zoom')
-        } catch (error) {
+        } catch {
           // Expected to throw
         }
 
@@ -289,7 +289,7 @@ describe('useSettingsStore', () => {
 
         try {
           await store.fetchAllSettings()
-        } catch (error) {
+        } catch {
           // Expected to throw
         }
 
@@ -304,7 +304,7 @@ describe('useSettingsStore', () => {
     it('should set loading state during fetchAllSettings', async () => {
       const store = useSettingsStore()
 
-      let resolvePromise: (value: any) => void
+      let resolvePromise: (value: unknown) => void
       const promise = new Promise((resolve) => {
         resolvePromise = resolve
       })
@@ -326,7 +326,7 @@ describe('useSettingsStore', () => {
     it('should set loading state during fetchSettingsByGroup', async () => {
       const store = useSettingsStore()
 
-      let resolvePromise: (value: any) => void
+      let resolvePromise: (value: unknown) => void
       const promise = new Promise((resolve) => {
         resolvePromise = resolve
       })
