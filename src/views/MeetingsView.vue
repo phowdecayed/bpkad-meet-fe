@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
-  Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
@@ -63,7 +62,7 @@ const selectedMeeting = ref<Meeting | null>(null)
 
 // Search and filter states
 const searchQuery = ref('')
-const selectedType = ref<string>('all')
+const selectedType = ref<string | undefined>(undefined)
 const startDate = ref('')
 const endDate = ref('')
 
@@ -159,7 +158,7 @@ const getTypeVariant = (type: string): BadgeVariants['variant'] => {
 const hasActiveFilters = computed(() => {
   return (
     searchQuery.value.trim() !== '' ||
-    selectedType.value !== 'all' ||
+    selectedType.value !== undefined ||
     startDate.value !== '' ||
     endDate.value !== ''
   )
@@ -173,7 +172,7 @@ const buildQueryParams = (): MeetingQueryParams => {
     params.search = searchQuery.value.trim()
   }
 
-  if (selectedType.value && selectedType.value !== 'all') {
+  if (selectedType.value) {
     params.type = selectedType.value
   }
 
@@ -226,7 +225,7 @@ async function retryFetch() {
 
 function clearFilters() {
   searchQuery.value = ''
-  selectedType.value = 'all'
+  selectedType.value = undefined
   startDate.value = ''
   endDate.value = ''
 }
