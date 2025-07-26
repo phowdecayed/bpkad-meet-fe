@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
+import { Switch } from '@/components/ui/switch'
 import { Eye, EyeOff } from 'lucide-vue-next'
 
 // By using <script setup>, the component is automatically named based on its filename,
@@ -89,13 +90,14 @@ function updateNestedValue(key: string, newValue: FieldValue) {
   <!-- If the value is a primitive, render a label and input field -->
   <div v-else class="grid gap-2">
     <Label :for="`${id}-${fieldKey}`">{{ formattedLabel }}</Label>
-    <div class="relative">
-      <Input
-        :id="`${id}-${fieldKey}`"
-        v-model="localValue"
-        :type="inputType"
-        :checked="typeof localValue === 'boolean' ? localValue : undefined"
-      />
+    <div v-if="typeof localValue === 'boolean'" class="flex items-center gap-2">
+      <Switch :id="`${id}-${fieldKey}`" v-model:checked="localValue" />
+      <Label :for="`${id}-${fieldKey}`" class="text-sm font-normal">
+        {{ localValue ? 'Enabled' : 'Disabled' }}
+      </Label>
+    </div>
+    <div v-else class="relative">
+      <Input :id="`${id}-${fieldKey}`" v-model="localValue" :type="inputType" />
       <Button
         v-if="isSecretField"
         type="button"

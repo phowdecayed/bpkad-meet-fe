@@ -248,8 +248,7 @@ function copyInvitation() {
                   size="icon"
                   variant="outline"
                   @click="
-                    detailedMeeting.zoom_meeting.join_url &&
-                    copyToClipboard(detailedMeeting.zoom_meeting.join_url, 'Join URL')
+                    copyToClipboard(detailedMeeting.zoom_meeting?.join_url ?? '', 'Join URL')
                   "
                 >
                   <ClipboardCopy class="h-4 w-4" />
@@ -270,8 +269,10 @@ function copyInvitation() {
                   size="sm"
                   variant="ghost"
                   @click="
-                    detailedMeeting.zoom_meeting.password &&
-                    copyToClipboard(detailedMeeting.zoom_meeting.password, 'Password')
+                    copyToClipboard(
+                      detailedMeeting.zoom_meeting?.password ?? '',
+                      'Password',
+                    )
                   "
                 >
                   <ClipboardCopy class="h-4 w-4" />
@@ -293,10 +294,7 @@ function copyInvitation() {
                 <Button
                   size="sm"
                   variant="ghost"
-                  @click="
-                    detailedMeeting.host_key &&
-                    copyToClipboard(detailedMeeting.host_key, 'Host Key')
-                  "
+                  @click="copyToClipboard(detailedMeeting.host_key ?? '', 'Host Key')"
                 >
                   <ClipboardCopy class="h-4 w-4" />
                 </Button>
