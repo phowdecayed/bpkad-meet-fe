@@ -25,6 +25,8 @@ export interface Meeting {
   start_time: string
   duration: number
   type: 'online' | 'offline' | 'hybrid'
+  join_url: string | null
+  password: string | null
   host_key: string | null
   location: MeetingLocation | null
   zoom_meeting: ZoomMeeting | null

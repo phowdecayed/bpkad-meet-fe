@@ -3,6 +3,7 @@ import { ref, computed, watch } from 'vue'
 import type { Meeting } from '@/types/meeting'
 import type { User } from '@/types/user'
 import { useMeetingsStore } from '@/stores/meetings'
+import { useAuthStore } from '@/stores/auth'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -16,6 +17,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Input } from '@/components/ui/input'
 import {
   Clock,
   Calendar,
@@ -28,7 +30,13 @@ import {
   FileText,
   AlertTriangle,
   Loader2,
+  KeyRound,
+  ClipboardCopy,
+  Eye,
+  EyeOff,
+  Link,
 } from 'lucide-vue-next'
+import { toast } from 'vue-sonner'
 
 const props = defineProps<{
   open: boolean
@@ -37,25 +45,40 @@ const props = defineProps<{
 
 const emit = defineEmits(['update:open'])
 const meetingsStore = useMeetingsStore()
+const authStore = useAuthStore()
 
 const isOpen = computed({
   get: () => props.open,
   set: (value) => emit('update:open', value),
 })
 
-const participants = ref<User[]>([])
+const detailedMeeting = ref<Meeting | null>(null)
 const isLoading = ref(false)
 const error = ref<string | null>(null)
+const showPassword = ref(false)
+const showHostKey = ref(false)
 
-async function loadParticipants() {
+const isOrganizer = computed(() => {
+  return detailedMeeting.value?.organizer.id === authStore.user?.id
+})
+
+const canViewHostKey = computed(() => {
+  return authStore.hasPermission('view host key') || isOrganizer.value
+})
+
+const participants = computed(() => {
+  return detailedMeeting.value?.participants || []
+})
+
+async function loadMeetingDetails() {
   if (!props.meeting) return
   isLoading.value = true
   error.value = null
   try {
-    const fetchedParticipants = await meetingsStore.fetchParticipants(props.meeting.id)
-    participants.value = fetchedParticipants
+    const fetchedMeeting = await meetingsStore.fetchMeeting(props.meeting.id)
+    detailedMeeting.value = fetchedMeeting
   } catch (e) {
-    error.value = 'Failed to load participants.'
+    error.value = 'Failed to load meeting details.'
   } finally {
     isLoading.value = false
   }
@@ -65,17 +88,13 @@ watch(
   () => props.open,
   (newVal) => {
     if (newVal) {
-      // If the meeting object already has participants, use them. Otherwise, fetch them.
-      if (props.meeting?.participants && props.meeting.participants.length > 0) {
-        participants.value = props.meeting.participants
-      } else {
-        loadParticipants()
-      }
+      loadMeetingDetails()
     } else {
-      // Reset when closing
-      participants.value = []
+      detailedMeeting.value = null
       isLoading.value = false
       error.value = null
+      showPassword.value = false
+      showHostKey.value = false
     }
   },
 )
@@ -90,9 +109,18 @@ function getInitials(name: string): string {
 }
 
 const formattedStartTime = computed(() => {
-  if (!props.meeting) return ''
-  return new Date(props.meeting.start_time).toLocaleString()
+  if (!detailedMeeting.value) return ''
+  return new Date(detailedMeeting.value.start_time).toLocaleString()
 })
+
+async function copyToClipboard(text: string, type: string) {
+  try {
+    await navigator.clipboard.writeText(text)
+    toast.success(`${type} copied to clipboard!`)
+  } catch {
+    toast.error(`Failed to copy ${type}.`)
+  }
+}
 </script>
 
 <template>
@@ -157,9 +185,68 @@ const formattedStartTime = computed(() => {
               </div>
             </div>
 
+            <!-- Connection Details -->
+            <div
+              v-if="meeting.zoom_meeting && (meeting.type === 'online' || meeting.type === 'hybrid')"
+              class="space-y-4"
+            >
+              <div class="flex items-start gap-4">
+                <Link class="h-5 w-5 text-muted-foreground mt-1" />
+                <div>
+                  <h3 class="font-semibold">Connection Details</h3>
+                  <div class="space-y-2 text-sm text-muted-foreground">
+                    <div v-if="meeting.zoom_meeting.join_url" class="flex items-center gap-2">
+                      <a
+                        :href="meeting.zoom_meeting.join_url"
+                        target="_blank"
+                        class="text-primary hover:underline truncate"
+                      >
+                        {{ meeting.zoom_meeting.join_url }}
+                      </a>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        @click="copyToClipboard(meeting.zoom_meeting.join_url, 'Join URL')"
+                      >
+                        <ClipboardCopy class="h-4 w-4" />
+                      </Button>
+                    </div>
+
+                    <div v-if="meeting.zoom_meeting.password" class="flex items-center gap-2">
+                      <KeyRound class="h-4 w-4" />
+                      <span>Password:</span>
+                      <Input
+                        :type="showPassword ? 'text' : 'password'"
+                        readonly
+                        :value="meeting.zoom_meeting.password"
+                        class="h-8 flex-1"
+                      />
+                      <Button size="sm" variant="ghost" @click="showPassword = !showPassword">
+                        <component :is="showPassword ? EyeOff : Eye" class="h-4 w-4" />
+                      </Button>
+                    </div>
+
+                    <div v-if="canViewHostKey && meeting.host_key" class="flex items-center gap-2">
+                      <KeyRound class="h-4 w-4" />
+                      <span>Host Key:</span>
+                      <Input
+                        :type="showHostKey ? 'text' : 'password'"
+                        readonly
+                        :value="meeting.host_key"
+                        class="h-8 flex-1"
+                      />
+                      <Button size="sm" variant="ghost" @click="showHostKey = !showHostKey">
+                        <component :is="showHostKey ? EyeOff : Eye" class="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <!-- Organizer -->
             <div class="flex items-start gap-4">
-              <User class="h-5 w-5 text-muted-foreground mt-1" />
+              <UserIcon class="h-5 w-5 text-muted-foreground mt-1" />
               <div>
                 <h3 class="font-semibold">Organizer</h3>
                 <div class="flex items-center gap-3">
@@ -198,7 +285,7 @@ const formattedStartTime = computed(() => {
                     <Button
                       variant="outline"
                       size="sm"
-                      @click="loadParticipants"
+                      @click="loadMeetingDetails"
                       :disabled="isLoading"
                     >
                       <Loader2 v-if="isLoading" class="mr-2 h-4 w-4 animate-spin" />
