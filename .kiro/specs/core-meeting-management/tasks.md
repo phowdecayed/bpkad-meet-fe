@@ -51,7 +51,7 @@
   - Write component tests for participant management scenarios
   - _Requirements: 5.1, 5.2, 5.3, 6.1, 6.2, 6.3, 6.4, 6.5_
 
-- [ ] 6. Enhance MeetingsView with improved functionality and permissions
+- [x] 6. Enhance MeetingsView with improved functionality and permissions
 
   - Add pagination controls using the existing store pagination state
   - Implement permission-based action visibility (create, edit, delete buttons)
@@ -63,37 +63,20 @@
   - Write component tests for table functionality and permission handling
   - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 4.1, 4.2, 4.3, 4.4, 4.5, 8.1, 8.2, 8.3, 8.4, 8.5_
 
-- [ ] 7. Implement permission-based UI controls
+- [x] 7. Complete test coverage for meeting components
 
-  - Add permission checks to MeetingsView for create/edit/delete button visibility
-  - Implement permission checking in meeting dialogs
-  - Add proper error handling for permission-denied scenarios
-  - Create permission-aware meeting operation guards
-  - Write tests for permission checking logic and UI behavior
-  - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5_
-
-- [ ] 8. Add comprehensive error handling and user feedback
-
-  - Create reusable error display components based on SettingsErrorBoundary pattern
-  - Implement loading indicators for all async operations
-  - Add retry functionality for failed network requests
-  - Enhance toast notifications for operation success/failure feedback
-  - Add network status detection and offline handling
-  - Write tests for error handling scenarios and recovery flows
-  - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5_
-
-- [ ] 9. Complete test coverage for meeting components
-
-  - Write comprehensive tests for CreateMeetingDialog component
-  - Enhance existing EditMeetingDialog tests with additional scenarios
-  - Add integration tests for MeetingsView component
-  - Write tests for ParticipantManagementDialog when created
-  - Add end-to-end tests for complete meeting management workflows
+  - Write comprehensive unit tests for CreateMeetingDialog component
+  - Write unit tests for EditMeetingDialog component
+  - Write unit tests for ParticipantManagementDialog component
+  - Write unit tests for MeetingsView component
+  - Write unit tests for meetings store
+  - Write unit tests for validation schemas and form utilities
+  - Add integration tests for complete meeting management workflows
   - Test error handling and edge cases
   - _Requirements: All requirements testing coverage_
 
-- [ ] 10. Performance optimizations and final integration
-  - Add debouncing to search inputs and API calls
+- [x] 8. Performance optimizations and final integration
+  - Add debouncing to search inputs and API calls (already implemented)
   - Implement virtual scrolling for large participant lists if needed
   - Add caching for frequently accessed data (locations, users)
   - Optimize bundle size with code splitting for meeting components
