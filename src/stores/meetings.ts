@@ -384,19 +384,19 @@ export const useMeetingsStore = defineStore('meetings', () => {
   // Pagination helpers
   async function nextPage() {
     if (pagination.value.hasNextPage) {
-      await fetchMeetings({ page: pagination.value.currentPage + 1 })
+      await fetchMeetings({ page: pagination.value.currentPage + 1, per_page: pagination.value.itemsPerPage })
     }
   }
 
   async function prevPage() {
     if (pagination.value.hasPrevPage) {
-      await fetchMeetings({ page: pagination.value.currentPage - 1 })
+      await fetchMeetings({ page: pagination.value.currentPage - 1, per_page: pagination.value.itemsPerPage })
     }
   }
 
   async function goToPage(page: number) {
     if (page >= 1 && page <= pagination.value.totalPages) {
-      await fetchMeetings({ page })
+      await fetchMeetings({ page, per_page: pagination.value.itemsPerPage })
     }
   }
 
@@ -432,3 +432,4 @@ export const useMeetingsStore = defineStore('meetings', () => {
     goToPage,
   }
 })
+

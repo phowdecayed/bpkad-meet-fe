@@ -15,13 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationNext,
-  PaginationPrevious,
-} from '@/components/ui/pagination'
+import PaginationControls from '@/components/PaginationControls.vue'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Skeleton } from '@/components/ui/skeleton'
 import EditMeetingDialog from '@/components/meetings/EditMeetingDialog.vue'
@@ -64,9 +58,10 @@ const selectedMeeting = ref<Meeting | null>(null)
 // Search and filter states
 const searchQuery = ref('')
 const selectedType = ref<string | undefined>(undefined)
-const selectedLocation = ref('')
+const selectedLocation = ref('all')
 const startDate = ref('')
 const endDate = ref('')
+const perPage = ref('10')
 
 // Permission checks
 const canCreateMeetings = computed(() => hasPermission.value('create meetings'))
@@ -161,7 +156,7 @@ const hasActiveFilters = computed(() => {
   return (
     searchQuery.value.trim() !== '' ||
     (selectedType.value !== undefined && selectedType.value !== 'all') ||
-    selectedLocation.value.trim() !== '' ||
+    selectedLocation.value !== 'all' ||
     startDate.value !== '' ||
     endDate.value !== ''
   )
@@ -171,7 +166,7 @@ const getActiveFilterCount = () => {
   let count = 0
   if (searchQuery.value.trim() !== '') count++
   if (selectedType.value !== undefined && selectedType.value !== 'all') count++
-  if (selectedLocation.value.trim() !== '') count++
+  if (selectedLocation.value !== 'all') count++
   if (startDate.value !== '') count++
   if (endDate.value !== '') count++
   return count
@@ -192,8 +187,11 @@ const availableLocations = computed(() => {
 const locationsCount = computed(() => availableLocations.value.length)
 
 // Search and filter functionality
+// This function preserves filter state when navigating between pages
 const buildQueryParams = (): MeetingQueryParams => {
-  const params: MeetingQueryParams = {}
+  const params: MeetingQueryParams = {
+    per_page: parseInt(perPage.value, 10),
+  }
 
   if (searchQuery.value.trim()) {
     params.topic = searchQuery.value.trim()
@@ -204,8 +202,8 @@ const buildQueryParams = (): MeetingQueryParams => {
     params.type = selectedType.value
   }
 
-  if (selectedLocation.value.trim()) {
-    params.location = selectedLocation.value.trim()
+  if (selectedLocation.value && selectedLocation.value !== 'all') {
+    params.location = selectedLocation.value
   }
 
   if (startDate.value) {
@@ -220,6 +218,8 @@ const buildQueryParams = (): MeetingQueryParams => {
 }
 
 const debouncedSearch = debounce(() => {
+  // Always reset to page 1 when filters change
+  // This ensures proper filter and pagination interaction
   goToPage(1)
 }, 300)
 
@@ -231,24 +231,39 @@ watch(
     selectedLocation.value,
     startDate.value,
     endDate.value,
+    perPage.value,
   ],
   debouncedSearch,
 )
 
-// Pagination handlers
+// Pagination handlers updated to work with PaginationControls component
+
+// Pagination handlers updated to work with PaginationControls component
 async function goToPage(page: number) {
   const params = buildQueryParams()
   params.page = page
   await meetingsStore.fetchMeetings(params)
 }
 
-async function nextPage() {
+async function handlePageChange(page: number) {
+  await goToPage(page)
+}
+
+async function handleFirstPage() {
+  await goToPage(1)
+}
+
+async function handleLastPage() {
+  await goToPage(pagination.value.totalPages)
+}
+
+async function handleNextPage() {
   if (pagination.value.hasNextPage) {
     await goToPage(pagination.value.currentPage + 1)
   }
 }
 
-async function prevPage() {
+async function handlePrevPage() {
   if (pagination.value.hasPrevPage) {
     await goToPage(pagination.value.currentPage - 1)
   }
@@ -263,19 +278,22 @@ async function retryFetch() {
 }
 
 function clearFilters() {
+  // Clear all filter values
   searchQuery.value = ''
   selectedType.value = undefined
-  selectedLocation.value = ''
+  selectedLocation.value = 'all'
   startDate.value = ''
   endDate.value = ''
+  perPage.value = '10'
 
-  // Immediately trigger a fresh fetch with no filters
+  // Reset pagination to page 1 and fetch with no filters
+  // This ensures proper filter and pagination interaction
   goToPage(1)
 }
 
 // Initialize
 onMounted(() => {
-  meetingsStore.fetchMeetings()
+  meetingsStore.fetchMeetings(buildQueryParams())
 })
 </script>
 
@@ -314,7 +332,7 @@ onMounted(() => {
         </div>
       </div>
 
-      <div class="grid grid-cols-1 gap-4 md:grid-cols-4 md:gap-2">
+      <div class="grid grid-cols-1 gap-4 md:grid-cols-5 md:gap-2">
         <div class="space-y-2">
           <Label for="type">Type</Label>
           <Select v-model="selectedType">
@@ -336,14 +354,11 @@ onMounted(() => {
         <div class="space-y-2">
           <Label for="location">Location ({{ locationsCount }} available)</Label>
           <Select v-model="selectedLocation">
-            <SelectTrigger
-              id="location"
-              :class="{ 'border-primary': selectedLocation.trim() !== '' }"
-            >
+            <SelectTrigger id="location" :class="{ 'border-primary': selectedLocation !== 'all' }">
               <SelectValue placeholder="All locations" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All locations</SelectItem>
+              <SelectItem value="all">All locations</SelectItem>
               <SelectItem
                 v-for="locationName in availableLocations"
                 :key="locationName"
@@ -373,6 +388,20 @@ onMounted(() => {
             type="date"
             :class="{ 'border-primary': endDate !== '' }"
           />
+        </div>
+        <div class="space-y-2">
+          <Label for="per-page">Per Page</Label>
+          <Select v-model="perPage">
+            <SelectTrigger id="per-page">
+              <SelectValue placeholder="10" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="5">5</SelectItem>
+              <SelectItem value="10">10</SelectItem>
+              <SelectItem value="20">20</SelectItem>
+              <SelectItem value="50">50</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -405,23 +434,8 @@ onMounted(() => {
       </AlertDescription>
     </Alert>
 
-    <!-- Loading State -->
-    <div
-      v-if="isLoading && meetings.length === 0"
-      class="border rounded-lg"
-      data-testid="loading-skeleton"
-    >
-      <div class="p-4">
-        <div class="space-y-3">
-          <Skeleton class="h-4 w-full" />
-          <Skeleton class="h-4 w-3/4" />
-          <Skeleton class="h-4 w-1/2" />
-        </div>
-      </div>
-    </div>
-
     <!-- Meetings Table -->
-    <div v-else class="border rounded-lg">
+    <div class="border rounded-lg">
       <Table>
         <TableHeader>
           <TableRow>
@@ -435,170 +449,165 @@ onMounted(() => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          <TableEmpty v-if="meetings.length === 0 && !isLoading" :colspan="7">
-            <div class="text-center py-8">
-              <p class="text-muted-foreground mb-4">
-                {{
-                  hasActiveFilters
-                    ? 'No meetings found matching your current filters.'
-                    : 'No meetings found.'
-                }}
-              </p>
-              <div v-if="hasActiveFilters" class="mb-4">
-                <p class="text-sm text-muted-foreground mb-2">Try adjusting your filters or</p>
-                <Button variant="outline" size="sm" @click="clearFilters">
-                  Clear all filters
-                </Button>
-              </div>
-              <Button
-                v-if="canCreateMeetings && !hasActiveFilters"
-                @click="openCreateDialog"
-                variant="outline"
-              >
-                <Plus class="h-4 w-4 mr-2" />
-                Create your first meeting
-              </Button>
-            </div>
-          </TableEmpty>
-
-          <TableRow
-            v-for="meeting in meetings"
-            :key="meeting.id"
-            :class="{ 'opacity-50': isLoading }"
-          >
-            <TableCell>
-              <div>
-                <span class="block max-w-xs truncate font-medium">{{ meeting.topic }}</span>
-                <span
-                  v-if="meeting.description"
-                  class="block max-w-xs truncate text-sm text-muted-foreground"
-                >
-                  {{ meeting.description }}
-                </span>
-              </div>
-            </TableCell>
-            <TableCell>
-              <Badge
-                :variant="getStatusVariant(getMeetingStatus(meeting.start_time, meeting.duration))"
-              >
-                {{ getMeetingStatus(meeting.start_time, meeting.duration) }}
-              </Badge>
-            </TableCell>
-            <TableCell>
-              <Badge :variant="getTypeVariant(meeting.type)">
-                {{ meeting.type }}
-              </Badge>
-            </TableCell>
-            <TableCell>
-              <div class="text-sm">
-                <div>{{ new Date(meeting.start_time).toLocaleDateString() }}</div>
-                <div class="text-muted-foreground">
-                  {{ new Date(meeting.start_time).toLocaleTimeString() }}
+          <template v-if="isLoading">
+            <TableRow v-for="i in parseInt(perPage)" :key="i">
+              <TableCell>
+                <Skeleton class="h-4 w-full" />
+              </TableCell>
+              <TableCell>
+                <Skeleton class="h-4 w-full" />
+              </TableCell>
+              <TableCell>
+                <Skeleton class="h-4 w-full" />
+              </TableCell>
+              <TableCell>
+                <Skeleton class="h-4 w-full" />
+              </TableCell>
+              <TableCell>
+                <Skeleton class="h-4 w-full" />
+              </TableCell>
+              <TableCell>
+                <Skeleton class="h-4 w-full" />
+              </TableCell>
+              <TableCell>
+                <Skeleton class="h-4 w-full" />
+              </TableCell>
+            </TableRow>
+          </template>
+          <template v-else>
+            <TableEmpty v-if="meetings.length === 0" :colspan="7">
+              <div class="text-center py-8">
+                <p class="text-muted-foreground mb-4">
+                  {{
+                    hasActiveFilters
+                      ? 'No meetings found matching your current filters.'
+                      : 'No meetings found.'
+                  }}
+                </p>
+                <div v-if="hasActiveFilters" class="mb-4">
+                  <p class="text-sm text-muted-foreground mb-2">Try adjusting your filters or</p>
+                  <Button variant="outline" size="sm" @click="clearFilters">
+                    Clear all filters
+                  </Button>
                 </div>
-              </div>
-            </TableCell>
-            <TableCell>{{ meeting.duration }} min</TableCell>
-            <TableCell>
-              <span class="text-sm">
-                {{ meeting.type === 'online' ? 'Zoom Meeting' : meeting.location?.name || 'N/A' }}
-              </span>
-            </TableCell>
-            <TableCell class="text-right">
-              <div class="flex items-center justify-end gap-2">
                 <Button
-                  variant="ghost"
-                  size="icon"
-                  :disabled="isLoading"
-                  @click="openDetailsDialog(meeting)"
-                  :data-testid="`view-details-${meeting.id}`"
+                  v-if="canCreateMeetings && !hasActiveFilters"
+                  @click="openCreateDialog"
+                  variant="outline"
                 >
-                  <Eye class="w-4 h-4" />
+                  <Plus class="h-4 w-4 mr-2" />
+                  Create your first meeting
                 </Button>
-                <DropdownMenu>
-                  <DropdownMenuTrigger as-child>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      :disabled="
-                        isLoading || !(canEditMeeting(meeting) || canDeleteMeeting(meeting))
-                      "
-                      :data-testid="`meeting-actions-${meeting.id}`"
-                    >
-                      <MoreHorizontal class="w-4 h-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent
-                    v-if="canEditMeeting(meeting) || canDeleteMeeting(meeting)"
-                    align="end"
-                  >
-                    <DropdownMenuItem
-                      v-if="canEditMeeting(meeting)"
-                      @click="openEditDialog(meeting)"
-                    >
-                      Edit
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      v-if="canDeleteMeeting(meeting)"
-                      @click="openDeleteDialog(meeting)"
-                      class="text-destructive focus:text-destructive"
-                    >
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
               </div>
-            </TableCell>
-          </TableRow>
+            </TableEmpty>
+
+            <TableRow v-for="meeting in meetings" :key="meeting.id">
+              <TableCell>
+                <div>
+                  <span class="block max-w-xs truncate font-medium">{{ meeting.topic }}</span>
+                  <span
+                    v-if="meeting.description"
+                    class="block max-w-xs truncate text-sm text-muted-foreground"
+                  >
+                    {{ meeting.description }}
+                  </span>
+                </div>
+              </TableCell>
+              <TableCell>
+                <Badge
+                  :variant="getStatusVariant(getMeetingStatus(meeting.start_time, meeting.duration))"
+                >
+                  {{ getMeetingStatus(meeting.start_time, meeting.duration) }}
+                </Badge>
+              </TableCell>
+              <TableCell>
+                <Badge :variant="getTypeVariant(meeting.type)">
+                  {{ meeting.type }}
+                </Badge>
+              </TableCell>
+              <TableCell>
+                <div class="text-sm">
+                  <div>{{ new Date(meeting.start_time).toLocaleDateString() }}</div>
+                  <div class="text-muted-foreground">
+                    {{ new Date(meeting.start_time).toLocaleTimeString() }}
+                  </div>
+                </div>
+              </TableCell>
+              <TableCell>{{ meeting.duration }} min</TableCell>
+              <TableCell>
+                <span class="text-sm">
+                  {{ meeting.type === 'online' ? 'Zoom Meeting' : meeting.location?.name || 'N/A' }}
+                </span>
+              </TableCell>
+              <TableCell class="text-right">
+                <div class="flex items-center justify-end gap-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    :disabled="isLoading"
+                    @click="openDetailsDialog(meeting)"
+                    :data-testid="`view-details-${meeting.id}`"
+                  >
+                    <Eye class="w-4 h-4" />
+                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger as-child>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        :disabled="
+                          isLoading || !(canEditMeeting(meeting) || canDeleteMeeting(meeting))
+                        "
+                        :data-testid="`meeting-actions-${meeting.id}`"
+                      >
+                        <MoreHorizontal class="w-4 h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      v-if="canEditMeeting(meeting) || canDeleteMeeting(meeting)"
+                      align="end"
+                    >
+                      <DropdownMenuItem
+                        v-if="canEditMeeting(meeting)"
+                        @click="openEditDialog(meeting)"
+                      >
+                        Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        v-if="canDeleteMeeting(meeting)"
+                        @click="openDeleteDialog(meeting)"
+                        class="text-destructive focus:text-destructive"
+                      >
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </TableCell>
+            </TableRow>
+          </template>
         </TableBody>
       </Table>
     </div>
 
     <!-- Pagination -->
-    <div
-      v-if="pagination.totalPages > 1"
-      class="flex items-center justify-between"
+    <PaginationControls
+      :current-page="pagination.currentPage"
+      :total-pages="pagination.totalPages"
+      :total-items="pagination.totalItems"
+      :items-per-page="pagination.itemsPerPage"
+      :has-next-page="pagination.hasNextPage"
+      :has-prev-page="pagination.hasPrevPage"
+      :is-loading="isLoading"
+      :error="error"
+      @page-change="handlePageChange"
+      @first-page="handleFirstPage"
+      @last-page="handleLastPage"
+      @next-page="handleNextPage"
+      @prev-page="handlePrevPage"
+      @retry="retryFetch"
       data-testid="pagination"
-    >
-      <div class="text-sm text-muted-foreground">
-        Showing {{ (pagination.currentPage - 1) * pagination.itemsPerPage + 1 }} to
-        {{ Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalItems) }}
-        of {{ pagination.totalItems }} meetings
-      </div>
-
-      <Pagination
-        :total="pagination.totalItems"
-        :items-per-page="pagination.itemsPerPage"
-        :page="pagination.currentPage"
-        :sibling-count="1"
-        show-edges
-        @update:page="goToPage"
-        v-slot="{ page }"
-      >
-        <PaginationContent>
-          <PaginationPrevious
-            @click="prevPage"
-            :disabled="!pagination.hasPrevPage || isLoading"
-            data-testid="pagination-previous"
-          />
-
-          <PaginationItem v-for="item in pagination.totalPages" :key="item" :value="item" as-child>
-            <Button
-              class="w-10 h-10 p-0"
-              :variant="item === page ? 'default' : 'outline'"
-              @click="() => goToPage(item)"
-            >
-              {{ item }}
-            </Button>
-          </PaginationItem>
-
-          <PaginationNext
-            @click="nextPage"
-            :disabled="!pagination.hasNextPage || isLoading"
-            data-testid="pagination-next"
-          />
-        </PaginationContent>
-      </Pagination>
-    </div>
+    />
 
     <!-- Dialogs -->
     <CreateMeetingDialog v-model:open="showCreateDialog" />
@@ -609,6 +618,7 @@ onMounted(() => {
       title="Delete Meeting"
       description="Are you sure you want to delete this meeting? This action cannot be undone."
       @confirm="handleDeleteMeeting"
-    />
+    ></ConfirmationDialog>
   </div>
 </template>
+
