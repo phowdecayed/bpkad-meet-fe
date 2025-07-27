@@ -167,6 +167,16 @@ const hasActiveFilters = computed(() => {
   )
 })
 
+const getActiveFilterCount = () => {
+  let count = 0
+  if (searchQuery.value.trim() !== '') count++
+  if (selectedType.value !== undefined && selectedType.value !== 'all') count++
+  if (selectedLocation.value.trim() !== '') count++
+  if (startDate.value !== '') count++
+  if (endDate.value !== '') count++
+  return count
+}
+
 // Extract unique locations from meetings for dynamic filtering
 const availableLocations = computed(() => {
   const locationSet = new Set<string>()
@@ -248,6 +258,7 @@ async function prevPage() {
 async function retryFetch() {
   meetingsStore.clearError()
   const params = buildQueryParams()
+  params.page = pagination.value.currentPage
   await meetingsStore.fetchMeetings(params)
 }
 
@@ -280,6 +291,9 @@ onMounted(() => {
               ? 'Manage all meetings in your organization.'
               : 'Manage your meetings.'
           }}
+          <span v-if="hasActiveFilters" class="text-primary font-medium">
+            ({{ getActiveFilterCount() }} filter{{ getActiveFilterCount() > 1 ? 's' : '' }} active)
+          </span>
         </p>
       </div>
     </div>
@@ -295,6 +309,7 @@ onMounted(() => {
             v-model="searchQuery"
             placeholder="Search by topic or description..."
             class="pl-10"
+            :class="{ 'border-primary': searchQuery.trim() !== '' }"
           />
         </div>
       </div>
@@ -303,7 +318,10 @@ onMounted(() => {
         <div class="space-y-2">
           <Label for="type">Type</Label>
           <Select v-model="selectedType">
-            <SelectTrigger id="type">
+            <SelectTrigger
+              id="type"
+              :class="{ 'border-primary': selectedType !== undefined && selectedType !== 'all' }"
+            >
               <SelectValue placeholder="All types" />
             </SelectTrigger>
             <SelectContent>
@@ -318,7 +336,10 @@ onMounted(() => {
         <div class="space-y-2">
           <Label for="location">Location ({{ locationsCount }} available)</Label>
           <Select v-model="selectedLocation">
-            <SelectTrigger id="location">
+            <SelectTrigger
+              id="location"
+              :class="{ 'border-primary': selectedLocation.trim() !== '' }"
+            >
               <SelectValue placeholder="All locations" />
             </SelectTrigger>
             <SelectContent>
@@ -336,17 +357,37 @@ onMounted(() => {
 
         <div class="space-y-2">
           <Label for="start-date">From</Label>
-          <Input id="start-date" v-model="startDate" type="date" />
+          <Input
+            id="start-date"
+            v-model="startDate"
+            type="date"
+            :class="{ 'border-primary': startDate !== '' }"
+          />
         </div>
 
         <div class="space-y-2">
           <Label for="end-date">To</Label>
-          <Input id="end-date" v-model="endDate" type="date" />
+          <Input
+            id="end-date"
+            v-model="endDate"
+            type="date"
+            :class="{ 'border-primary': endDate !== '' }"
+          />
         </div>
       </div>
 
       <div class="flex gap-2">
-        <Button variant="outline" @click="clearFilters" size="sm"> Clear </Button>
+        <Button
+          variant="outline"
+          @click="clearFilters"
+          size="sm"
+          :class="{ 'border-primary text-primary': hasActiveFilters }"
+        >
+          Clear
+          <Badge v-if="hasActiveFilters" variant="secondary" class="ml-2 h-4 px-1 text-xs">
+            {{ getActiveFilterCount() }}
+          </Badge>
+        </Button>
         <Button variant="outline" @click="retryFetch" size="sm" :disabled="isLoading">
           <RefreshCw :class="['h-4 w-4', isLoading && 'animate-spin']" />
         </Button>
@@ -399,10 +440,16 @@ onMounted(() => {
               <p class="text-muted-foreground mb-4">
                 {{
                   hasActiveFilters
-                    ? 'No meetings found matching your criteria.'
+                    ? 'No meetings found matching your current filters.'
                     : 'No meetings found.'
                 }}
               </p>
+              <div v-if="hasActiveFilters" class="mb-4">
+                <p class="text-sm text-muted-foreground mb-2">Try adjusting your filters or</p>
+                <Button variant="outline" size="sm" @click="clearFilters">
+                  Clear all filters
+                </Button>
+              </div>
               <Button
                 v-if="canCreateMeetings && !hasActiveFilters"
                 @click="openCreateDialog"
