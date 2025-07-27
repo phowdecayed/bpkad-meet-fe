@@ -2,6 +2,7 @@
 import { ref, onMounted, computed, watch } from 'vue'
 import { useMeetingsStore, type MeetingQueryParams } from '@/stores/meetings'
 import { useAuthStore } from '@/stores/auth'
+
 import { storeToRefs } from 'pinia'
 import type { Meeting } from '@/types/meeting'
 import { Button } from '@/components/ui/button'
@@ -63,6 +64,7 @@ const selectedMeeting = ref<Meeting | null>(null)
 // Search and filter states
 const searchQuery = ref('')
 const selectedType = ref<string | undefined>(undefined)
+const selectedLocation = ref('')
 const startDate = ref('')
 const endDate = ref('')
 
@@ -158,22 +160,42 @@ const getTypeVariant = (type: string): BadgeVariants['variant'] => {
 const hasActiveFilters = computed(() => {
   return (
     searchQuery.value.trim() !== '' ||
-    selectedType.value !== undefined ||
+    (selectedType.value !== undefined && selectedType.value !== 'all') ||
+    selectedLocation.value.trim() !== '' ||
     startDate.value !== '' ||
     endDate.value !== ''
   )
 })
+
+// Extract unique locations from meetings for dynamic filtering
+const availableLocations = computed(() => {
+  const locationSet = new Set<string>()
+  meetings.value.forEach((meeting) => {
+    if (meeting.location?.name) {
+      locationSet.add(meeting.location.name)
+    }
+  })
+  return Array.from(locationSet).sort()
+})
+
+// Debug computed property for locations
+const locationsCount = computed(() => availableLocations.value.length)
 
 // Search and filter functionality
 const buildQueryParams = (): MeetingQueryParams => {
   const params: MeetingQueryParams = {}
 
   if (searchQuery.value.trim()) {
-    params.search = searchQuery.value.trim()
+    params.topic = searchQuery.value.trim()
   }
 
-  if (selectedType.value) {
+  // Exclude 'all' and undefined values from type parameter
+  if (selectedType.value && selectedType.value !== 'all') {
     params.type = selectedType.value
+  }
+
+  if (selectedLocation.value.trim()) {
+    params.location = selectedLocation.value.trim()
   }
 
   if (startDate.value) {
@@ -193,7 +215,13 @@ const debouncedSearch = debounce(() => {
 
 // Watch for search changes
 watch(
-  () => [searchQuery.value, selectedType.value, startDate.value, endDate.value],
+  () => [
+    searchQuery.value,
+    selectedType.value,
+    selectedLocation.value,
+    startDate.value,
+    endDate.value,
+  ],
   debouncedSearch,
 )
 
@@ -226,8 +254,12 @@ async function retryFetch() {
 function clearFilters() {
   searchQuery.value = ''
   selectedType.value = undefined
+  selectedLocation.value = ''
   startDate.value = ''
   endDate.value = ''
+
+  // Immediately trigger a fresh fetch with no filters
+  goToPage(1)
 }
 
 // Initialize
@@ -267,7 +299,7 @@ onMounted(() => {
         </div>
       </div>
 
-      <div class="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-2">
+      <div class="grid grid-cols-1 gap-4 md:grid-cols-4 md:gap-2">
         <div class="space-y-2">
           <Label for="type">Type</Label>
           <Select v-model="selectedType">
@@ -279,6 +311,25 @@ onMounted(() => {
               <SelectItem value="online">Online</SelectItem>
               <SelectItem value="offline">Offline</SelectItem>
               <SelectItem value="hybrid">Hybrid</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div class="space-y-2">
+          <Label for="location">Location ({{ locationsCount }} available)</Label>
+          <Select v-model="selectedLocation">
+            <SelectTrigger id="location">
+              <SelectValue placeholder="All locations" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">All locations</SelectItem>
+              <SelectItem
+                v-for="locationName in availableLocations"
+                :key="locationName"
+                :value="locationName"
+              >
+                {{ locationName }}
+              </SelectItem>
             </SelectContent>
           </Select>
         </div>

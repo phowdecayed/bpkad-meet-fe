@@ -9,22 +9,26 @@
 - **Description:** Retrieves all meetings within a specific date range, suitable for a calendar view. **Requires `view meetings` permission.**
 - **Headers:** `Authorization: Bearer <token>`
 - **Query Parameters:**
-| Parameter | Type | Validation | Description |
-|---|---|---|---|
-| `start_date` | date | required | The start of the date range (e.g., `2025-08-01`). |
-| `end_date` | date | required | The end of the date range (e.g., `2025-08-31`). |
+  | Parameter | Type | Validation | Description |
+  |---|---|---|---|
+  | `start_date` | date | required | The start of the date range (e.g., `2025-08-01`). |
+  | `end_date` | date | required | The end of the date range (e.g., `2025-08-31`). |
 - **Success Response (200):** A collection of meeting objects within the specified range.
 
 ### 2. List All Meetings (Paginated)
 
 - **Method:** `GET`
 - **Endpoint:** `/api/meetings`
-- **Description:** Retrieves a paginated list of meetings. If the user has the `view meetings` permission, it returns all meetings. Otherwise, it returns only the meetings organized by the authenticated user.
+- **Description:** Retrieves a paginated list of meetings. If the user has the `view meetings` permission, it returns all meetings. Otherwise, it returns only the meetings organized by the authenticated user. It supports filtering by topic, start date, location, and type.
 - **Headers:** `Authorization: Bearer <token>`
 - **Query Parameters:**
-| Parameter | Type | Description |
-|---|---|---|
-| `page` | integer | The page number for pagination. |
+  | Parameter | Type | Description |
+  |---|---|---|
+  | `page` | integer | The page number for pagination. |
+  | `topic` | string | Search for meetings by topic. |
+  | `start_time` | date | Filter meetings by a specific date (e.g., `2025-07-28`). |
+  | `location` | string | Filter meetings by location name. |
+  | `type` | string | Filter meetings by type (`online`, `offline`, or `hybrid`). |
 - **Success Response (200):** A paginated list of meeting objects.
 
 ### 3. Create a Meeting
@@ -35,17 +39,17 @@
 - **Headers:** `Authorization: Bearer <token>`
 
 - **Payload Parameters:**
-| Parameter | Type | Validation | Description |
-|---|---|---|---|
-| `topic` | string | required, max:255 | The title or topic of the meeting. |
-| `description` | string | nullable | A longer description of the meeting. |
-| `start_time`| date | required | The meeting's start time in a valid date format (e.g., ISO 8601). |
-| `duration` | integer | required, min:1 | The meeting's duration in minutes. |
-| `type` | string | required, in:online,offline,hybrid | The type of meeting. |
-| `location_id`| integer | required_if:type=offline,hybrid | The ID of a `MeetingLocation`. |
-| `password` | string | nullable, max:10 | The meeting password (for online/hybrid meetings). |
-| `settings` | object | nullable | An object of Zoom-specific settings. See Zoom API docs. |
-| `participants` | array | nullable | An array of user IDs to invite to the meeting. |
+  | Parameter | Type | Validation | Description |
+  |---|---|---|---|
+  | `topic` | string | required, max:255 | The title or topic of the meeting. |
+  | `description` | string | nullable | A longer description of the meeting. |
+  | `start_time`| date | required | The meeting's start time in a valid date format (e.g., ISO 8601). |
+  | `duration` | integer | required, min:1 | The meeting's duration in minutes. |
+  | `type` | string | required, in:online,offline,hybrid | The type of meeting. |
+  | `location_id`| integer | required_if:type=offline,hybrid | The ID of a `MeetingLocation`. |
+  | `password` | string | nullable, max:10 | The meeting password (for online/hybrid meetings). |
+  | `settings` | object | nullable | An object of Zoom-specific settings. See Zoom API docs. |
+  | `participants` | array | nullable | An array of user IDs to invite to the meeting. |
 
 - **Success Response (201):** Returns the newly created meeting object with its relations.
 
@@ -95,14 +99,14 @@
 - **Headers:** `Authorization: Bearer <token>`
 
 - **Payload Parameters:** (All are optional)
-| Parameter | Type | Validation | Description |
-|---|---|---|---|
-| `topic` | string | sometimes, required, max:255 | The title of the meeting. |
-| `description` | string | nullable | A longer description. |
-| `start_time`| date | sometimes, required | The meeting's start time. |
-| `duration` | integer | sometimes, required, min:1 | The meeting's duration in minutes. |
-| `location_id`| integer | nullable, exists:meeting_locations,id | The ID of a `MeetingLocation`. |
-| `settings` | object | nullable | An object of Zoom-specific settings. |
+  | Parameter | Type | Validation | Description |
+  |---|---|---|---|
+  | `topic` | string | sometimes, required, max:255 | The title of the meeting. |
+  | `description` | string | nullable | A longer description. |
+  | `start_time`| date | sometimes, required | The meeting's start time. |
+  | `duration` | integer | sometimes, required, min:1 | The meeting's duration in minutes. |
+  | `location_id`| integer | nullable, exists:meeting_locations,id | The ID of a `MeetingLocation`. |
+  | `settings` | object | nullable | An object of Zoom-specific settings. |
 
 - **Success Response (200):** Returns the updated meeting object with relations.
 
@@ -115,7 +119,7 @@
 - **Success Response (200):**
   ```json
   {
-      "message": "Meeting deleted successfully."
+    "message": "Meeting deleted successfully."
   }
   ```
 
@@ -134,9 +138,9 @@
 - **Description:** Invites a user to a meeting. Requires the user to be the meeting organizer or have the `edit meetings` permission.
 - **Headers:** `Authorization: Bearer <token>`
 - **Payload:**
-| Parameter | Type | Validation | Description |
-|---|---|---|---|
-| `user_id` | integer | required, exists:users,id | The ID of the user to invite. |
+  | Parameter | Type | Validation | Description |
+  |---|---|---|---|
+  | `user_id` | integer | required, exists:users,id | The ID of the user to invite. |
 - **Success Response (200):** `{"message": "User invited successfully."}`
 
 ### 9. Remove Participant
