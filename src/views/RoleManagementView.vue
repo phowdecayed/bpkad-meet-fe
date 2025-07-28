@@ -4,7 +4,6 @@ import { storeToRefs } from 'pinia'
 import { useUsersStore } from '@/stores/users'
 import type { Role, Permission } from '@/types/user'
 import ConfirmationDialog from '@/components/ConfirmationDialog.vue'
-import axios from 'axios'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -104,11 +103,8 @@ async function handleSave() {
     }
     isDialogOpen.value = false
   } catch (error: unknown) {
-    if (axios.isAxiosError(error) && error.response) {
-      toast.error('Save Failed', { description: error.response.data.message })
-    } else {
-      toast.error('Save Failed', { description: 'An unexpected error occurred.' })
-    }
+    const message = error instanceof Error ? error.message : 'An unexpected error occurred.'
+    toast.error('Save Failed', { description: message })
   } finally {
     isSaving.value = false
   }
@@ -125,11 +121,8 @@ async function onConfirmDelete() {
     await usersStore.deleteRole(roleToDelete.value.id)
     toast.success('Role Deleted', { description: `${roleToDelete.value.name} has been deleted.` })
   } catch (error: unknown) {
-    if (axios.isAxiosError(error) && error.response) {
-      toast.error('Delete Failed', { description: error.response.data.message })
-    } else {
-      toast.error('Delete Failed', { description: 'An unexpected error occurred.' })
-    }
+    const message = error instanceof Error ? error.message : 'An unexpected error occurred.'
+    toast.error('Delete Failed', { description: message })
   } finally {
     roleToDelete.value = null
   }
@@ -137,13 +130,13 @@ async function onConfirmDelete() {
 </script>
 
 <template>
-  <div class="flex-1 space-y-4 p-2 pt-4 sm:p-4 md:p-8 overflow-x-hidden">
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+  <div class="flex-1 space-y-4 p-4 pt-6 md:p-8">
+    <div class="flex items-center justify-between">
       <div class="space-y-1">
-        <h1 class="text-2xl sm:text-3xl font-bold">Role Management</h1>
+        <h1 class="text-3xl font-bold">Role Management</h1>
         <p class="text-sm text-muted-foreground">Define roles and assign permissions to them.</p>
       </div>
-      <Button @click="openCreateDialog" class="w-full sm:w-auto">
+      <Button @click="openCreateDialog">
         <PlusCircle class="mr-2 h-4 w-4" />
         Create Role
       </Button>
@@ -153,50 +146,44 @@ async function onConfirmDelete() {
       <Skeleton class="h-48 w-full" />
     </div>
     <div v-else>
-      <div class="overflow-x-auto rounded-md border">
-        <Table class="min-w-[300px]">
-          <TableHeader>
-            <TableRow>
-              <TableHead class="min-w-[80px]">Role Name</TableHead>
-              <TableHead class="min-w-[120px]">Permissions</TableHead>
-              <TableHead class="text-right min-w-[60px]"> Actions </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            <TableRow v-for="role in roles" :key="role.id">
-              <TableCell class="font-medium">
-                {{ role.name }}
-              </TableCell>
-              <TableCell>
-                <div class="flex flex-wrap gap-1">
-                  <Badge
-                    v-for="permission in role.permissions"
-                    :key="permission.id"
-                    variant="outline"
-                    class="text-xs"
-                  >
-                    {{ permission.name }}
-                  </Badge>
-                </div>
-              </TableCell>
-              <TableCell class="text-right">
-                <div class="flex justify-end gap-1">
-                  <Button variant="ghost" size="icon" @click="openEditDialog(role)" class="h-8 w-8">
-                    <Pencil class="h-3 w-3" />
-                  </Button>
-                  <Button variant="ghost" size="icon" @click="handleDelete(role)" class="h-8 w-8">
-                    <Trash2 class="h-3 w-3" />
-                  </Button>
-                </div>
-              </TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
-      </div>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Role Name</TableHead>
+            <TableHead>Permissions</TableHead>
+            <TableHead class="text-right"> Actions </TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          <TableRow v-for="role in roles" :key="role.id">
+            <TableCell>
+              {{ role.name }}
+            </TableCell>
+            <TableCell>
+              <Badge
+                v-for="permission in role.permissions"
+                :key="permission.id"
+                variant="outline"
+                class="mr-1"
+              >
+                {{ permission.name }}
+              </Badge>
+            </TableCell>
+            <TableCell class="text-right">
+              <Button variant="ghost" size="icon" @click="openEditDialog(role)">
+                <Pencil class="h-4 w-4" />
+              </Button>
+              <Button variant="ghost" size="icon" @click="handleDelete(role)">
+                <Trash2 class="h-4 w-4" />
+              </Button>
+            </TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
     </div>
 
     <Dialog v-model:open="isDialogOpen">
-      <DialogContent class="max-w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto overflow-x-hidden">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{{ isEditing ? 'Edit Role' : 'Create Role' }}</DialogTitle>
           <DialogDescription>
@@ -207,28 +194,20 @@ async function onConfirmDelete() {
             }}
           </DialogDescription>
         </DialogHeader>
-        <form v-if="permissions" class="space-y-4" @submit.prevent="handleSave">
+        <form class="space-y-4" @submit.prevent="handleSave">
           <div class="grid gap-2">
-            <Label for="name">Role Name</Label>
+            <Label for="name">Name</Label>
             <Input id="name" v-model="form.name" />
           </div>
           <div class="grid gap-2">
             <Label>Permissions</Label>
-            <div class="space-y-4">
-              <div
-                v-for="(permissionGroup, groupName) in groupedPermissions"
-                :key="groupName"
-                class="rounded-md border p-2 sm:p-4"
-              >
+            <div class="space-y-2 rounded-md border p-4">
+              <div v-for="(permissionGroup, groupName) in groupedPermissions" :key="groupName" class="mb-4">
                 <h4 class="mb-2 font-semibold capitalize">
                   {{ groupName }}
                 </h4>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <div
-                    v-for="permission in permissionGroup"
-                    :key="permission.id"
-                    class="flex items-center space-x-2"
-                  >
+                <div class="space-y-2">
+                  <div v-for="permission in permissionGroup" :key="permission.id" class="flex items-center space-x-2">
                     <Checkbox
                       :id="`permission-${permission.id}`"
                       :checked="selectedPermissions.includes(permission.id)"
