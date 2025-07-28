@@ -317,7 +317,8 @@ onMounted(() => {
     </div>
 
     <!-- Search and Filters -->
-    <div class="flex flex-col gap-4 md:flex-row md:items-end">
+    <div class="space-y-4">
+      <!-- Search Bar - Full width -->
       <div class="flex-1 space-y-2">
         <Label for="search">Search meetings</Label>
         <div class="relative">
@@ -332,94 +333,101 @@ onMounted(() => {
         </div>
       </div>
 
-      <div class="grid grid-cols-1 gap-4 md:grid-cols-5 md:gap-2">
-        <div class="space-y-2">
-          <Label for="type">Type</Label>
-          <Select v-model="selectedType">
-            <SelectTrigger
-              id="type"
-              :class="{ 'border-primary': selectedType !== undefined && selectedType !== 'all' }"
-            >
-              <SelectValue placeholder="All types" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All types</SelectItem>
-              <SelectItem value="online">Online</SelectItem>
-              <SelectItem value="offline">Offline</SelectItem>
-              <SelectItem value="hybrid">Hybrid</SelectItem>
-            </SelectContent>
-          </Select>
+      <!-- Filters - Responsive grid -->
+      <div class="flex flex-col lg:flex-row gap-4">
+        <div class="flex-1">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div class="space-y-2">
+              <Label for="type">Type</Label>
+              <Select v-model="selectedType">
+                <SelectTrigger
+                  id="type"
+                  :class="{ 'border-primary': selectedType !== undefined && selectedType !== 'all' }"
+                >
+                  <SelectValue placeholder="All types" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All types</SelectItem>
+                  <SelectItem value="online">Online</SelectItem>
+                  <SelectItem value="offline">Offline</SelectItem>
+                  <SelectItem value="hybrid">Hybrid</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div class="space-y-2">
+              <Label for="location">Location ({{ locationsCount }} available)</Label>
+              <Select v-model="selectedLocation">
+                <SelectTrigger id="location" :class="{ 'border-primary': selectedLocation !== 'all' }">
+                  <SelectValue placeholder="All locations" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All locations</SelectItem>
+                  <SelectItem
+                    v-for="locationName in availableLocations"
+                    :key="locationName"
+                    :value="locationName"
+                  >
+                    {{ locationName }}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div class="space-y-2">
+              <Label for="start-date">From</Label>
+              <Input
+                id="start-date"
+                v-model="startDate"
+                type="date"
+                :class="{ 'border-primary': startDate !== '' }"
+              />
+            </div>
+
+            <div class="space-y-2">
+              <Label for="end-date">To</Label>
+              <Input
+                id="end-date"
+                v-model="endDate"
+                type="date"
+                :class="{ 'border-primary': endDate !== '' }"
+              />
+            </div>
+
+            <div class="space-y-2">
+              <Label for="per-page">Per Page</Label>
+              <Select v-model="perPage">
+                <SelectTrigger id="per-page">
+                  <SelectValue placeholder="10" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="5">5</SelectItem>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="20">20</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
         </div>
 
-        <div class="space-y-2">
-          <Label for="location">Location ({{ locationsCount }} available)</Label>
-          <Select v-model="selectedLocation">
-            <SelectTrigger id="location" :class="{ 'border-primary': selectedLocation !== 'all' }">
-              <SelectValue placeholder="All locations" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All locations</SelectItem>
-              <SelectItem
-                v-for="locationName in availableLocations"
-                :key="locationName"
-                :value="locationName"
-              >
-                {{ locationName }}
-              </SelectItem>
-            </SelectContent>
-          </Select>
+        <!-- Action Buttons - Align to bottom on large screens -->
+        <div class="flex flex-col lg:flex-row gap-2 lg:items-end lg:self-end">
+          <Button
+            variant="outline"
+            @click="clearFilters"
+            size="sm"
+            :class="{ 'border-primary text-primary': hasActiveFilters }"
+          >
+            Clear
+            <Badge v-if="hasActiveFilters" variant="secondary" class="ml-2 h-4 px-1 text-xs">
+              {{ getActiveFilterCount() }}
+            </Badge>
+          </Button>
+          <Button variant="outline" @click="retryFetch" size="sm" :disabled="isLoading">
+            <RefreshCw :class="['h-4 w-4', isLoading && 'animate-spin']" />
+          </Button>
         </div>
-
-        <div class="space-y-2">
-          <Label for="start-date">From</Label>
-          <Input
-            id="start-date"
-            v-model="startDate"
-            type="date"
-            :class="{ 'border-primary': startDate !== '' }"
-          />
-        </div>
-
-        <div class="space-y-2">
-          <Label for="end-date">To</Label>
-          <Input
-            id="end-date"
-            v-model="endDate"
-            type="date"
-            :class="{ 'border-primary': endDate !== '' }"
-          />
-        </div>
-        <div class="space-y-2">
-          <Label for="per-page">Per Page</Label>
-          <Select v-model="perPage">
-            <SelectTrigger id="per-page">
-              <SelectValue placeholder="10" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="5">5</SelectItem>
-              <SelectItem value="10">10</SelectItem>
-              <SelectItem value="20">20</SelectItem>
-              <SelectItem value="50">50</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      <div class="flex gap-2">
-        <Button
-          variant="outline"
-          @click="clearFilters"
-          size="sm"
-          :class="{ 'border-primary text-primary': hasActiveFilters }"
-        >
-          Clear
-          <Badge v-if="hasActiveFilters" variant="secondary" class="ml-2 h-4 px-1 text-xs">
-            {{ getActiveFilterCount() }}
-          </Badge>
-        </Button>
-        <Button variant="outline" @click="retryFetch" size="sm" :disabled="isLoading">
-          <RefreshCw :class="['h-4 w-4', isLoading && 'animate-spin']" />
-        </Button>
       </div>
     </div>
 
@@ -435,17 +443,17 @@ onMounted(() => {
     </Alert>
 
     <!-- Meetings Table -->
-    <div class="border rounded-lg">
-      <Table>
+    <div class="border rounded-lg overflow-x-auto">
+      <Table class="min-w-[800px]">
         <TableHeader>
           <TableRow>
-            <TableHead>Topic</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Type</TableHead>
-            <TableHead>Start Time</TableHead>
-            <TableHead>Duration</TableHead>
-            <TableHead>Location</TableHead>
-            <TableHead class="text-right">Actions</TableHead>
+            <TableHead class="min-w-[200px]">Topic</TableHead>
+            <TableHead class="min-w-[100px]">Status</TableHead>
+            <TableHead class="min-w-[100px]">Type</TableHead>
+            <TableHead class="min-w-[120px]">Start Time</TableHead>
+            <TableHead class="min-w-[80px]">Duration</TableHead>
+            <TableHead class="min-w-[120px]">Location</TableHead>
+            <TableHead class="text-right min-w-[100px]">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
