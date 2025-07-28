@@ -43,6 +43,9 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function login(credentials: { email: string; password: string }) {
     try {
+      // Get CSRF token first
+      await getCsrfToken()
+      
       const response = await axios.post('/api/login', credentials)
       const { access_token } = response.data
       setToken(access_token)
@@ -76,22 +79,27 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function changeName(name: string) {
+    await getCsrfToken()
     return axios.post('/api/user/change-name', { name })
   }
 
   async function changeEmail(email: string) {
+    await getCsrfToken()
     return axios.post('/api/user/change-email', { email })
   }
 
   async function changePassword(payload: ChangePasswordPayload) {
+    await getCsrfToken()
     return axios.post('/api/user/change-password', payload)
   }
 
   async function forgotPassword(email: string) {
+    await getCsrfToken()
     return axios.post('/api/forgot-password', { email })
   }
 
   async function resetPassword(payload: ResetPasswordPayload) {
+    await getCsrfToken()
     return axios.post('/api/reset-password', payload)
   }
 
@@ -105,7 +113,12 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function resendVerificationEmail() {
+    await getCsrfToken()
     return axios.post('/api/email/verification-notification')
+  }
+
+  async function getCsrfToken() {
+    return axios.get('/sanctum/csrf-cookie')
   }
 
   const hasPermission = computed(() => {
@@ -134,6 +147,7 @@ export const useAuthStore = defineStore('auth', () => {
     resetPassword,
     verifyEmail,
     resendVerificationEmail,
+    getCsrfToken,
     hasPermission,
   }
 })

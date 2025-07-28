@@ -34,6 +34,9 @@ const authStore = useAuthStore()
 
 async function initializeApp() {
   try {
+    // Always get CSRF token on app initialization
+    await authStore.getCsrfToken()
+    
     if (authStore.token) {
       await authStore.fetchUser()
     }

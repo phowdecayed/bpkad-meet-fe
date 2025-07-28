@@ -137,13 +137,13 @@ async function onConfirmDelete() {
 </script>
 
 <template>
-  <div class="flex-1 space-y-4 p-4 pt-6 md:p-8">
-    <div class="flex items-center justify-between">
+  <div class="flex-1 space-y-4 p-2 pt-4 sm:p-4 md:p-8 overflow-x-hidden">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div class="space-y-1">
-        <h1 class="text-3xl font-bold">Role Management</h1>
+        <h1 class="text-2xl sm:text-3xl font-bold">Role Management</h1>
         <p class="text-sm text-muted-foreground">Define roles and assign permissions to them.</p>
       </div>
-      <Button @click="openCreateDialog">
+      <Button @click="openCreateDialog" class="w-full sm:w-auto">
         <PlusCircle class="mr-2 h-4 w-4" />
         Create Role
       </Button>
@@ -153,44 +153,50 @@ async function onConfirmDelete() {
       <Skeleton class="h-48 w-full" />
     </div>
     <div v-else>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Role Name</TableHead>
-            <TableHead>Permissions</TableHead>
-            <TableHead class="text-right"> Actions </TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          <TableRow v-for="role in roles" :key="role.id">
-            <TableCell class="font-medium">
-              {{ role.name }}
-            </TableCell>
-            <TableCell>
-              <Badge
-                v-for="permission in role.permissions"
-                :key="permission.id"
-                variant="outline"
-                class="mr-1 mb-1"
-              >
-                {{ permission.name }}
-              </Badge>
-            </TableCell>
-            <TableCell class="text-right">
-              <Button variant="ghost" size="icon" @click="openEditDialog(role)">
-                <Pencil class="h-4 w-4" />
-              </Button>
-              <Button variant="ghost" size="icon" @click="handleDelete(role)">
-                <Trash2 class="h-4 w-4" />
-              </Button>
-            </TableCell>
-          </TableRow>
-        </TableBody>
-      </Table>
+      <div class="overflow-x-auto rounded-md border">
+        <Table class="min-w-[300px]">
+          <TableHeader>
+            <TableRow>
+              <TableHead class="min-w-[80px]">Role Name</TableHead>
+              <TableHead class="min-w-[120px]">Permissions</TableHead>
+              <TableHead class="text-right min-w-[60px]"> Actions </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            <TableRow v-for="role in roles" :key="role.id">
+              <TableCell class="font-medium">
+                {{ role.name }}
+              </TableCell>
+              <TableCell>
+                <div class="flex flex-wrap gap-1">
+                  <Badge
+                    v-for="permission in role.permissions"
+                    :key="permission.id"
+                    variant="outline"
+                    class="text-xs"
+                  >
+                    {{ permission.name }}
+                  </Badge>
+                </div>
+              </TableCell>
+              <TableCell class="text-right">
+                <div class="flex justify-end gap-1">
+                  <Button variant="ghost" size="icon" @click="openEditDialog(role)" class="h-8 w-8">
+                    <Pencil class="h-3 w-3" />
+                  </Button>
+                  <Button variant="ghost" size="icon" @click="handleDelete(role)" class="h-8 w-8">
+                    <Trash2 class="h-3 w-3" />
+                  </Button>
+                </div>
+              </TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
+      </div>
     </div>
 
     <Dialog v-model:open="isDialogOpen">
-      <DialogContent class="max-w-2xl">
+      <DialogContent class="max-w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto overflow-x-hidden">
         <DialogHeader>
           <DialogTitle>{{ isEditing ? 'Edit Role' : 'Create Role' }}</DialogTitle>
           <DialogDescription>
@@ -212,12 +218,12 @@ async function onConfirmDelete() {
               <div
                 v-for="(permissionGroup, groupName) in groupedPermissions"
                 :key="groupName"
-                class="rounded-md border p-4"
+                class="rounded-md border p-2 sm:p-4"
               >
                 <h4 class="mb-2 font-semibold capitalize">
                   {{ groupName }}
                 </h4>
-                <div class="grid grid-cols-2 gap-2">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <div
                     v-for="permission in permissionGroup"
                     :key="permission.id"
