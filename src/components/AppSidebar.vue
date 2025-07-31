@@ -1,3 +1,10 @@
+<!--
+@file This component renders the main sidebar of the application.
+It displays navigation links based on the user's permissions.
+@author BPKAD
+@version 1.0.0
+-->
+
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { SidebarProps } from '@/components/ui/sidebar'
@@ -49,6 +56,10 @@ const data = {
   ],
 }
 
+/**
+ * The main navigation items.
+ * @type {import('vue').ComputedRef<Array<object>>}
+ */
 const navMain = computed(() => {
   const menu = [
     {
@@ -69,6 +80,10 @@ const navMain = computed(() => {
   return menu
 })
 
+/**
+ * The admin navigation items.
+ * @type {import('vue').ComputedRef<Array<object>>}
+ */
 const navAdmin = computed(() => {
   const menu = []
 
