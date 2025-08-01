@@ -28,6 +28,10 @@ const emits = defineEmits<CalendarRootEmits>()
 const delegatedProps = reactiveOmit(props, 'class')
 
 const forwarded = useForwardPropsEmits(delegatedProps, emits)
+
+defineOptions({
+  name: 'BaseCalendar',
+})
 </script>
 
 <template>

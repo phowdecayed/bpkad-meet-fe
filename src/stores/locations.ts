@@ -1,6 +1,7 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import axios from 'axios'
+import { isApiError } from '@/lib/error-handling'
 import type { MeetingLocation } from '@/types/meeting'
 
 export const useLocationsStore = defineStore('locations', () => {
@@ -14,8 +15,14 @@ export const useLocationsStore = defineStore('locations', () => {
     try {
       const response = await axios.get('/api/meeting-locations')
       locations.value = response.data.data
-    } catch (err: any) {
-      error.value = err.response?.data?.message || 'Failed to fetch locations.'
+    } catch (err: unknown) {
+      if (isApiError(err)) {
+        error.value = err.response?.data?.message || 'Failed to fetch locations.'
+      } else if (err instanceof Error) {
+        error.value = err.message
+      } else {
+        error.value = 'An unknown error occurred.'
+      }
     } finally {
       isLoading.value = false
     }

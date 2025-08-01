@@ -99,7 +99,11 @@ export function useMultiStepMeetingValidation() {
 
   // Step-specific validation schemas
   const stepSchemas = {
-    1: createMeetingSchema._def.schema._def.schema.pick({ topic: true, description: true, type: true }),
+    1: createMeetingSchema._def.schema._def.schema.pick({
+      topic: true,
+      description: true,
+      type: true,
+    }),
     2: createMeetingSchema._def.schema._def.schema.pick({
       start_time: true,
       duration: true,

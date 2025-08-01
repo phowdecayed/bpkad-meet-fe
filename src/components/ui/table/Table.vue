@@ -5,6 +5,10 @@ import { cn } from '@/lib/utils'
 const props = defineProps<{
   class?: HTMLAttributes['class']
 }>()
+
+defineOptions({
+  name: 'BaseTable',
+})
 </script>
 
 <template>

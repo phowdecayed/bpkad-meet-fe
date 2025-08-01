@@ -15,9 +15,18 @@ import {
   DialogClose,
 } from '@/components/ui/dialog'
 import { toast } from 'vue-sonner'
-import { LoaderCircle, Trash2, PlusCircle, Settings, ChevronRight } from 'lucide-vue-next'
+import { LoaderCircle, PlusCircle, Settings, ChevronRight } from 'lucide-vue-next'
 import { Skeleton } from '@/components/ui/skeleton'
 import AccountSettingsForm from './AccountSettingsForm.vue'
+import type { Setting } from '@/types/settings'
+import axios from 'axios'
+
+// Props interface for when used within SettingsGroupSection
+interface Props {
+  settings?: Setting[]
+}
+
+const props = defineProps<Props>()
 
 const settingsStore = useSettingsStore()
 const { settings: storeSettings, isLoading } = storeToRefs(settingsStore)
@@ -39,60 +48,151 @@ const newAccountForm = ref({
 })
 
 onMounted(() => {
-  settingsStore.fetchSettingsByGroup('zoom')
+  // Only fetch settings if not provided via props (backward compatibility)
+  if (!props.settings) {
+    settingsStore.fetchSettingsByGroup('zoom')
+  }
+})
+
+// Use either passed-in settings or store settings
+const currentSettings = computed(() => {
+  return props.settings || storeSettings.value
+})
+
+// Computed property for loading state - only show loading if we're fetching our own data
+const isLoadingSettings = computed(() => {
+  return !props.settings && isLoading.value
 })
 
 const selectedSetting = computed(() => {
   if (!selectedAccountId.value) return null
-  return storeSettings.value.find((s) => s.id === selectedAccountId.value) || null
+  return currentSettings.value.find((s) => s.id === selectedAccountId.value) || null
 })
 
 function selectAccount(id: number) {
   selectedAccountId.value = id
 }
 
-async function handleUpdate(setting: any) {
+async function handleUpdate(setting: Setting) {
   isSaving.value[setting.id] = true
   try {
-    await settingsStore.updateSetting(setting.id, setting.payload)
-    await settingsStore.fetchSettingsByGroup('zoom')
+    await settingsStore.updateSetting(setting.id, { payload: setting.payload })
+    // Only refetch if we're managing our own data (not using passed-in settings)
+    if (!props.settings) {
+      await settingsStore.fetchSettingsByGroup('zoom')
+    } else {
+      // If using passed-in settings, refresh all settings to update the parent
+      await settingsStore.fetchAllSettings()
+    }
     toast.success('Settings Saved', {
       description: `${setting.name} has been updated successfully.`,
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
+    console.error('Failed to update zoom setting:', error)
+
+    let errorMessage = 'Failed to save settings. Please try again.'
+    if (axios.isAxiosError(error) && error.response) {
+      if (error.response?.status === 400) {
+        errorMessage = 'Invalid settings data. Please check your input and try again.'
+      } else if (error.response?.status === 401) {
+        errorMessage = 'You are not authorized to update settings. Please log in again.'
+      } else if (error.response?.status === 403) {
+        errorMessage = 'You do not have permission to update this setting.'
+      } else if (error.response?.status >= 500) {
+        errorMessage = 'Server error. Please try again later.'
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message
+      }
+    }
+
     toast.error('Save Failed', {
-      description: error.message,
+      description: errorMessage,
+      action: {
+        label: 'Retry',
+        onClick: () => handleUpdate(setting),
+      },
     })
   } finally {
     isSaving.value[setting.id] = false
   }
 }
 
-async function handleDelete(setting: any) {
-  if (confirm(`Are you sure you want to delete "${setting.name}"?`)) {
+async function handleDelete(setting: Setting) {
+  if (
+    confirm(`Are you sure you want to delete "${setting.name}"?\n\nThis action cannot be undone.`)
+  ) {
     try {
       await settingsStore.deleteSetting(setting.id)
+      // Only refetch if we're managing our own data (not using passed-in settings)
+      if (!props.settings) {
+        await settingsStore.fetchSettingsByGroup('zoom')
+      } else {
+        // If using passed-in settings, refresh all settings to update the parent
+        await settingsStore.fetchAllSettings()
+      }
       toast.success('Setting Deleted', {
-        description: `${setting.name} has been deleted.`,
+        description: `${setting.name} has been deleted successfully.`,
       })
       if (selectedAccountId.value === setting.id) {
         selectedAccountId.value = null
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      console.error('Failed to delete zoom setting:', error)
+
+      let errorMessage = 'Failed to delete setting. Please try again.'
+      if (axios.isAxiosError(error) && error.response) {
+        if (error.response?.status === 401) {
+          errorMessage = 'You are not authorized to delete settings. Please log in again.'
+        } else if (error.response?.status === 403) {
+          errorMessage = 'You do not have permission to delete this setting.'
+        } else if (error.response?.status === 404) {
+          errorMessage = 'Setting not found. It may have already been deleted.'
+        } else if (error.response?.status >= 500) {
+          errorMessage = 'Server error. Please try again later.'
+        } else if (error.response?.data?.message) {
+          errorMessage = error.response.data.message
+        }
+      }
+
       toast.error('Delete Failed', {
-        description: error.message,
+        description: errorMessage,
+        action: {
+          label: 'Retry',
+          onClick: () => handleDelete(setting),
+        },
       })
     }
   }
 }
 
 async function handleCreate() {
+  // Validate form data
+  if (!newAccountForm.value.name.trim()) {
+    toast.error('Validation Error', {
+      description: 'Account name is required.',
+    })
+    return
+  }
+
+  if (!newAccountForm.value.payload.client_id.trim()) {
+    toast.error('Validation Error', {
+      description: 'Client ID is required.',
+    })
+    return
+  }
+
   isCreating.value = true
   try {
     await settingsStore.createSetting(newAccountForm.value)
-    await settingsStore.fetchSettingsByGroup('zoom')
+    // Only refetch if we're managing our own data (not using passed-in settings)
+    if (!props.settings) {
+      await settingsStore.fetchSettingsByGroup('zoom')
+    } else {
+      // If using passed-in settings, refresh all settings to update the parent
+      await settingsStore.fetchAllSettings()
+    }
     toast.success('Account Added', {
-      description: `${newAccountForm.value.name} has been created.`,
+      description: `${newAccountForm.value.name} has been created successfully.`,
     })
     isAddDialogOpen.value = false
     newAccountForm.value = {
@@ -100,9 +200,32 @@ async function handleCreate() {
       group: 'zoom',
       payload: { client_id: '', client_secret: '', account_id: '', host_key: '' },
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
+    console.error('Failed to create zoom setting:', error)
+
+    let errorMessage = 'Failed to create account. Please try again.'
+    if (axios.isAxiosError(error) && error.response) {
+      if (error.response?.status === 400) {
+        errorMessage = 'Invalid account data. Please check your input and try again.'
+      } else if (error.response?.status === 401) {
+        errorMessage = 'You are not authorized to create settings. Please log in again.'
+      } else if (error.response?.status === 403) {
+        errorMessage = 'You do not have permission to create settings.'
+      } else if (error.response?.status === 409) {
+        errorMessage = 'An account with this name already exists. Please choose a different name.'
+      } else if (error.response?.status >= 500) {
+        errorMessage = 'Server error. Please try again later.'
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message
+      }
+    }
+
     toast.error('Creation Failed', {
-      description: error.message,
+      description: errorMessage,
+      action: {
+        label: 'Retry',
+        onClick: () => handleCreate(),
+      },
     })
   } finally {
     isCreating.value = false
@@ -177,14 +300,14 @@ async function handleCreate() {
     <div class="grid grid-cols-1 md:grid-cols-3 gap-8 pt-4">
       <!-- Left Column: Account List -->
       <div class="md:col-span-1">
-        <div v-if="isLoading" class="space-y-2">
+        <div v-if="isLoadingSettings" class="space-y-2">
           <Skeleton class="h-12 w-full" />
           <Skeleton class="h-12 w-full" />
           <Skeleton class="h-12 w-full" />
         </div>
-        <div v-else-if="storeSettings && storeSettings.length > 0" class="space-y-2">
+        <div v-else-if="currentSettings && currentSettings.length > 0" class="space-y-2">
           <button
-            v-for="setting in storeSettings"
+            v-for="setting in currentSettings"
             :key="setting.id"
             class="w-full text-left p-3 rounded-lg transition-colors"
             :class="{

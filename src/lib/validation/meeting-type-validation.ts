@@ -153,7 +153,12 @@ export function validateMeetingByType(data: Record<string, unknown>): {
   errors.push(...conditionalErrors)
 
   // Type-specific validations
-  if (data.type === 'offline' && data.password && typeof data.password === 'string' && data.password.trim() !== '') {
+  if (
+    data.type === 'offline' &&
+    data.password &&
+    typeof data.password === 'string' &&
+    data.password.trim() !== ''
+  ) {
     errors.push('Password is not applicable for offline meetings')
   }
 

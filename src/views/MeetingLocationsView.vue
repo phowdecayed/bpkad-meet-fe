@@ -89,8 +89,9 @@ async function handleSave() {
       })
     }
     isDialogOpen.value = false
-  } catch (error: any) {
-    toast.error('Save Failed', { description: error.message })
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'An unknown error occurred'
+    toast.error('Save Failed', { description: message })
   } finally {
     isSaving.value = false
   }
@@ -108,8 +109,9 @@ async function onConfirmDelete() {
     toast.success('Location Deleted', {
       description: `${locationToDelete.value.name} has been deleted.`,
     })
-  } catch (error: any) {
-    toast.error('Delete Failed', { description: error.message })
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'An unknown error occurred'
+    toast.error('Delete Failed', { description: message })
   } finally {
     locationToDelete.value = null
   }

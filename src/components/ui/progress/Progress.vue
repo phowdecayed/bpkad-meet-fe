@@ -9,6 +9,10 @@ const props = withDefaults(defineProps<ProgressRootProps & { class?: HTMLAttribu
 })
 
 const delegatedProps = reactiveOmit(props, 'class')
+
+defineOptions({
+  name: 'BaseProgress',
+})
 </script>
 
 <template>

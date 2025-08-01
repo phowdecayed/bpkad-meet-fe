@@ -21,6 +21,10 @@ const separatorClasses = computed(() =>
     props.class,
   ),
 )
+
+defineOptions({
+  name: 'BaseSelect',
+})
 </script>
 
 <template>

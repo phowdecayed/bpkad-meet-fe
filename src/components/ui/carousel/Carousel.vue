@@ -45,6 +45,10 @@ function onKeyDown(event: KeyboardEvent) {
     scrollNext()
   }
 }
+
+defineOptions({
+  name: 'BaseCarousel',
+})
 </script>
 
 <template>

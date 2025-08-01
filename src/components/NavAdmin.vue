@@ -1,3 +1,9 @@
+<!--
+@file This component renders the admin navigation menu.
+@author BPKAD
+@version 1.0.0
+-->
+
 <script setup lang="ts">
 import { ChevronRight, type LucideIcon } from 'lucide-vue-next'
 import { RouterLink } from 'vue-router'
@@ -14,6 +20,10 @@ import {
 } from '@/components/ui/sidebar'
 
 defineProps<{
+  /**
+   * The navigation items.
+   * @type {Array<object>}
+   */
   items: {
     title: string
     url: string

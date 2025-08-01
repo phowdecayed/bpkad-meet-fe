@@ -10,6 +10,10 @@ const props = defineProps<DialogRootProps>()
 const emits = defineEmits<DialogRootEmits>()
 
 const forwarded = useForwardPropsEmits(props, emits)
+
+defineOptions({
+  name: 'BaseSheet',
+})
 </script>
 
 <template>

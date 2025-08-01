@@ -1,3 +1,9 @@
+<!--
+@file This component displays a confirmation dialog.
+@author BPKAD
+@version 1.0.0
+-->
+
 <script setup lang="ts">
 import {
   AlertDialog,
@@ -12,13 +18,25 @@ import {
 import { Button } from '@/components/ui/button'
 
 defineProps<{
+  /**
+   * The title of the dialog.
+   * @type {string}
+   */
   title: string
+  /**
+   * The description of the dialog.
+   * @type {string}
+   */
   description: string
 }>()
 
 const open = defineModel<boolean>('open')
 const emit = defineEmits(['confirm'])
 
+/**
+ * Handles the confirm event.
+ * Emits the confirm event and closes the dialog.
+ */
 function handleConfirm() {
   emit('confirm')
   open.value = false

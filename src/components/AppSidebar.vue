@@ -1,9 +1,24 @@
+<!--
+@file This component renders the main sidebar of the application.
+It displays navigation links based on the user's permissions.
+@author BPKAD
+@version 1.0.0
+-->
+
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { SidebarProps } from '@/components/ui/sidebar'
 import { useAuthStore } from '@/stores/auth'
 
-import { GalleryVerticalEnd, PieChart, Settings2, Users, Shield, MapPin, CalendarDays } from 'lucide-vue-next'
+import {
+  GalleryVerticalEnd,
+  PieChart,
+  Settings2,
+  Users,
+  Shield,
+  MapPin,
+  CalendarDays,
+} from 'lucide-vue-next'
 import NavMain from '@/components/NavMain.vue'
 import NavAdmin from '@/components/NavAdmin.vue'
 import NavUser from '@/components/NavUser.vue'
@@ -36,11 +51,15 @@ const data = {
     {
       name: 'BPKAD Meeting',
       logo: GalleryVerticalEnd,
-      plan: 'Enterprise',
+      plan: `v${import.meta.env.PACKAGE_VERSION}`,
     },
   ],
 }
 
+/**
+ * The main navigation items.
+ * @type {import('vue').ComputedRef<Array<object>>}
+ */
 const navMain = computed(() => {
   const menu = [
     {
@@ -61,6 +80,10 @@ const navMain = computed(() => {
   return menu
 })
 
+/**
+ * The admin navigation items.
+ * @type {import('vue').ComputedRef<Array<object>>}
+ */
 const navAdmin = computed(() => {
   const menu = []
 

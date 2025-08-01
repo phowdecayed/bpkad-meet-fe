@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import type { FieldValue } from '@/types/settings'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
+import { Switch } from '@/components/ui/switch'
 import { Eye, EyeOff } from 'lucide-vue-next'
 
 // By using <script setup>, the component is automatically named based on its filename,
@@ -14,7 +16,7 @@ defineOptions({
 const props = defineProps<{
   id: string | number
   fieldKey: string
-  modelValue: any
+  modelValue: FieldValue
   isRoot?: boolean
 }>()
 
@@ -59,6 +61,13 @@ const inputType = computed(() => {
 function toggleSecretVisibility() {
   isSecretVisible.value = !isSecretVisible.value
 }
+
+function updateNestedValue(key: string, newValue: FieldValue) {
+  if (typeof props.modelValue === 'object' && props.modelValue !== null) {
+    const updatedValue = { ...props.modelValue, [key]: newValue }
+    emit('update:modelValue', updatedValue)
+  }
+}
 </script>
 
 <template>
@@ -72,15 +81,22 @@ function toggleSecretVisibility() {
       :id="`${id}-${key}`"
       :key="key"
       :field-key="key"
-      v-model="modelValue[key]"
+      :model-value="(modelValue as { [key: string]: FieldValue })[key]"
+      @update:model-value="(newValue) => updateNestedValue(key, newValue)"
     />
   </div>
 
   <!-- If the value is a primitive, render a label and input field -->
   <div v-else class="grid gap-2">
     <Label :for="`${id}-${fieldKey}`">{{ formattedLabel }}</Label>
-    <div class="relative">
-      <Input :id="`${id}-${fieldKey}`" v-model="localValue" :type="inputType" />
+    <div v-if="typeof localValue === 'boolean'" class="flex items-center gap-2">
+      <Switch :id="`${id}-${fieldKey}`" v-model:checked="localValue" />
+      <Label :for="`${id}-${fieldKey}`" class="text-sm font-normal">
+        {{ localValue ? 'Enabled' : 'Disabled' }}
+      </Label>
+    </div>
+    <div v-else class="relative">
+      <Input :id="`${id}-${fieldKey}`" v-model="localValue as string | number" :type="inputType" />
       <Button
         v-if="isSecretField"
         type="button"

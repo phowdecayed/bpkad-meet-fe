@@ -1,45 +1,59 @@
-# bpkad-zoom-vue-fe
+# BPKAD Zoom Vue FE
 
-This template should help get you started developing with Vue 3 in Vite.
+This is the frontend for the BPKAD Zoom application, built with Vue.js, Pinia, and TypeScript.
 
-## Recommended IDE Setup
+## Project Structure
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+The project is organized into the following directories:
 
-## Type Support for `.vue` Imports in TS
+- **`src`**: Contains the main application source code.
+  - **`assets`**: Static assets like CSS and images.
+  - **`components`**: Reusable Vue components.
+  - **`layouts`**: Application layouts.
+  - **`lib`**: Utility functions and libraries.
+  - **`router`**: Vue Router configuration.
+  - **`stores`**: Pinia stores for state management.
+  - **`types`**: TypeScript type definitions.
+  - **`views`**: Application views or pages.
+- **`public`**: Static assets that are not processed by the build system.
+- **`docker`**: Docker-related files.
+- **`docs`**: Project documentation.
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
+## Getting Started
 
-## Customize configuration
+To get started with the project, you can use Docker or run it locally.
 
-See [Vite Configuration Reference](https://vite.dev/config/).
+### Docker
 
-## Project Setup
+For detailed instructions on how to use Docker, see the [Docker documentation](./docker/docker.md).
 
-```sh
-npm install
-```
+### Local Development
 
-### Compile and Hot-Reload for Development
+1. **Install dependencies:**
 
-```sh
-npm run dev
-```
+   ```bash
+   npm install
+   ```
 
-### Type-Check, Compile and Minify for Production
+2. **Run the development server:**
 
-```sh
+   ```bash
+   npm run dev
+   ```
+
+   The application will be available at [http://localhost:5173](http://localhost:5173).
+
+## Building for Production
+
+To build the application for production, run the following command:
+
+```bash
 npm run build
 ```
 
-### Run Unit Tests with [Vitest](https://vitest.dev/)
+This will create a `dist` directory with the production-ready files.
 
-```sh
-npm run test:unit
-```
+## Documentation
 
-### Lint with [ESLint](https://eslint.org/)
-
-```sh
-npm run lint
-```
+- **[API Documentation](./docs/api_documentation.md)**: Detailed documentation of the API endpoints.
+- **[Docker Documentation](./docker/docker.md)**: Instructions for building and running the application with Docker.

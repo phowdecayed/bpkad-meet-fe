@@ -2,6 +2,10 @@
 import { Toaster as Sonner, type ToasterProps } from 'vue-sonner'
 
 const props = defineProps<ToasterProps>()
+
+defineOptions({
+  name: 'BaseSonner',
+})
 </script>
 
 <template>

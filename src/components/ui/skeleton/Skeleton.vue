@@ -7,6 +7,10 @@ interface SkeletonProps {
 }
 
 const props = defineProps<SkeletonProps>()
+
+defineOptions({
+  name: 'BaseSkeleton',
+})
 </script>
 
 <template>

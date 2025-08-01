@@ -18,6 +18,10 @@ const emits = defineEmits<PaginationRootEmits>()
 
 const delegatedProps = reactiveOmit(props, 'class')
 const forwarded = useForwardPropsEmits(delegatedProps, emits)
+
+defineOptions({
+  name: 'BasePagination',
+})
 </script>
 
 <template>

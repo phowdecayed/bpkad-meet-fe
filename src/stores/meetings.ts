@@ -29,10 +29,12 @@ export interface UpdateMeetingPayload {
 export interface MeetingQueryParams {
   page?: number
   per_page?: number
-  start_date?: string
-  end_date?: string
-  type?: string
-  search?: string
+  start_date?: string // For calendar endpoint only
+  end_date?: string // For calendar endpoint only
+  start_time?: string // For meetings endpoint date filtering
+  type?: string // online, offline, hybrid
+  topic?: string // For topic search
+  location?: string // For location filtering
 }
 
 export interface PaginationState {
@@ -175,21 +177,33 @@ export const useMeetingsStore = defineStore('meetings', () => {
     error.value = null
 
     try {
-      const queryParams: Record<string, string | number> = {
-        page: params.page || pagination.value.currentPage,
-        per_page: params.per_page || pagination.value.itemsPerPage,
+      // Determine endpoint based on date parameters
+      const useCalendarEndpoint = params.start_date && params.end_date
+      const endpoint = useCalendarEndpoint ? '/api/calendar' : '/api/meetings'
+
+      const queryParams: Record<string, string | number> = {}
+
+      if (useCalendarEndpoint) {
+        // Calendar endpoint parameters (no pagination)
+        queryParams.start_date = params.start_date!
+        queryParams.end_date = params.end_date!
+      } else {
+        // Meetings endpoint parameters (with pagination and filters)
+        queryParams.page = params.page || pagination.value.currentPage
+        queryParams.per_page = params.per_page || pagination.value.itemsPerPage
+
+        if (params.start_time) queryParams.start_time = params.start_time
+        if (params.type) queryParams.type = params.type
+        if (params.topic) queryParams.topic = params.topic
+        if (params.location) queryParams.location = params.location
       }
 
-      if (params.start_date) queryParams.start_date = params.start_date
-      if (params.end_date) queryParams.end_date = params.end_date
-      if (params.type) queryParams.type = params.type
-      if (params.search) queryParams.search = params.search
-
-      const endpoint = params.start_date && params.end_date ? '/api/calendar' : '/api/meetings'
       const response = await axios.get<MeetingsResponse>(endpoint, { params: queryParams })
 
       meetings.value = response.data.data
-      if (response.data.meta) {
+
+      // Only update pagination for meetings endpoint (calendar endpoint doesn't have pagination)
+      if (!useCalendarEndpoint && response.data.meta) {
         updatePaginationState(response.data.meta)
       }
     } catch (err: unknown) {
@@ -370,19 +384,19 @@ export const useMeetingsStore = defineStore('meetings', () => {
   // Pagination helpers
   async function nextPage() {
     if (pagination.value.hasNextPage) {
-      await fetchMeetings({ page: pagination.value.currentPage + 1 })
+      await fetchMeetings({ page: pagination.value.currentPage + 1, per_page: pagination.value.itemsPerPage })
     }
   }
 
   async function prevPage() {
     if (pagination.value.hasPrevPage) {
-      await fetchMeetings({ page: pagination.value.currentPage - 1 })
+      await fetchMeetings({ page: pagination.value.currentPage - 1, per_page: pagination.value.itemsPerPage })
     }
   }
 
   async function goToPage(page: number) {
     if (page >= 1 && page <= pagination.value.totalPages) {
-      await fetchMeetings({ page })
+      await fetchMeetings({ page, per_page: pagination.value.itemsPerPage })
     }
   }
 
@@ -418,3 +432,4 @@ export const useMeetingsStore = defineStore('meetings', () => {
     goToPage,
   }
 })
+

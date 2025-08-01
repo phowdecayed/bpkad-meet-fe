@@ -6,6 +6,7 @@ import { toast } from 'vue-sonner'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { LoaderCircle, CircleCheck, CircleX } from 'lucide-vue-next'
+import axios from 'axios'
 
 const route = useRoute()
 const router = useRouter()
@@ -27,11 +28,7 @@ onMounted(async () => {
 
   try {
     // Security Check: If a user is logged in, ensure they are the correct user OR an admin.
-    if (
-      authStore.isAuthenticated &&
-      authStore.user &&
-      String(authStore.user.id) !== id
-    ) {
+    if (authStore.isAuthenticated && authStore.user && String(authStore.user.id) !== id) {
       if (authStore.hasPermission('manage users')) {
         isAdminAction.value = true
       } else {
@@ -42,13 +39,16 @@ onMounted(async () => {
       }
     }
 
-    await authStore.verifyEmail(id as string, hash as string, query)
+    await authStore.verifyEmail(id as string, hash as string, {
+      expires: query.expires as string,
+      signature: query.signature as string,
+    })
     verificationStatus.value = 'success'
 
     // After successful verification, check auth state again.
     if (authStore.isAuthenticated) {
       await authStore.fetchUser() // Refresh current user's data
-      
+
       if (isAdminAction.value) {
         toast.success('Verification Successful', {
           description: "The user's email address has been verified.",
@@ -66,10 +66,15 @@ onMounted(async () => {
         description: 'Your email has been verified. You can now log in.',
       })
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     verificationStatus.value = 'error'
-    errorMessage.value =
-      error.response?.data?.message || 'Verification failed. The link may be invalid or expired.'
+    if (axios.isAxiosError(error) && error.response?.data?.message) {
+      errorMessage.value = error.response.data.message
+    } else if (error instanceof Error) {
+      errorMessage.value = error.message
+    } else {
+      errorMessage.value = 'Verification failed. The link may be invalid or expired.'
+    }
     toast.error('Error', {
       description: errorMessage.value,
     })

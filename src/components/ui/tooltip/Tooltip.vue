@@ -10,6 +10,10 @@ const props = defineProps<TooltipRootProps>()
 const emits = defineEmits<TooltipRootEmits>()
 
 const forwarded = useForwardPropsEmits(props, emits)
+
+defineOptions({
+  name: 'BaseTooltip',
+})
 </script>
 
 <template>

@@ -4,6 +4,10 @@ import type { HTMLAttributes } from 'vue'
 const props = defineProps<{
   class?: HTMLAttributes['class']
 }>()
+
+defineOptions({
+  name: 'BaseBreadcrumb',
+})
 </script>
 
 <template>

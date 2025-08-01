@@ -1,3 +1,9 @@
+<!--
+@file This component displays a login form.
+@author BPKAD
+@version 1.0.0
+-->
+
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
@@ -21,6 +27,11 @@ const error = ref<string | null>(null)
 const authStore = useAuthStore()
 const router = useRouter()
 
+/**
+ * Handles the form submission.
+ * Logs in the user and redirects to the dashboard.
+ * If an error occurs, it displays an error message.
+ */
 async function handleSubmit() {
   error.value = null
   try {

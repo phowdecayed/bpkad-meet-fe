@@ -1,24 +1,39 @@
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue'
-import { useMeetingsStore } from '@/stores/meetings'
+import { ref, computed, watch } from 'vue'
 import type { Meeting } from '@/types/meeting'
+import { useMeetingsStore } from '@/stores/meetings'
+import { useAuthStore } from '@/stores/auth'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { ScrollArea } from '@/components/ui/scroll-area'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Separator } from '@/components/ui/separator'
-import { toast } from 'vue-sonner'
-import { 
-  Eye, EyeOff, Loader2, User, Mail, Calendar, Clock, 
-  FileText, Laptop, Building, Users, Link, KeyRound, Copy 
+import {
+  Clock,
+  Calendar,
+  Users,
+  MapPin,
+  Video,
+  User as UserIcon,
+  Mail,
+  FileText,
+  AlertTriangle,
+  Loader2,
+  KeyRound,
+  ClipboardCopy,
+  Eye,
+  EyeOff,
+  Link,
+  Copy,
 } from 'lucide-vue-next'
+import { toast } from 'vue-sonner'
 
 const props = defineProps<{
   open: boolean
@@ -26,185 +41,361 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits(['update:open'])
-
 const meetingsStore = useMeetingsStore()
+const authStore = useAuthStore()
+
+const isOpen = computed({
+  get: () => props.open,
+  set: (value) => emit('update:open', value),
+})
+
 const detailedMeeting = ref<Meeting | null>(null)
 const isLoading = ref(false)
+const error = ref<string | null>(null)
 const showPassword = ref(false)
 const showHostKey = ref(false)
 
-watch(() => props.open, async (isOpen) => {
-  if (isOpen && props.meeting) {
-    isLoading.value = true
-    try {
-      detailedMeeting.value = await meetingsStore.fetchMeeting(props.meeting.id)
-    } catch (error) {
-      toast.error('Failed to fetch meeting details.')
-      console.error(error)
-    } finally {
-      isLoading.value = false
-    }
-  } else if (!isOpen) {
-    detailedMeeting.value = null
-    showPassword.value = false
-    showHostKey.value = false
-  }
+const isOrganizer = computed(() => {
+  return detailedMeeting.value?.organizer.id === authStore.user?.id
 })
 
-const meetingTypeIcon = computed(() => {
-  if (!detailedMeeting.value) return null
-  switch (detailedMeeting.value.type) {
-    case 'online': return Laptop
-    case 'offline': return Building
-    case 'hybrid': return Users
-    default: return FileText
+const canViewHostKey = computed(() => {
+  return authStore.hasPermission('view host key') || isOrganizer.value
+})
+
+const participants = computed(() => {
+  return detailedMeeting.value?.participants || []
+})
+
+async function loadMeetingDetails() {
+  if (!props.meeting) return
+  isLoading.value = true
+  error.value = null
+  try {
+    const fetchedMeeting = await meetingsStore.fetchMeeting(props.meeting.id)
+    detailedMeeting.value = fetchedMeeting
+  } catch {
+    error.value = 'Failed to load meeting details.'
+  } finally {
+    isLoading.value = false
   }
+}
+
+watch(
+  () => props.open,
+  (newVal) => {
+    if (newVal) {
+      loadMeetingDetails()
+    } else {
+      detailedMeeting.value = null
+      isLoading.value = false
+      error.value = null
+      showPassword.value = false
+      showHostKey.value = false
+    }
+  },
+)
+
+function getInitials(name: string): string {
+  return name
+    .split(' ')
+    .map((word) => word.charAt(0))
+    .join('')
+    .toUpperCase()
+    .slice(0, 2)
+}
+
+const formattedStartTime = computed(() => {
+  if (!detailedMeeting.value) return ''
+  return new Date(detailedMeeting.value.start_time).toLocaleString([], {
+    dateStyle: 'full',
+    timeStyle: 'short',
+  })
 })
 
 const invitationText = computed(() => {
   if (!detailedMeeting.value) return ''
-  
-  let text = `You are invited to a meeting.\n\n`
-  text += `Organizer: ${detailedMeeting.value.organizer.name} (${detailedMeeting.value.organizer.email})\n`
+  let text = `You are invited to the following meeting:\n\n`
   text += `Topic: ${detailedMeeting.value.topic}\n`
-  text += `Time: ${new Date(detailedMeeting.value.start_time).toLocaleString()}\n`
-  
-  if ((detailedMeeting.value.type === 'online' || detailedMeeting.value.type === 'hybrid') && detailedMeeting.value.zoom_meeting) {
-    text += `Join Zoom Meeting: ${detailedMeeting.value.zoom_meeting.join_url}\n`
-    text += `Meeting ID: ${detailedMeeting.value.zoom_meeting.zoom_id}\n`
+  text += `Organizer: ${detailedMeeting.value.organizer.name}\n`
+  text += `Time: ${formattedStartTime.value}\n`
+
+  if (detailedMeeting.value.description) {
+    text += `\nDescription:\n${detailedMeeting.value.description}\n`
+  }
+
+  if (detailedMeeting.value.type !== 'offline' && detailedMeeting.value.zoom_meeting) {
+    text += `\nJoin Zoom Meeting:\n${detailedMeeting.value.zoom_meeting.join_url}\n`
     if (detailedMeeting.value.zoom_meeting.password) {
       text += `Password: ${detailedMeeting.value.zoom_meeting.password}\n`
-    n  }
+    }
+  } else if (detailedMeeting.value.location) {
+    text += `\nLocation: ${detailedMeeting.value.location.name}\n`
   }
-  
-  if (detailedMeeting.value.location) {
-    text += `Location: ${detailedMeeting.value.location.name}\n`
-  }
-  
   return text
 })
 
+const zoomMeeting = computed(() => {
+  return detailedMeeting.value?.zoom_meeting || null
+})
+
+const joinUrl = computed(() => {
+  if (zoomMeeting.value && typeof zoomMeeting.value.join_url === 'string') {
+    return zoomMeeting.value.join_url
+  }
+  return ''
+})
+
+const password = computed(() => {
+  if (zoomMeeting.value && typeof zoomMeeting.value.password === 'string') {
+    return zoomMeeting.value.password
+  }
+  return ''
+})
+
+const hostKey = computed(() => {
+  if (detailedMeeting.value && typeof detailedMeeting.value.host_key === 'string') {
+    return detailedMeeting.value.host_key
+  }
+  return ''
+})
+
 function copyInvitation() {
-  navigator.clipboard.writeText(invitationText.value).then(() => {
-    toast.success('Meeting invitation copied to clipboard.')
-  }).catch(err => {
-    toast.error('Failed to copy invitation.')
-    console.error('Failed to copy invitation: ', err)
-  })
+  copyToClipboard(invitationText.value, 'Invitation')
 }
 
-function handleClose() {
-  emit('update:open', false)
+function copyToClipboard(text: unknown, type: string) {
+  if (typeof text !== 'string' || !text) {
+    toast.error(`No ${type} to copy.`)
+    return
+  }
+  try {
+    navigator.clipboard.writeText(text)
+    toast.success(`${type} copied to clipboard!`)
+  } catch {
+    toast.error(`Failed to copy ${type}.`)
+  }
 }
 </script>
 
 <template>
-  <Dialog :open="props.open" @update:open="handleClose">
-    <DialogContent class="sm:max-w-2xl">
-      <DialogHeader>
-        <DialogTitle class="text-2xl">{{ meeting?.topic }}</DialogTitle>
+  <Dialog v-model:open="isOpen">
+    <DialogContent class="sm:max-w-lg grid-rows-[auto_minmax(0,1fr)_auto] p-0 max-h-[90dvh]">
+      <DialogHeader class="p-6 pb-4">
+        <DialogTitle class="text-2xl font-bold">
+          {{ detailedMeeting?.topic || meeting?.topic }}
+        </DialogTitle>
         <DialogDescription>
-          Review the meeting details below.
+          Organized by {{ detailedMeeting?.organizer.name || meeting?.organizer.name }}
         </DialogDescription>
       </DialogHeader>
 
-      <div v-if="isLoading" class="flex items-center justify-center p-12">
-        <Loader2 class="h-10 w-10 animate-spin text-primary" />
-      </div>
-
-      <div v-else-if="detailedMeeting" class="space-y-6 py-4">
-        <Card>
-          <CardHeader>
-            <CardTitle class="flex items-center text-lg">
-              <User class="mr-3 h-5 w-5" />
-              Organizer
-            </CardTitle>
-          </CardHeader>
-          <CardContent class="text-sm">
-            <p>{{ detailedMeeting.organizer.name }}</p>
-            <p class="text-muted-foreground">{{ detailedMeeting.organizer.email }}</p>
-          </CardContent>
-        </Card>
-
-        <div class="grid md:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle class="flex items-center text-lg">
-                <Calendar class="mr-3 h-5 w-5" />
-                Schedule & Details
-              </CardTitle>
-            </CardHeader>
-            <CardContent class="space-y-3 text-sm">
-              <div class="flex items-start">
-                <FileText class="mr-3 mt-1 h-4 w-4 flex-shrink-0 text-muted-foreground" />
-                <ScrollArea class="h-24 w-full">
-                  <p>{{ detailedMeeting.description || 'No description provided.' }}</p>
-                </ScrollArea>
-              </div>
-              <div class="flex items-center">
-                <Clock class="mr-3 h-4 w-4 flex-shrink-0 text-muted-foreground" />
-                <span>{{ new Date(detailedMeeting.start_time).toLocaleString() }} ({{ detailedMeeting.duration }} minutes)</span>
-              </div>
-              <div class="flex items-center">
-                <component :is="meetingTypeIcon" class="mr-3 h-4 w-4 flex-shrink-0 text-muted-foreground" />
-                <span class="capitalize">{{ detailedMeeting.type }} Meeting</span>
-              </div>
-              <div v-if="detailedMeeting.type !== 'online' && detailedMeeting.location" class="flex items-center">
-                <Building class="mr-3 h-4 w-4 flex-shrink-0 text-muted-foreground" />
-                <span>{{ detailedMeeting.location.name }}</span>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card v-if="(detailedMeeting.type === 'online' || detailedMeeting.type === 'hybrid') && detailedMeeting.zoom_meeting">
-            <CardHeader>
-              <CardTitle class="flex items-center text-lg">
-                <Laptop class="mr-3 h-5 w-5" />
-                Zoom Details
-              </CardTitle>
-            </CardHeader>
-            <CardContent class="space-y-3 text-sm">
-              <div class="flex items-center">
-                <Link class="mr-3 h-4 w-4 flex-shrink-0 text-muted-foreground" />
-                <a :href="detailedMeeting.zoom_meeting.join_url" target="_blank" class="text-primary hover:underline truncate">
-                  {{ detailedMeeting.zoom_meeting.join_url }}
-                </a>
-              </div>
-              <div v-if="detailedMeeting.zoom_meeting.password" class="flex items-center justify-between">
-                <div class="flex items-center">
-                  <KeyRound class="mr-3 h-4 w-4 flex-shrink-0 text-muted-foreground" />
-                  <span class="font-mono">{{ showPassword ? detailedMeeting.zoom_meeting.password : '••••••••' }}</span>
-                </div>
-                <Button variant="ghost" size="icon" @click="showPassword = !showPassword" class="h-7 w-7">
-                  <component :is="showPassword ? EyeOff : Eye" class="h-4 w-4" />
-                </Button>
-              </div>
-              <div v-if="detailedMeeting.host_key" class="flex items-center justify-between">
-                <div class="flex items-center">
-                  <KeyRound class="mr-3 h-4 w-4 flex-shrink-0 text-muted-foreground" />
-                  <span class="font-mono">{{ showHostKey ? detailedMeeting.host_key : '••••••••' }}</span>
-                </div>
-                <Button variant="ghost" size="icon" @click="showHostKey = !showHostKey" class="h-7 w-7">
-                  <component :is="showHostKey ? EyeOff : Eye" class="h-4 w-4" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+      <div v-if="isLoading && !detailedMeeting" class="space-y-6 py-4 px-6">
+        <div v-for="i in 4" :key="i" class="flex items-start gap-4">
+          <Skeleton class="h-6 w-6 rounded" />
+          <div class="flex-1 space-y-2">
+            <Skeleton class="h-5 w-1/3" />
+            <Skeleton class="h-4 w-2/3" />
+          </div>
         </div>
       </div>
-      
-      <div v-else class="p-12 text-center text-muted-foreground">
-        <p>No meeting details available.</p>
+
+      <Alert v-else-if="error" variant="destructive" class="m-6">
+        <AlertTriangle class="h-4 w-4" />
+        <AlertDescription class="flex items-center justify-between">
+          <span>{{ error }}</span>
+          <Button variant="outline" size="sm" @click="loadMeetingDetails" :disabled="isLoading">
+            <Loader2 v-if="isLoading" class="mr-2 h-4 w-4 animate-spin" />
+            Retry
+          </Button>
+        </AlertDescription>
+      </Alert>
+
+      <div v-else-if="detailedMeeting" class="py-4 overflow-y-auto px-6">
+        <div class="space-y-6">
+          <!-- Details Section -->
+          <div>
+            <div class="flex items-center mb-3">
+              <Link class="h-5 w-5 mr-3 flex-shrink-0" />
+              <h3 class="text-lg font-semibold">Details</h3>
+            </div>
+            <div class="space-y-4 text-sm pl-[32px]">
+              <div class="flex items-center gap-4">
+                <Calendar class="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                <span class="text-muted-foreground">{{ formattedStartTime }}</span>
+              </div>
+              <div class="flex items-center gap-4">
+                <Clock class="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                <span class="text-muted-foreground">{{ detailedMeeting.duration }} minutes</span>
+              </div>
+              <div class="flex items-center gap-4">
+                <component
+                  :is="
+                    detailedMeeting.type === 'online' || detailedMeeting.type === 'hybrid'
+                      ? Video
+                      : MapPin
+                  "
+                  class="h-5 w-5 text-muted-foreground flex-shrink-0"
+                />
+                <span class="text-muted-foreground">
+                  {{
+                    detailedMeeting.type === 'online'
+                      ? 'Online via Zoom'
+                      : detailedMeeting.location?.name
+                  }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <Separator />
+
+          <!-- Connection Details -->
+          <div
+            v-if="
+              zoomMeeting &&
+              (detailedMeeting.type === 'online' || detailedMeeting.type === 'hybrid')
+            "
+          >
+            <div class="flex items-center mb-3">
+              <Link class="h-5 w-5 mr-3 flex-shrink-0" />
+              <h3 class="text-lg font-semibold">Connection</h3>
+            </div>
+            <div class="space-y-3 text-sm pl-[32px]">
+              <div v-if="zoomMeeting.join_url" class="flex items-center gap-2">
+                <Button asChild>
+                  <a :href="joinUrl" target="_blank" rel="noopener noreferrer">
+                    <Video class="mr-2 h-4 w-4" />
+                    Join Meeting
+                  </a>
+                </Button>
+                <Button
+                  v-if="zoomMeeting.join_url"
+                  size="icon"
+                  variant="outline"
+                  @click="copyToClipboard(joinUrl, 'Join URL')"
+                >
+                  <ClipboardCopy class="h-4 w-4" />
+                  <span class="sr-only">Copy Join URL</span>
+                </Button>
+              </div>
+
+              <div v-if="zoomMeeting.password" class="flex items-center gap-2">
+                <KeyRound class="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                <span class="text-muted-foreground">Password:</span>
+                <span class="font-mono text-sm text-foreground">
+                  {{ showPassword ? zoomMeeting.password : '••••••••' }}
+                </span>
+                <Button size="sm" variant="ghost" @click="showPassword = !showPassword">
+                  <component :is="showPassword ? EyeOff : Eye" class="h-4 w-4" />
+                </Button>
+                <Button
+                  v-if="zoomMeeting.password"
+                  size="sm"
+                  variant="ghost"
+                  @click="copyToClipboard(password, 'Password')"
+                >
+                  <ClipboardCopy class="h-4 w-4" />
+                </Button>
+              </div>
+
+              <div
+                v-if="canViewHostKey && detailedMeeting.host_key"
+                class="flex items-center gap-2"
+              >
+                <KeyRound class="h-5 w-5 text-muted-foreground flex-shrink-0" />
+                <span class="text-muted-foreground">Host Key:</span>
+                <span class="font-mono text-sm text-foreground">
+                  {{ showHostKey ? detailedMeeting.host_key : '••••••' }}
+                </span>
+                <Button size="sm" variant="ghost" @click="showHostKey = !showHostKey">
+                  <component :is="showHostKey ? EyeOff : Eye" class="h-4 w-4" />
+                </Button>
+                <Button
+                  v-if="detailedMeeting.host_key"
+                  size="sm"
+                  variant="ghost"
+                  @click="copyToClipboard(hostKey, 'Host Key')"
+                >
+                  <ClipboardCopy class="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+          <Separator
+            v-if="
+              zoomMeeting &&
+              (detailedMeeting.type === 'online' || detailedMeeting.type === 'hybrid')
+            "
+          />
+          <!-- Description -->
+          <div>
+            <div class="flex items-center mb-2">
+              <FileText class="h-5 w-5 mr-3 flex-shrink-0" />
+              <h3 class="text-lg font-semibold">Description</h3>
+            </div>
+            <p class="text-sm text-muted-foreground pl-[32px]">
+              {{ detailedMeeting.description || 'No description provided.' }}
+            </p>
+          </div>
+
+          <Separator />
+
+          <!-- Organizer & Participants -->
+          <div class="grid grid-cols-2 gap-6">
+            <div>
+              <div class="flex items-center mb-3">
+                <UserIcon class="h-5 w-5 mr-3 flex-shrink-0" />
+                <h3 class="text-lg font-semibold">Organizer</h3>
+              </div>
+              <div class="flex items-center gap-3 pl-[32px]">
+                <Avatar class="h-10 w-10">
+                  <AvatarFallback>{{
+                    getInitials(detailedMeeting.organizer.name || '')
+                  }}</AvatarFallback>
+                </Avatar>
+                <div>
+                  <p class="font-medium">{{ detailedMeeting.organizer.name }}</p>
+                  <p class="text-xs text-muted-foreground flex items-center gap-1">
+                    <Mail class="h-3 w-3" />
+                    {{ detailedMeeting.organizer.email }}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div>
+              <div class="flex items-center mb-3">
+                <Users class="h-5 w-5 mr-3 flex-shrink-0" />
+                <h3 class="text-lg font-semibold">Participants ({{ participants.length }})</h3>
+              </div>
+              <div v-if="participants.length > 0" class="flex -space-x-2 overflow-hidden pl-[32px]">
+                <Avatar
+                  v-for="participant in participants.slice(0, 5)"
+                  :key="participant.id"
+                  class="h-10 w-10 border-2 border-card"
+                >
+                  <AvatarFallback>{{ getInitials(participant.name) }}</AvatarFallback>
+                </Avatar>
+                <Avatar v-if="participants.length > 5" class="h-10 w-10 border-2 border-card">
+                  <AvatarFallback>+{{ participants.length - 5 }}</AvatarFallback>
+                </Avatar>
+              </div>
+              <p v-else class="text-sm text-muted-foreground pl-[32px]">No participants.</p>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <DialogFooter>
-        <Button @click="copyInvitation">
-          <Copy class="mr-2 h-4 w-4" />
-          Copy Invitation
-        </Button>
-      </DialogFooter>
+      <div class="p-6 pt-4">
+        <Separator class="mb-4" />
+        <div class="flex justify-between gap-2">
+          <Button variant="outline" @click="isOpen = false">Close</Button>
+          <Button @click="copyInvitation">
+            <Copy class="mr-2 h-4 w-4" />
+            Copy Invitation
+          </Button>
+        </div>
+      </div>
     </DialogContent>
   </Dialog>
 </template>
-
-

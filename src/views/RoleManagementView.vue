@@ -4,7 +4,6 @@ import { storeToRefs } from 'pinia'
 import { useUsersStore } from '@/stores/users'
 import type { Role, Permission } from '@/types/user'
 import ConfirmationDialog from '@/components/ConfirmationDialog.vue'
-import axios from 'axios'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -104,11 +103,8 @@ async function handleSave() {
     }
     isDialogOpen.value = false
   } catch (error: unknown) {
-    if (axios.isAxiosError(error) && error.response) {
-      toast.error('Save Failed', { description: error.response.data.message })
-    } else {
-      toast.error('Save Failed', { description: 'An unexpected error occurred.' })
-    }
+    const message = error instanceof Error ? error.message : 'An unexpected error occurred.'
+    toast.error('Save Failed', { description: message })
   } finally {
     isSaving.value = false
   }
@@ -125,11 +121,8 @@ async function onConfirmDelete() {
     await usersStore.deleteRole(roleToDelete.value.id)
     toast.success('Role Deleted', { description: `${roleToDelete.value.name} has been deleted.` })
   } catch (error: unknown) {
-    if (axios.isAxiosError(error) && error.response) {
-      toast.error('Delete Failed', { description: error.response.data.message })
-    } else {
-      toast.error('Delete Failed', { description: 'An unexpected error occurred.' })
-    }
+    const message = error instanceof Error ? error.message : 'An unexpected error occurred.'
+    toast.error('Delete Failed', { description: message })
   } finally {
     roleToDelete.value = null
   }
@@ -163,7 +156,7 @@ async function onConfirmDelete() {
         </TableHeader>
         <TableBody>
           <TableRow v-for="role in roles" :key="role.id">
-            <TableCell class="font-medium">
+            <TableCell>
               {{ role.name }}
             </TableCell>
             <TableCell>
@@ -171,7 +164,7 @@ async function onConfirmDelete() {
                 v-for="permission in role.permissions"
                 :key="permission.id"
                 variant="outline"
-                class="mr-1 mb-1"
+                class="mr-1"
               >
                 {{ permission.name }}
               </Badge>
@@ -190,7 +183,7 @@ async function onConfirmDelete() {
     </div>
 
     <Dialog v-model:open="isDialogOpen">
-      <DialogContent class="max-w-2xl">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{{ isEditing ? 'Edit Role' : 'Create Role' }}</DialogTitle>
           <DialogDescription>
@@ -201,28 +194,20 @@ async function onConfirmDelete() {
             }}
           </DialogDescription>
         </DialogHeader>
-        <form v-if="permissions" class="space-y-4" @submit.prevent="handleSave">
+        <form class="space-y-4" @submit.prevent="handleSave">
           <div class="grid gap-2">
-            <Label for="name">Role Name</Label>
+            <Label for="name">Name</Label>
             <Input id="name" v-model="form.name" />
           </div>
           <div class="grid gap-2">
             <Label>Permissions</Label>
-            <div class="space-y-4">
-              <div
-                v-for="(permissionGroup, groupName) in groupedPermissions"
-                :key="groupName"
-                class="rounded-md border p-4"
-              >
+            <div class="space-y-2 rounded-md border p-4">
+              <div v-for="(permissionGroup, groupName) in groupedPermissions" :key="groupName" class="mb-4">
                 <h4 class="mb-2 font-semibold capitalize">
                   {{ groupName }}
                 </h4>
-                <div class="grid grid-cols-2 gap-2">
-                  <div
-                    v-for="permission in permissionGroup"
-                    :key="permission.id"
-                    class="flex items-center space-x-2"
-                  >
+                <div class="space-y-2">
+                  <div v-for="permission in permissionGroup" :key="permission.id" class="flex items-center space-x-2">
                     <Checkbox
                       :id="`permission-${permission.id}`"
                       :checked="selectedPermissions.includes(permission.id)"

@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label'
 import { toast } from 'vue-sonner'
 import { RouterLink } from 'vue-router'
 import { LoaderCircle } from 'lucide-vue-next'
+import axios from 'axios'
 
 const authStore = useAuthStore()
 const email = ref('')
@@ -19,9 +20,15 @@ async function handleSubmit() {
     toast.success('Success', {
       description: 'If an account with that email exists, a password reset link has been sent.',
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
+    let message = 'An error occurred.'
+    if (axios.isAxiosError(error) && error.response) {
+      message = error.response.data.message || message
+    } else if (error instanceof Error) {
+      message = error.message
+    }
     toast.error('Error', {
-      description: error.response?.data?.message || 'An error occurred.',
+      description: message,
     })
   } finally {
     isLoading.value = false

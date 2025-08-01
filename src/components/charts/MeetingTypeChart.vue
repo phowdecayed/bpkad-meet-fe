@@ -9,11 +9,10 @@ import {
   CategoryScale,
   LinearScale,
 } from 'chart.js'
-import { computed } from 'vue'
 
 ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale)
 
-const props = defineProps<{
+defineProps<{
   chartData: {
     labels: string[]
     datasets: {

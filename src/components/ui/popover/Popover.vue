@@ -6,6 +6,10 @@ const props = defineProps<PopoverRootProps>()
 const emits = defineEmits<PopoverRootEmits>()
 
 const forwarded = useForwardPropsEmits(props, emits)
+
+defineOptions({
+  name: 'BasePopover',
+})
 </script>
 
 <template>

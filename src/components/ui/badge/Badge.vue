@@ -14,6 +14,10 @@ const props = defineProps<
 >()
 
 const delegatedProps = reactiveOmit(props, 'class')
+
+defineOptions({
+  name: 'BaseBadge',
+})
 </script>
 
 <template>
