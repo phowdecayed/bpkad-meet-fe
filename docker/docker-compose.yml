@@ -12,19 +12,19 @@ services:
       - bpkad-network
 
   # Development service
-  app-dev:
-    build:
-      context: ..
-      dockerfile: Dockerfile.dev
-    container_name: bpkad-zoom-vue-fe-dev
-    ports:
-      - '5173:5173'
-    volumes:
-      - ../src:/app/src
-      - ../public:/app/public
-    restart: unless-stopped
-    networks:
-      - bpkad-network
+  # app-dev:
+  #   build:
+  #     context: ..
+  #     dockerfile: Dockerfile.dev
+  #   container_name: bpkad-zoom-vue-fe-dev
+  #   ports:
+  #     - '5173:5173'
+  #   volumes:
+  #     - ../src:/app/src
+  #     - ../public:/app/public
+  #   restart: unless-stopped
+  #   networks:
+  #     - bpkad-network
 
 networks:
   bpkad-network:
