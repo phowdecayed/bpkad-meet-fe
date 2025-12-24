@@ -8,6 +8,7 @@ import VerifyEmailView from '../views/VerifyEmailView.vue'
 import NotFoundView from '../views/NotFoundView.vue'
 import MainLayout from '../layouts/MainLayout.vue'
 import { useAuthStore } from '@/stores/auth'
+import { PERMISSIONS } from '@/constants/permissions'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -60,31 +61,31 @@ const router = createRouter({
           path: 'settings',
           name: 'settings',
           component: () => import('../views/SettingsView.vue'),
-          meta: { requiresPermission: 'manage settings' },
+          meta: { requiresPermission: PERMISSIONS.SETTINGS.MANAGE },
         },
         {
           path: 'users',
           name: 'users',
           component: () => import('../views/UserManagementView.vue'),
-          meta: { requiresPermission: 'manage users' },
+          meta: { requiresPermission: PERMISSIONS.USERS.MANAGE },
         },
         {
           path: 'roles',
           name: 'roles',
           component: () => import('../views/RoleManagementView.vue'),
-          meta: { requiresPermission: 'manage roles' },
+          meta: { requiresPermission: PERMISSIONS.ROLES.MANAGE },
         },
         {
           path: 'meetings',
           name: 'meetings',
           component: () => import('../views/MeetingsView.vue'),
-          meta: { requiresPermission: 'view meetings' },
+          meta: { requiresPermission: PERMISSIONS.MEETINGS.VIEW },
         },
         {
           path: 'locations',
           name: 'locations',
           component: () => import('../views/MeetingLocationsView.vue'),
-          meta: { requiresPermission: 'edit meetings' },
+          meta: { requiresPermission: PERMISSIONS.MEETINGS.EDIT },
         },
       ],
     },

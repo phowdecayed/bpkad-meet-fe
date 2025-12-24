@@ -2,6 +2,7 @@
 import { watch, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useStatisticsStore } from '@/stores/statistics'
+import { PERMISSIONS } from '@/constants/permissions'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -11,7 +12,7 @@ import MeetingsByMonthChart from '@/components/charts/MeetingsByMonthChart.vue'
 const authStore = useAuthStore()
 const statisticsStore = useStatisticsStore()
 
-const canViewMeetings = computed(() => authStore.hasPermission('view meetings'))
+const canViewMeetings = computed(() => authStore.hasPermission(PERMISSIONS.MEETINGS.VIEW))
 const stats = computed(() => statisticsStore.dashboardStats)
 
 const meetingTypeChartData = computed(() => {

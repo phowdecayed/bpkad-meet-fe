@@ -4,6 +4,7 @@ import { RouterView } from 'vue-router'
 import AppSidebar from '@/components/AppSidebar.vue'
 import CreateMeetingDialog from '@/components/meetings/CreateMeetingDialog.vue'
 import { useAuthStore } from '@/stores/auth'
+import { PERMISSIONS } from '@/constants/permissions'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -18,7 +19,7 @@ import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/s
 import { Plus } from 'lucide-vue-next'
 
 const authStore = useAuthStore()
-const canCreateMeetings = computed(() => authStore.hasPermission('edit meetings'))
+const canCreateMeetings = computed(() => authStore.hasPermission(PERMISSIONS.MEETINGS.EDIT))
 const isCreateMeetingDialogOpen = ref(false)
 </script>
 

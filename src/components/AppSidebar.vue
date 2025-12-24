@@ -9,6 +9,7 @@ It displays navigation links based on the user's permissions.
 import { computed } from 'vue'
 import type { SidebarProps } from '@/components/ui/sidebar'
 import { useAuthStore } from '@/stores/auth'
+import { PERMISSIONS } from '@/constants/permissions'
 
 import {
   GalleryVerticalEnd,
@@ -38,12 +39,12 @@ const props = withDefaults(defineProps<SidebarProps>(), {
 
 const authStore = useAuthStore()
 
-const canManageSettings = computed(() => authStore.hasPermission('manage settings'))
-const canManageUsers = computed(() => authStore.hasPermission('manage users'))
-const canManageRoles = computed(() => authStore.hasPermission('manage roles'))
-const canEditMeetings = computed(() => authStore.hasPermission('edit meetings'))
+const canManageSettings = computed(() => authStore.hasPermission(PERMISSIONS.SETTINGS.MANAGE))
+const canManageUsers = computed(() => authStore.hasPermission(PERMISSIONS.USERS.MANAGE))
+const canManageRoles = computed(() => authStore.hasPermission(PERMISSIONS.ROLES.MANAGE))
+const canEditMeetings = computed(() => authStore.hasPermission(PERMISSIONS.MEETINGS.EDIT))
 
-const canViewMeetings = computed(() => authStore.hasPermission('view meetings'))
+const canViewMeetings = computed(() => authStore.hasPermission(PERMISSIONS.MEETINGS.VIEW))
 
 // This is sample data.
 const data = {

@@ -3,6 +3,7 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { useMeetingsStore } from '@/stores/meetings'
 import { useUsersStore } from '@/stores/users'
 import { useAuthStore } from '@/stores/auth'
+import { PERMISSIONS } from '@/constants/permissions'
 import type { User } from '@/types/user'
 import { Button } from '@/components/ui/button'
 import {
@@ -68,11 +69,11 @@ const error = ref<string | null>(null)
 
 // Computed properties
 const canManageParticipants = computed(() => {
-  return authStore.hasPermission('manage participants') || authStore.hasPermission('edit meetings')
+  return authStore.hasPermission(PERMISSIONS.PARTICIPANTS.MANAGE) || authStore.hasPermission(PERMISSIONS.MEETINGS.EDIT)
 })
 
 const canViewParticipants = computed(() => {
-  return authStore.hasPermission('view participants') || authStore.hasPermission('view meetings')
+  return authStore.hasPermission(PERMISSIONS.PARTICIPANTS.VIEW) || authStore.hasPermission(PERMISSIONS.MEETINGS.VIEW)
 })
 
 const availableUsers = computed(() => {

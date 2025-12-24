@@ -42,6 +42,7 @@ import { Badge } from '@/components/ui/badge'
 import type { BadgeVariants } from '@/components/ui/badge'
 import { toast } from 'vue-sonner'
 import { useMeetingFilters } from '@/composables/useMeetingFilters'
+import { PERMISSIONS } from '@/constants/permissions'
 
 const meetingsStore = useMeetingsStore()
 const authStore = useAuthStore()
@@ -73,10 +74,10 @@ const {
 })
 
 // Permission checks
-const canCreateMeetings = computed(() => hasPermission.value('create meetings'))
-const canEditMeetings = computed(() => hasPermission.value('edit meetings'))
-const canDeleteMeetings = computed(() => hasPermission.value('delete meetings'))
-const canViewAllMeetings = computed(() => hasPermission.value('view meetings'))
+const canCreateMeetings = computed(() => hasPermission.value(PERMISSIONS.MEETINGS.CREATE))
+const canEditMeetings = computed(() => hasPermission.value(PERMISSIONS.MEETINGS.EDIT))
+const canDeleteMeetings = computed(() => hasPermission.value(PERMISSIONS.MEETINGS.DELETE))
+const canViewAllMeetings = computed(() => hasPermission.value(PERMISSIONS.MEETINGS.VIEW))
 
 // Dialog handlers
 function openEditDialog(meeting: Meeting) {

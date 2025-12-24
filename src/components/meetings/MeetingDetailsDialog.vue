@@ -3,6 +3,7 @@ import { ref, computed, watch } from 'vue'
 import type { Meeting } from '@/types/meeting'
 import { useMeetingsStore } from '@/stores/meetings'
 import { useAuthStore } from '@/stores/auth'
+import { PERMISSIONS } from '@/constants/permissions'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -60,7 +61,7 @@ const isOrganizer = computed(() => {
 })
 
 const canViewHostKey = computed(() => {
-  return authStore.hasPermission('view host key') || isOrganizer.value
+  return authStore.hasPermission(PERMISSIONS.MEETINGS.VIEW_HOST_KEY) || isOrganizer.value
 })
 
 const participants = computed(() => {

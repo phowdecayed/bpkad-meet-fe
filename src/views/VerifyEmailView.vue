@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button'
 import { LoaderCircle, CircleCheck, CircleX } from 'lucide-vue-next'
 import axios from 'axios'
+import { PERMISSIONS } from '@/constants/permissions'
 
 const route = useRoute()
 const router = useRouter()
@@ -29,7 +30,7 @@ onMounted(async () => {
   try {
     // Security Check: If a user is logged in, ensure they are the correct user OR an admin.
     if (authStore.isAuthenticated && authStore.user && String(authStore.user.id) !== id) {
-      if (authStore.hasPermission('manage users')) {
+      if (authStore.hasPermission(PERMISSIONS.USERS.MANAGE)) {
         isAdminAction.value = true
       } else {
         await authStore.logout()

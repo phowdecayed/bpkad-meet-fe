@@ -1,6 +1,7 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import axios, { type AxiosError } from 'axios'
+import { meetingService } from '@/services/meetingService'
 import type { Meeting } from '@/types/meeting'
 import type { User } from '@/types/user'
 
@@ -198,7 +199,7 @@ export const useMeetingsStore = defineStore('meetings', () => {
         if (params.location) queryParams.location = params.location
       }
 
-      const response = await axios.get<MeetingsResponse>(endpoint, { params: queryParams })
+      const response = await meetingService.fetchMeetings(queryParams, endpoint)
 
       meetings.value = response.data.data
 
@@ -220,7 +221,7 @@ export const useMeetingsStore = defineStore('meetings', () => {
     error.value = null
 
     try {
-      const response = await axios.get<{ data: Meeting }>(`/api/meetings/${id}`)
+      const response = await meetingService.fetchMeeting(id)
       currentMeeting.value = response.data.data
       return response.data.data
     } catch (err: unknown) {
@@ -237,7 +238,7 @@ export const useMeetingsStore = defineStore('meetings', () => {
     error.value = null
 
     try {
-      const response = await axios.post<{ data: Meeting }>('/api/meetings', meetingData)
+      const response = await meetingService.createMeeting(meetingData)
       const newMeeting = response.data.data
 
       // Add to current meetings list if it fits current filters
@@ -258,7 +259,7 @@ export const useMeetingsStore = defineStore('meetings', () => {
     error.value = null
 
     try {
-      const response = await axios.patch<{ data: Meeting }>(`/api/meetings/${id}`, meetingData)
+      const response = await meetingService.updateMeeting(id, meetingData)
       const updatedMeeting = response.data.data
 
       // Update in current meetings list
@@ -287,7 +288,7 @@ export const useMeetingsStore = defineStore('meetings', () => {
     error.value = null
 
     try {
-      await axios.delete(`/api/meetings/${id}`)
+      await meetingService.deleteMeeting(id)
 
       // Remove from current meetings list
       meetings.value = meetings.value.filter((m) => m.id !== id)
@@ -313,9 +314,7 @@ export const useMeetingsStore = defineStore('meetings', () => {
     error.value = null
 
     try {
-      const response = await axios.get<ParticipantsResponse>(
-        `/api/meetings/${meetingId}/participants`,
-      )
+      const response = await meetingService.fetchParticipants(meetingId)
       participants.value = response.data.data
       return response.data.data
     } catch (err: unknown) {
@@ -332,7 +331,7 @@ export const useMeetingsStore = defineStore('meetings', () => {
     error.value = null
 
     try {
-      await axios.post(`/api/meetings/${meetingId}/participants`, { user_id: userId })
+      await meetingService.addParticipant(meetingId, userId)
 
       // Refresh participants list
       await fetchParticipants(meetingId)
@@ -349,7 +348,7 @@ export const useMeetingsStore = defineStore('meetings', () => {
     error.value = null
 
     try {
-      await axios.delete(`/api/meetings/${meetingId}/participants/${userId}`)
+      await meetingService.removeParticipant(meetingId, userId)
 
       // Remove from current participants list
       participants.value = participants.value.filter((p) => p.id !== userId)
