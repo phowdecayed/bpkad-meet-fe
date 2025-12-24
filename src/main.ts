@@ -65,6 +65,14 @@ async function initializeApp() {
     initError = error
   } finally {
     app.mount('#app')
+
+    // Hide splash screen with fade effect
+    const splashScreen = document.getElementById('splash-screen')
+    if (splashScreen) {
+      splashScreen.classList.add('fade-out')
+      setTimeout(() => splashScreen.remove(), 400)
+    }
+
     if (initError) {
       // Use setTimeout to ensure Toaster is mounted and ready to receive event
       setTimeout(() => {
