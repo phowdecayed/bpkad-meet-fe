@@ -51,8 +51,8 @@ async function initializeApp() {
       await authStore.fetchUser()
     }
   } catch {
-    // Token might be invalid, clear it
-    authStore.logout()
+    // Token might be invalid or server down, clear it locally
+    authStore.clearAuth()
   } finally {
     app.mount('#app')
   }
