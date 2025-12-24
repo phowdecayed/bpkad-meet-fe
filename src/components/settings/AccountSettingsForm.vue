@@ -40,12 +40,7 @@ function onDelete() {
       <Input :id="`${form.id}-name`" v-model="form.name" />
     </div>
 
-    <RecursiveFormField
-      :id="form.id"
-      field-key="payload"
-      v-model="form.payload"
-      :is-root="true"
-    />
+    <RecursiveFormField :id="form.id" field-key="payload" v-model="form.payload" :is-root="true" />
 
     <div class="flex justify-between pt-4">
       <Button type="submit" :disabled="isSaving">

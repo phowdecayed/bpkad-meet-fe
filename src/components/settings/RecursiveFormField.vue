@@ -81,7 +81,7 @@ function updateNestedValue(key: string, newValue: FieldValue) {
       :id="`${id}-${key}`"
       :key="key"
       :field-key="key"
-      :model-value="(modelValue as { [key: string]: FieldValue })[key]"
+      :model-value="(modelValue as unknown as Record<string, FieldValue>)[key] as FieldValue"
       @update:model-value="(newValue) => updateNestedValue(key, newValue)"
     />
   </div>

@@ -331,7 +331,10 @@ onMounted(() => {
 <template>
   <Dialog :open="props.open" @update:open="(value) => emit('update:open', value)">
     <DialogContent class="sm:max-w-[650px] flex flex-col">
-      <div v-if="isSubmitting" class="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-10 rounded-lg">
+      <div
+        v-if="isSubmitting"
+        class="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-10 rounded-lg"
+      >
         <div class="flex flex-col items-center gap-2">
           <Loader2 class="h-8 w-8 animate-spin text-primary" />
           <p class="text-lg font-semibold">Creating Meeting...</p>

@@ -42,7 +42,7 @@ const isValidJson = (jsonString: string): boolean => {
 }
 
 const handleSave = async (setting: Setting) => {
-  const editedJson = editingSettings.value[setting.id]
+  const editedJson = editingSettings.value[setting.id] || '{}'
 
   if (!isValidJson(editedJson)) {
     toast.error('Invalid JSON', {
@@ -143,7 +143,10 @@ const handleReset = (setting: Setting) => {
           <Button type="button" variant="secondary" @click="handleReset(setting)"> Reset </Button>
           <Button
             type="button"
-            :disabled="isSaving[setting.id] || !isValidJson(editingSettings[setting.id])"
+            :disabled="
+              isSaving[setting.id] ||
+              (editingSettings[setting.id] ? !isValidJson(editingSettings[setting.id]!) : true)
+            "
             @click="handleSave(setting)"
           >
             <LoaderCircle v-if="isSaving[setting.id]" class="mr-2 h-4 w-4 animate-spin" />

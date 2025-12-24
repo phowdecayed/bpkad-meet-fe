@@ -202,12 +202,20 @@ async function onConfirmDelete() {
           <div class="grid gap-2">
             <Label>Permissions</Label>
             <div class="space-y-2 rounded-md border p-4">
-              <div v-for="(permissionGroup, groupName) in groupedPermissions" :key="groupName" class="mb-4">
+              <div
+                v-for="(permissionGroup, groupName) in groupedPermissions"
+                :key="groupName"
+                class="mb-4"
+              >
                 <h4 class="mb-2 font-semibold capitalize">
                   {{ groupName }}
                 </h4>
                 <div class="space-y-2">
-                  <div v-for="permission in permissionGroup" :key="permission.id" class="flex items-center space-x-2">
+                  <div
+                    v-for="permission in permissionGroup"
+                    :key="permission.id"
+                    class="flex items-center space-x-2"
+                  >
                     <Checkbox
                       :id="`permission-${permission.id}`"
                       :checked="selectedPermissions.includes(permission.id)"

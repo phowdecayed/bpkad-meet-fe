@@ -54,8 +54,11 @@ async function handleSubmit() {
     let errorMessage = 'An unknown error occurred. Please try again.'
     if (axios.isAxiosError(error) && error.response?.data) {
       if (error.response.data.errors) {
-        const errorKey = Object.keys(error.response.data.errors)[0]
-        errorMessage = error.response.data.errors[errorKey][0]
+        const errors = error.response.data.errors as Record<string, string[]>
+        const errorKey = Object.keys(errors)[0]
+        if (errorKey && errors[errorKey] && errors[errorKey][0]) {
+          errorMessage = errors[errorKey][0]
+        }
       } else if (error.response.data.message) {
         errorMessage = error.response.data.message
       }

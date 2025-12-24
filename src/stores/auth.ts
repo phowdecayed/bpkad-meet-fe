@@ -1,6 +1,6 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
-import axios from 'axios'
+import { authService } from '@/services/authService'
 import type { User, Role, Permission } from '@/types/user'
 
 interface ChangePasswordPayload {
@@ -25,7 +25,6 @@ export const useAuthStore = defineStore('auth', () => {
   function setToken(newToken: string) {
     token.value = newToken
     localStorage.setItem('token', newToken)
-    axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`
   }
 
   function setUser(newUser: User) {
@@ -38,15 +37,14 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = null
     localStorage.removeItem('token')
     localStorage.removeItem('user')
-    delete axios.defaults.headers.common['Authorization']
   }
 
   async function login(credentials: { email: string; password: string }) {
     try {
-      // Get CSRF token first
-      await getCsrfToken()
-      
-      const response = await axios.post('/api/login', credentials)
+      // Service handles CSRF internally if needed, but we can call it here too.
+      // The service.login calls getCsrfToken().
+
+      const response = await authService.login(credentials)
       const { access_token } = response.data
       setToken(access_token)
       await fetchUser()
@@ -60,7 +58,7 @@ export const useAuthStore = defineStore('auth', () => {
     if (!token.value) return
 
     try {
-      const response = await axios.get('/api/user')
+      const response = await authService.fetchUser()
       setUser(response.data.data)
     } catch (error) {
       clearAuth()
@@ -70,7 +68,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function logout() {
     try {
-      await axios.post('/api/logout')
+      await authService.logout()
     } catch (error) {
       console.error('Failed to logout on server:', error)
     } finally {
@@ -79,28 +77,23 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function changeName(name: string) {
-    await getCsrfToken()
-    return axios.post('/api/user/change-name', { name })
+    return authService.changeName(name)
   }
 
   async function changeEmail(email: string) {
-    await getCsrfToken()
-    return axios.post('/api/user/change-email', { email })
+    return authService.changeEmail(email)
   }
 
   async function changePassword(payload: ChangePasswordPayload) {
-    await getCsrfToken()
-    return axios.post('/api/user/change-password', payload)
+    return authService.changePassword(payload)
   }
 
   async function forgotPassword(email: string) {
-    await getCsrfToken()
-    return axios.post('/api/forgot-password', { email })
+    return authService.forgotPassword(email)
   }
 
   async function resetPassword(payload: ResetPasswordPayload) {
-    await getCsrfToken()
-    return axios.post('/api/reset-password', payload)
+    return authService.resetPassword(payload)
   }
 
   async function verifyEmail(
@@ -108,17 +101,15 @@ export const useAuthStore = defineStore('auth', () => {
     hash: string,
     query: { expires: string; signature: string },
   ) {
-    const queryString = new URLSearchParams(query as Record<string, string>).toString()
-    return axios.get(`/api/email/verify/${id}/${hash}?${queryString}`)
+    return authService.verifyEmail(id, hash, query)
   }
 
   async function resendVerificationEmail() {
-    await getCsrfToken()
-    return axios.post('/api/email/verification-notification')
+    return authService.resendVerificationEmail()
   }
 
   async function getCsrfToken() {
-    return axios.get('/sanctum/csrf-cookie')
+    return authService.getCsrfToken()
   }
 
   const hasPermission = computed(() => {
@@ -130,13 +121,12 @@ export const useAuthStore = defineStore('auth', () => {
     }
   })
 
-  // Set auth header on initial load if token exists
-  if (token.value) axios.defaults.headers.common['Authorization'] = `Bearer ${token.value}`
-
   return {
     token,
     user,
     isAuthenticated,
+    setToken,
+    clearAuth,
     login,
     logout,
     fetchUser,

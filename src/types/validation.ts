@@ -128,8 +128,9 @@ export interface FormContext<T extends object = Record<string, unknown>> {
 }
 
 // Multi-step form context
-export interface MultiStepFormContext<T extends object = Record<string, unknown>>
-  extends FormContext<T> {
+export interface MultiStepFormContext<
+  T extends object = Record<string, unknown>,
+> extends FormContext<T> {
   currentStep: number
   totalSteps: number
   stepValidation: Record<number, StepValidationState>

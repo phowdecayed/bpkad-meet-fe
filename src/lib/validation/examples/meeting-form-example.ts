@@ -186,7 +186,9 @@ export function useApiValidationErrorHandling() {
 
       Object.entries(error.response.data.errors).forEach(([field, messages]) => {
         if (Array.isArray(messages) && messages.length > 0) {
-          formattedErrors[field] = messages[0]
+          if (messages[0]) {
+            formattedErrors[field] = messages[0]
+          }
         }
       })
 

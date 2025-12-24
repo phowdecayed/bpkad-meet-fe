@@ -99,7 +99,7 @@ function reloadPage() {
     <!-- Settings Groups -->
     <div v-else-if="Object.keys(settingsStore.groupedSettings).length > 0" class="space-y-8">
       <Tabs
-        :default-value="Object.keys(settingsStore.groupedSettings)[0].toString()"
+        :default-value="(Object.keys(settingsStore.groupedSettings)[0] || 'default').toString()"
         class="w-full"
       >
         <TabsList>

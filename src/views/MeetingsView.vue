@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from 'vue'
-import { useMeetingsStore, type MeetingQueryParams } from '@/stores/meetings'
+import { ref, onMounted, computed } from 'vue'
+import { useMeetingsStore } from '@/stores/meetings'
 import { useAuthStore } from '@/stores/auth'
 
 import { storeToRefs } from 'pinia'
@@ -41,7 +41,7 @@ import {
 import { Badge } from '@/components/ui/badge'
 import type { BadgeVariants } from '@/components/ui/badge'
 import { toast } from 'vue-sonner'
-import debounce from 'lodash-es/debounce'
+import { useMeetingFilters } from '@/composables/useMeetingFilters'
 
 const meetingsStore = useMeetingsStore()
 const authStore = useAuthStore()
@@ -55,13 +55,22 @@ const showDeleteDialog = ref(false)
 const showDetailsDialog = ref(false)
 const selectedMeeting = ref<Meeting | null>(null)
 
-// Search and filter states
-const searchQuery = ref('')
-const selectedType = ref<string | undefined>(undefined)
-const selectedLocation = ref('all')
-const startDate = ref('')
-const endDate = ref('')
-const perPage = ref('10')
+const {
+  searchQuery,
+  selectedType,
+  selectedLocation,
+  startDate,
+  endDate,
+  perPage,
+  hasActiveFilters,
+  getActiveFilterCount,
+  availableLocations,
+  locationsCount,
+  buildQueryParams,
+  clearFilters,
+} = useMeetingFilters(meetings, async (params) => {
+  await meetingsStore.fetchMeetings(params)
+})
 
 // Permission checks
 const canCreateMeetings = computed(() => hasPermission.value('create meetings'))
@@ -152,90 +161,6 @@ const getTypeVariant = (type: string): BadgeVariants['variant'] => {
   }
 }
 
-const hasActiveFilters = computed(() => {
-  return (
-    searchQuery.value.trim() !== '' ||
-    (selectedType.value !== undefined && selectedType.value !== 'all') ||
-    selectedLocation.value !== 'all' ||
-    startDate.value !== '' ||
-    endDate.value !== ''
-  )
-})
-
-const getActiveFilterCount = () => {
-  let count = 0
-  if (searchQuery.value.trim() !== '') count++
-  if (selectedType.value !== undefined && selectedType.value !== 'all') count++
-  if (selectedLocation.value !== 'all') count++
-  if (startDate.value !== '') count++
-  if (endDate.value !== '') count++
-  return count
-}
-
-// Extract unique locations from meetings for dynamic filtering
-const availableLocations = computed(() => {
-  const locationSet = new Set<string>()
-  meetings.value.forEach((meeting) => {
-    if (meeting.location?.name) {
-      locationSet.add(meeting.location.name)
-    }
-  })
-  return Array.from(locationSet).sort()
-})
-
-// Debug computed property for locations
-const locationsCount = computed(() => availableLocations.value.length)
-
-// Search and filter functionality
-// This function preserves filter state when navigating between pages
-const buildQueryParams = (): MeetingQueryParams => {
-  const params: MeetingQueryParams = {
-    per_page: parseInt(perPage.value, 10),
-  }
-
-  if (searchQuery.value.trim()) {
-    params.topic = searchQuery.value.trim()
-  }
-
-  // Exclude 'all' and undefined values from type parameter
-  if (selectedType.value && selectedType.value !== 'all') {
-    params.type = selectedType.value
-  }
-
-  if (selectedLocation.value && selectedLocation.value !== 'all') {
-    params.location = selectedLocation.value
-  }
-
-  if (startDate.value) {
-    params.start_date = startDate.value
-  }
-
-  if (endDate.value) {
-    params.end_date = endDate.value
-  }
-
-  return params
-}
-
-const debouncedSearch = debounce(() => {
-  // Always reset to page 1 when filters change
-  // This ensures proper filter and pagination interaction
-  goToPage(1)
-}, 300)
-
-// Watch for search changes
-watch(
-  () => [
-    searchQuery.value,
-    selectedType.value,
-    selectedLocation.value,
-    startDate.value,
-    endDate.value,
-    perPage.value,
-  ],
-  debouncedSearch,
-)
-
 // Pagination handlers updated to work with PaginationControls component
 
 // Pagination handlers updated to work with PaginationControls component
@@ -275,20 +200,6 @@ async function retryFetch() {
   const params = buildQueryParams()
   params.page = pagination.value.currentPage
   await meetingsStore.fetchMeetings(params)
-}
-
-function clearFilters() {
-  // Clear all filter values
-  searchQuery.value = ''
-  selectedType.value = undefined
-  selectedLocation.value = 'all'
-  startDate.value = ''
-  endDate.value = ''
-  perPage.value = '10'
-
-  // Reset pagination to page 1 and fetch with no filters
-  // This ensures proper filter and pagination interaction
-  goToPage(1)
 }
 
 // Initialize
@@ -342,7 +253,9 @@ onMounted(() => {
               <Select v-model="selectedType">
                 <SelectTrigger
                   id="type"
-                  :class="{ 'border-primary': selectedType !== undefined && selectedType !== 'all' }"
+                  :class="{
+                    'border-primary': selectedType !== undefined && selectedType !== 'all',
+                  }"
                 >
                   <SelectValue placeholder="All types" />
                 </SelectTrigger>
@@ -358,7 +271,10 @@ onMounted(() => {
             <div class="space-y-2">
               <Label for="location">Location ({{ locationsCount }} available)</Label>
               <Select v-model="selectedLocation">
-                <SelectTrigger id="location" :class="{ 'border-primary': selectedLocation !== 'all' }">
+                <SelectTrigger
+                  id="location"
+                  :class="{ 'border-primary': selectedLocation !== 'all' }"
+                >
                   <SelectValue placeholder="All locations" />
                 </SelectTrigger>
                 <SelectContent>
@@ -523,7 +439,9 @@ onMounted(() => {
               </TableCell>
               <TableCell>
                 <Badge
-                  :variant="getStatusVariant(getMeetingStatus(meeting.start_time, meeting.duration))"
+                  :variant="
+                    getStatusVariant(getMeetingStatus(meeting.start_time, meeting.duration))
+                  "
                 >
                   {{ getMeetingStatus(meeting.start_time, meeting.duration) }}
                 </Badge>
@@ -629,4 +547,3 @@ onMounted(() => {
     ></ConfirmationDialog>
   </div>
 </template>
-
