@@ -10,7 +10,7 @@ import pkg from './package.json'
 // https://vite.dev/config/
 export default defineConfig({
   define: {
-    'import.meta.env.PACKAGE_VERSION': JSON.stringify(pkg.version)
+    'import.meta.env.PACKAGE_VERSION': JSON.stringify(pkg.version),
   },
   plugins: [vue(), vueJsx(), vueDevTools(), tailwindcss()],
   resolve: {
@@ -20,5 +20,25 @@ export default defineConfig({
   },
   preview: {
     allowedHosts: ['meeting.bpkadprovjabar.page'],
+  },
+  build: {
+    chunkSizeWarningLimit: 1000,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-vue': ['vue', 'vue-router', 'pinia'],
+          'vendor-ui': [
+            'reka-ui',
+            'lucide-vue-next',
+            'class-variance-authority',
+            'clsx',
+            'tailwind-merge',
+            'vaul-vue',
+          ],
+          'vendor-utils': ['axios', 'zod', 'lodash-es'],
+          'vendor-charts': ['chart.js', 'vue-chartjs'],
+        },
+      },
+    },
   },
 })
