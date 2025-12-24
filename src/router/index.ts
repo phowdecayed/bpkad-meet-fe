@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import NProgress from 'nprogress'
 import LoginView from '../views/LoginView.vue'
 import DashboardView from '../views/DashboardView.vue'
 import ProfileView from '../views/ProfileView.vue'
@@ -99,6 +100,7 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
+  NProgress.start()
   const authStore = useAuthStore()
   const isAuthenticated = authStore.isAuthenticated
 
@@ -126,6 +128,10 @@ router.beforeEach((to, from, next) => {
   }
 
   next()
+})
+
+router.afterEach(() => {
+  NProgress.done()
 })
 
 export default router
