@@ -7,12 +7,16 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
 import { Toaster } from '@/components/ui/sonner'
+import ErrorBoundary from '@/components/ErrorBoundary.vue'
 import 'vue-sonner/style.css'
 </script>
 
 <template>
-  <!-- The RouterView component renders the component for the current route. -->
-  <RouterView />
+  <!-- Error Boundary catches runtime errors and displays fallback UI -->
+  <ErrorBoundary>
+    <!-- The RouterView component renders the component for the current route. -->
+    <RouterView />
+  </ErrorBoundary>
   <!-- The Toaster component is used to display notifications. -->
   <Teleport to="body">
     <Toaster rich-colors position="top-right" />
