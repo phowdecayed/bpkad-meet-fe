@@ -1,5 +1,5 @@
 import axios from 'axios'
-import router from '@/router'
+
 import { useAuthStore } from '@/stores/auth'
 
 const api = axios.create({
@@ -29,7 +29,7 @@ api.interceptors.response.use(
       // But authStore.logout calls API.
       // We should just clear state and redirect.
       authStore.clearAuth()
-      router.push({ name: 'login' })
+      window.location.href = '/login'
     }
     return Promise.reject(error)
   },

@@ -59,7 +59,7 @@ const hasChanges = computed(() => {
   return appsName.value !== generalSetting.value.payload.apps_name
 })
 
-function getString(value: any): string {
+function getString(value: unknown): string {
   if (typeof value === 'string') {
     return value
   }

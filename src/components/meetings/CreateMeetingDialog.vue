@@ -15,30 +15,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@/components/ui/command'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Check, ChevronsUpDown, Loader2 } from 'lucide-vue-next'
-import { cn } from '@/lib/utils'
+import { Loader2 } from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
+import MeetingForm from './MeetingForm.vue'
 
 const props = defineProps<{
   open: boolean
@@ -63,25 +43,20 @@ const stepValidation = ref<Record<number, boolean>>({
   3: true, // Participants step is optional
 })
 
-// Form fields
-const topic = ref('')
-const description = ref('')
-const startTime = ref('')
-const duration = ref(60)
-const type = ref<'online' | 'offline' | 'hybrid'>('online')
-const locationId = ref<number | undefined>(undefined)
-const password = ref('')
-const participants = ref<number[]>([])
+const initialFormState = {
+  topic: '',
+  description: '',
+  start_time: '',
+  duration: 60,
+  type: 'online' as 'online' | 'offline' | 'hybrid',
+  location_id: undefined as number | undefined,
+  password: '',
+  participants: [] as number[],
+}
+
+const formData = ref({ ...initialFormState })
 
 // Computed properties
-const isLocationRequired = computed(() => type.value === 'offline' || type.value === 'hybrid')
-const isPasswordVisible = computed(() => type.value === 'online' || type.value === 'hybrid')
-const openParticipantsPopover = ref(false)
-
-const selectedUsers = computed(() =>
-  users.value.filter((user) => participants.value.includes(user.id)),
-)
-
 const canProceedToNextStep = computed(() => {
   return stepValidation.value[currentStep.value] === true
 })
@@ -94,18 +69,6 @@ const showValidationErrors = computed(() => {
   return Object.keys(validationErrors.value).length > 0
 })
 
-// Form data computed property for validation
-const formData = computed(() => ({
-  topic: topic.value.trim(),
-  description: description.value.trim() || undefined,
-  start_time: startTime.value,
-  duration: duration.value,
-  type: type.value,
-  location_id: locationId.value,
-  password: password.value.trim() || undefined,
-  participants: participants.value,
-}))
-
 // Validation functions
 function validateStep(step: number): boolean {
   const stepFields = getStepFields(step)
@@ -117,7 +80,15 @@ function validateStep(step: number): boolean {
   })
 
   // We validate the whole form, but only check for errors in the current step's fields.
-  const result: ValidationResult = validateWithSchema(createMeetingSchema, formData.value)
+  // Transform formData to match schema expectations (trim strings etc)
+  const dataToValidate = {
+    ...formData.value,
+    topic: formData.value.topic.trim(),
+    description: formData.value.description.trim() || undefined,
+    password: formData.value.password?.trim() || undefined,
+  }
+
+  const result: ValidationResult = validateWithSchema(createMeetingSchema, dataToValidate)
 
   let isStepValid = true
   if (!result.success && result.fieldErrors) {
@@ -153,7 +124,14 @@ function validateCurrentStep(): boolean {
 }
 
 function validateAllSteps(): boolean {
-  const result: ValidationResult = validateWithSchema(createMeetingSchema, formData.value)
+  const dataToValidate = {
+    ...formData.value,
+    topic: formData.value.topic.trim(),
+    description: formData.value.description.trim() || undefined,
+    password: formData.value.password?.trim() || undefined,
+  }
+
+  const result: ValidationResult = validateWithSchema(createMeetingSchema, dataToValidate)
 
   if (!result.success && result.fieldErrors) {
     validationErrors.value = result.fieldErrors
@@ -195,22 +173,23 @@ async function createMeeting() {
 
   try {
     const meetingData: CreateMeetingPayload = {
-      topic: topic.value.trim(),
-      description: description.value.trim() || undefined,
-      start_time: startTime.value,
-      duration: duration.value,
-      type: type.value,
-      participants: participants.value, // Already array of user IDs
+      topic: formData.value.topic.trim(),
+      description: formData.value.description.trim() || undefined,
+      start_time: formData.value.start_time,
+      duration: formData.value.duration,
+      type: formData.value.type,
+      participants: formData.value.participants,
     }
 
+    const type = formData.value.type
     // Add location_id for offline/hybrid meetings
-    if (isLocationRequired.value && locationId.value) {
-      meetingData.location_id = locationId.value
+    if ((type === 'offline' || type === 'hybrid') && formData.value.location_id) {
+      meetingData.location_id = formData.value.location_id
     }
 
     // Add password for online/hybrid meetings
-    if (isPasswordVisible.value && password.value.trim()) {
-      meetingData.password = password.value.trim()
+    if ((type === 'online' || type === 'hybrid') && formData.value.password?.trim()) {
+      meetingData.password = formData.value.password.trim()
     }
 
     await meetingsStore.createMeeting(meetingData)
@@ -228,8 +207,6 @@ async function createMeeting() {
       validationErrors.value = { ...validationErrors.value, ...serverErrors }
 
       if (serverErrors.zoom_api) {
-        // The zoom_api error is not tied to a specific field, but it's related to time.
-        // So, we navigate to the first step where time is set.
         currentStep.value = 1
       } else {
         // Navigate to the step with other errors
@@ -255,14 +232,7 @@ async function createMeeting() {
 
 // Form reset
 function resetForm() {
-  topic.value = ''
-  description.value = ''
-  startTime.value = ''
-  duration.value = 60
-  type.value = 'online'
-  locationId.value = undefined
-  password.value = ''
-  participants.value = []
+  formData.value = { ...initialFormState }
   currentStep.value = 1
   validationErrors.value = {}
   stepValidation.value = { 1: false, 2: false, 3: true }
@@ -288,33 +258,29 @@ watch(
   },
 )
 
-// Watch for type changes to clear location when not required
-watch(type, (newType) => {
-  if (newType === 'online') {
-    locationId.value = undefined
-  }
-  // Clear validation errors when type changes
-  if (validationErrors.value.location_id) {
-    delete validationErrors.value.location_id
-  }
-  if (validationErrors.value.password) {
-    delete validationErrors.value.password
-  }
-  validateStep(2)
-})
+// Watch for type changes to clear location/password when not required
+watch(
+  () => formData.value.type,
+  (newType) => {
+    if (newType === 'online') {
+      formData.value.location_id = undefined
+    }
+    // Clear validation errors when type changes
+    if (validationErrors.value.location_id) delete validationErrors.value.location_id
+    if (validationErrors.value.password) delete validationErrors.value.password
+    validateStep(2)
+  },
+)
 
 // Watch form fields for real-time validation
-watch([topic, description, startTime, duration], () => {
-  if (currentStep.value === 1) {
-    validateStep(1)
-  }
-})
-
-watch([type, locationId, password], () => {
-  if (currentStep.value === 2) {
-    validateStep(2)
-  }
-})
+watch(
+  formData,
+  () => {
+    if (currentStep.value === 1) validateStep(1)
+    if (currentStep.value === 2) validateStep(2)
+  },
+  { deep: true },
+)
 
 // Watch for step changes to validate current step
 watch(currentStep, (newStep) => {
@@ -414,175 +380,14 @@ onMounted(() => {
       </Alert>
 
       <div class="flex-grow overflow-y-auto -mx-6 px-6">
-        <!-- Step 1: Basic Info -->
-        <div v-if="currentStep === 1" class="space-y-4 py-4">
-          <div class="grid gap-2">
-            <Label for="topic">Topic *</Label>
-            <Input
-              id="topic"
-              v-model="topic"
-              :class="{ 'border-red-500': validationErrors.topic }"
-              placeholder="Enter meeting topic"
-            />
-            <p v-if="validationErrors.topic" class="text-sm text-red-500 mt-1">
-              {{ validationErrors.topic }}
-            </p>
-          </div>
-          <div class="grid gap-2">
-            <Label for="description">Description</Label>
-            <Textarea
-              id="description"
-              v-model="description"
-              :class="{ 'border-red-500': validationErrors.description }"
-              placeholder="Optional meeting description"
-              rows="3"
-            />
-            <p v-if="validationErrors.description" class="text-sm text-red-500 mt-1">
-              {{ validationErrors.description }}
-            </p>
-          </div>
-          <div class="grid grid-cols-2 gap-4">
-            <div class="grid gap-2">
-              <Label for="start_time">Start Time *</Label>
-              <Input
-                id="start_time"
-                v-model="startTime"
-                type="datetime-local"
-                :class="{ 'border-red-500': validationErrors.start_time }"
-              />
-              <p v-if="validationErrors.start_time" class="text-sm text-red-500 mt-1">
-                {{ validationErrors.start_time }}
-              </p>
-            </div>
-            <div class="grid gap-2">
-              <Label for="duration">Duration (minutes) *</Label>
-              <Input
-                id="duration"
-                v-model.number="duration"
-                type="number"
-                min="1"
-                max="1440"
-                :class="{ 'border-red-500': validationErrors.duration }"
-                placeholder="60"
-              />
-              <p v-if="validationErrors.duration" class="text-sm text-red-500 mt-1">
-                {{ validationErrors.duration }}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Step 2: Details -->
-        <div v-if="currentStep === 2" class="space-y-4 py-4">
-          <div class="grid gap-2">
-            <Label for="type">Type *</Label>
-            <Select v-model="type">
-              <SelectTrigger :class="{ 'border-red-500': validationErrors.type }">
-                <SelectValue placeholder="Select a type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="online">Online</SelectItem>
-                <SelectItem value="offline">Offline</SelectItem>
-                <SelectItem value="hybrid">Hybrid</SelectItem>
-              </SelectContent>
-            </Select>
-            <p v-if="validationErrors.type" class="text-sm text-red-500 mt-1">
-              {{ validationErrors.type }}
-            </p>
-          </div>
-          <div v-if="isLocationRequired" class="grid gap-2">
-            <Label for="location">Location *</Label>
-            <Select v-model="locationId">
-              <SelectTrigger :class="{ 'border-red-500': validationErrors.location_id }">
-                <SelectValue placeholder="Select a location" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem v-for="loc in locations" :key="loc.id" :value="loc.id">
-                  {{ loc.name }}
-                </SelectItem>
-              </SelectContent>
-            </Select>
-            <p v-if="validationErrors.location_id" class="text-sm text-red-500 mt-1">
-              {{ validationErrors.location_id }}
-            </p>
-          </div>
-          <div v-if="isPasswordVisible" class="grid gap-2">
-            <Label for="password">Password</Label>
-            <Input
-              id="password"
-              v-model="password"
-              type="text"
-              :class="{ 'border-red-500': validationErrors.password }"
-              placeholder="Optional meeting password (max 10 chars)"
-              maxlength="10"
-            />
-            <p v-if="validationErrors.password" class="text-sm text-red-500 mt-1">
-              {{ validationErrors.password }}
-            </p>
-          </div>
-        </div>
-
-        <!-- Step 3: Participants -->
-        <div v-if="currentStep === 3" class="space-y-4 py-4">
-          <div class="grid gap-2">
-            <Label>Invite Participants</Label>
-            <Popover v-model:open="openParticipantsPopover">
-              <PopoverTrigger as-child>
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  :aria-expanded="openParticipantsPopover"
-                  class="w-full justify-between"
-                >
-                  {{
-                    selectedUsers.length > 0
-                      ? selectedUsers.map((u) => u.name).join(', ')
-                      : 'Select participants...'
-                  }}
-                  <ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent class="w-[--radix-popover-trigger-width] p-0">
-                <Command>
-                  <CommandInput placeholder="Search users..." />
-                  <CommandEmpty>No users found.</CommandEmpty>
-                  <CommandGroup>
-                    <CommandList>
-                      <CommandItem
-                        v-for="user in users"
-                        :key="user.id"
-                        :value="user.name"
-                        @select="
-                          () => {
-                            const index = participants.indexOf(user.id)
-                            if (index > -1) {
-                              participants.splice(index, 1)
-                            } else {
-                              participants.push(user.id)
-                            }
-                          }
-                        "
-                      >
-                        <Check
-                          :class="
-                            cn(
-                              'mr-2 h-4 w-4',
-                              participants.includes(user.id) ? 'opacity-100' : 'opacity-0',
-                            )
-                          "
-                        />
-                        {{ user.name }}
-                      </CommandItem>
-                    </CommandList>
-                  </CommandGroup>
-                </Command>
-              </PopoverContent>
-            </Popover>
-            <p class="text-sm text-muted-foreground">
-              Select users to invite to the meeting. This step is optional.
-            </p>
-          </div>
-        </div>
+        <MeetingForm
+          v-model="formData"
+          :current-step="currentStep"
+          :locations="locations"
+          :users="users"
+          :validation-errors="validationErrors"
+          :is-edit-mode="false"
+        />
       </div>
 
       <DialogFooter class="flex justify-between border-t pt-4">

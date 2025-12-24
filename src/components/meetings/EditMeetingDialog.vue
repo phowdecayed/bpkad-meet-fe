@@ -15,23 +15,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { Checkbox } from '@/components/ui/checkbox'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { AlertTriangle, Type, Loader2 } from 'lucide-vue-next'
 import ConfirmationDialog from '@/components/ConfirmationDialog.vue'
 import { toast } from 'vue-sonner'
+import MeetingForm from './MeetingForm.vue'
 
 const props = defineProps<{
   open: boolean
@@ -44,25 +33,29 @@ const meetingsStore = useMeetingsStore()
 const locationsStore = useLocationsStore()
 const usersStore = useUsersStore()
 
-// Form fields
-const topic = ref('')
-const description = ref('')
-const startTime = ref('')
-const duration = ref(60)
-const type = ref<'online' | 'offline' | 'hybrid'>('online')
-const locationId = ref<number | undefined>(undefined)
-const password = ref('')
-const selectedParticipants = ref<number[]>([])
-
-// Stepper state
-const currentStep = ref(1)
-const stepValidation = ref<Record<number, boolean>>({ 1: true, 2: true, 3: true })
-
 // State management
 const isLoading = ref(false)
 const hasUnsavedChanges = ref(false)
 const validationErrors = ref<Record<string, string>>({})
 const isConfirmDialogOpen = ref(false)
+
+// Stepper state
+const currentStep = ref(1)
+const stepValidation = ref<Record<number, boolean>>({ 1: true, 2: true, 3: true })
+
+const initialFormState = {
+  topic: '',
+  description: '',
+  start_time: '',
+  duration: 60,
+  type: 'online' as 'online' | 'offline' | 'hybrid',
+  location_id: undefined as number | undefined,
+  password: '',
+  participants: [] as number[],
+}
+
+const formData = ref({ ...initialFormState })
+
 const originalData = ref<{
   topic: string
   description: string
@@ -74,11 +67,17 @@ const originalData = ref<{
 } | null>(null)
 
 // Computed properties
-const isLocationRequired = computed(() => type.value === 'offline' || type.value === 'hybrid')
-const isPasswordAllowed = computed(() => type.value === 'online' || type.value === 'hybrid')
+const isLocationRequired = computed(
+  () => formData.value.type === 'offline' || formData.value.type === 'hybrid',
+)
+const isPasswordAllowed = computed(
+  () => formData.value.type === 'online' || formData.value.type === 'hybrid',
+)
+// Filter out organizer from available users list
 const availableUsers = computed(() =>
   usersStore.users.filter((user) => user.id !== props.meeting?.organizer.id),
 )
+
 const canProceedToNextStep = computed(() => {
   return stepValidation.value[currentStep.value] === true
 })
@@ -87,20 +86,9 @@ const showValidationErrors = computed(() => {
   return Object.keys(validationErrors.value).length > 0
 })
 
-const formData = computed(() => ({
-  topic: topic.value,
-  description: description.value || undefined,
-  start_time: startTime.value,
-  duration: duration.value,
-  type: type.value,
-  location_id: locationId.value,
-  password: password.value || undefined,
-  participants: selectedParticipants.value,
-}))
-
 // Watchers
 watch(
-  [topic, description, startTime, duration, type, locationId, password, selectedParticipants],
+  formData,
   () => {
     if (originalData.value) {
       hasUnsavedChanges.value = hasFormChanged()
@@ -160,9 +148,6 @@ async function loadRequiredData() {
 async function populateForm(meeting: Meeting) {
   const fullMeeting = await meetingsStore.fetchMeeting(meeting.id)
 
-  topic.value = fullMeeting.topic
-  description.value = fullMeeting.description || ''
-
   // Correctly format the UTC date from the server to a local datetime-local string
   const d = new Date(fullMeeting.start_time)
   const year = d.getFullYear()
@@ -170,29 +155,35 @@ async function populateForm(meeting: Meeting) {
   const day = d.getDate().toString().padStart(2, '0')
   const hours = d.getHours().toString().padStart(2, '0')
   const minutes = d.getMinutes().toString().padStart(2, '0')
-  startTime.value = `${year}-${month}-${day}T${hours}:${minutes}`
+  const formattedStartTime = `${year}-${month}-${day}T${hours}:${minutes}`
 
-  duration.value = fullMeeting.duration
-  type.value = fullMeeting.type
-  locationId.value = fullMeeting.location?.id
-  password.value = ''
-
+  let participantIds: number[] = []
   try {
     const participants = await meetingsStore.fetchParticipants(fullMeeting.id)
-    selectedParticipants.value = participants.map((p) => p.id)
+    participantIds = participants.map((p) => p.id)
   } catch (error) {
     console.error('Failed to load participants:', error)
-    selectedParticipants.value = []
+  }
+
+  formData.value = {
+    topic: fullMeeting.topic,
+    description: fullMeeting.description || '',
+    start_time: formattedStartTime,
+    duration: fullMeeting.duration,
+    type: fullMeeting.type,
+    location_id: fullMeeting.location?.id,
+    password: '',
+    participants: participantIds,
   }
 
   originalData.value = {
     topic: fullMeeting.topic,
     description: fullMeeting.description || '',
-    start_time: fullMeeting.start_time,
+    start_time: formattedStartTime,
     duration: fullMeeting.duration,
     type: fullMeeting.type,
     location_id: fullMeeting.location?.id,
-    participants: [...selectedParticipants.value],
+    participants: [...participantIds],
   }
 
   hasUnsavedChanges.value = false
@@ -202,14 +193,7 @@ async function populateForm(meeting: Meeting) {
 }
 
 function resetForm() {
-  topic.value = ''
-  description.value = ''
-  startTime.value = ''
-  duration.value = 60
-  type.value = 'online'
-  locationId.value = undefined
-  password.value = ''
-  selectedParticipants.value = []
+  formData.value = { ...initialFormState }
   originalData.value = null
   hasUnsavedChanges.value = false
   validationErrors.value = {}
@@ -219,16 +203,15 @@ function resetForm() {
 
 function hasFormChanged(): boolean {
   if (!originalData.value) return false
-  const currentStartTime = new Date(startTime.value).toISOString()
-  const originalStartTime = new Date(originalData.value.start_time).toISOString()
+
   return (
-    topic.value !== originalData.value.topic ||
-    description.value !== originalData.value.description ||
-    currentStartTime !== originalStartTime ||
-    duration.value !== originalData.value.duration ||
-    type.value !== originalData.value.type ||
-    locationId.value !== originalData.value.location_id ||
-    !arraysEqual(selectedParticipants.value, originalData.value.participants)
+    formData.value.topic !== originalData.value.topic ||
+    formData.value.description !== originalData.value.description ||
+    formData.value.start_time !== originalData.value.start_time ||
+    formData.value.duration !== originalData.value.duration ||
+    formData.value.type !== originalData.value.type ||
+    formData.value.location_id !== originalData.value.location_id ||
+    !arraysEqual(formData.value.participants, originalData.value.participants)
   )
 }
 
@@ -257,7 +240,15 @@ function validateStep(step: number): boolean {
   const newErrors = { ...validationErrors.value }
   stepFields.forEach((field) => delete newErrors[field])
 
-  const result: ValidationResult = validateWithSchema(updateMeetingSchema, formData.value)
+  // Transform for validation
+  const dataToValidate = {
+    ...formData.value,
+    topic: formData.value.topic.trim(),
+    description: formData.value.description.trim() || undefined,
+    password: formData.value.password?.trim() || undefined,
+  }
+
+  const result: ValidationResult = validateWithSchema(updateMeetingSchema, dataToValidate)
 
   let isStepValid = true
   if (!result.success && result.fieldErrors) {
@@ -275,7 +266,14 @@ function validateStep(step: number): boolean {
 }
 
 function validateAllSteps(): boolean {
-  const result = validateWithSchema(updateMeetingSchema, formData.value)
+  const dataToValidate = {
+    ...formData.value,
+    topic: formData.value.topic.trim(),
+    description: formData.value.description.trim() || undefined,
+    password: formData.value.password?.trim() || undefined,
+  }
+
+  const result = validateWithSchema(updateMeetingSchema, dataToValidate)
   if (!result.success) {
     validationErrors.value = result.fieldErrors || {}
     return false
@@ -296,15 +294,6 @@ function previousStep() {
   }
 }
 
-function toggleParticipant(userId: number) {
-  const index = selectedParticipants.value.indexOf(userId)
-  if (index > -1) {
-    selectedParticipants.value.splice(index, 1)
-  } else {
-    selectedParticipants.value.push(userId)
-  }
-}
-
 async function updateMeeting() {
   if (!props.meeting || !validateAllSteps()) {
     for (let step = 1; step <= 3; step++) {
@@ -321,21 +310,25 @@ async function updateMeeting() {
 
   try {
     const updateData: UpdateMeetingPayload = {
-      topic: topic.value,
-      description: description.value || undefined,
-      start_time: startTime.value,
-      duration: duration.value,
-      location_id: isLocationRequired.value ? locationId.value : undefined,
+      topic: formData.value.topic,
+      description: formData.value.description || undefined,
+      start_time: formData.value.start_time,
+      duration: formData.value.duration,
+      location_id: isLocationRequired.value ? formData.value.location_id : undefined,
       settings:
-        isPasswordAllowed.value && password.value ? { password: password.value } : undefined,
+        isPasswordAllowed.value && formData.value.password
+          ? { password: formData.value.password }
+          : undefined,
     }
 
     await meetingsStore.updateMeeting(props.meeting.id, updateData)
 
-    if (!arraysEqual(selectedParticipants.value, originalData.value?.participants || [])) {
+    if (!arraysEqual(formData.value.participants, originalData.value?.participants || [])) {
       const originalParticipants = originalData.value?.participants || []
-      const toAdd = selectedParticipants.value.filter((id) => !originalParticipants.includes(id))
-      const toRemove = originalParticipants.filter((id) => !selectedParticipants.value.includes(id))
+      const currentParticipants = formData.value.participants
+
+      const toAdd = currentParticipants.filter((id) => !originalParticipants.includes(id))
+      const toRemove = originalParticipants.filter((id) => !currentParticipants.includes(id))
 
       for (const userId of toAdd) {
         await meetingsStore.addParticipant(props.meeting.id, userId)
@@ -444,154 +437,16 @@ function handleConfirmClose() {
         <AlertDescription> Please fix the validation errors before proceeding. </AlertDescription>
       </Alert>
 
-      <ScrollArea class="flex-grow -mx-6 px-6">
-        <!-- Step 1: Basic Info & Schedule -->
-        <div v-if="currentStep === 1" class="space-y-4 py-4">
-          <div class="grid gap-2">
-            <Label for="topic">Topic *</Label>
-            <Input
-              id="topic"
-              v-model="topic"
-              :class="{ 'border-red-500': validationErrors.topic }"
-              placeholder="Enter meeting topic"
-            />
-            <p v-if="validationErrors.topic" class="text-sm text-red-500 mt-1">
-              {{ validationErrors.topic }}
-            </p>
-          </div>
-          <div class="grid gap-2">
-            <Label for="description">Description</Label>
-            <Textarea
-              id="description"
-              v-model="description"
-              :class="{ 'border-red-500': validationErrors.description }"
-              placeholder="Optional meeting description"
-              rows="3"
-            />
-            <p v-if="validationErrors.description" class="text-sm text-red-500 mt-1">
-              {{ validationErrors.description }}
-            </p>
-          </div>
-          <div class="grid grid-cols-2 gap-4">
-            <div class="grid gap-2">
-              <Label for="start_time">Start Time *</Label>
-              <Input
-                id="start_time"
-                v-model="startTime"
-                type="datetime-local"
-                :class="{ 'border-red-500': validationErrors.start_time }"
-              />
-              <p v-if="validationErrors.start_time" class="text-sm text-red-500 mt-1">
-                {{ validationErrors.start_time }}
-              </p>
-            </div>
-            <div class="grid gap-2">
-              <Label for="duration">Duration (minutes) *</Label>
-              <Input
-                id="duration"
-                v-model.number="duration"
-                type="number"
-                min="1"
-                max="1440"
-                :class="{ 'border-red-500': validationErrors.duration }"
-              />
-              <p v-if="validationErrors.duration" class="text-sm text-red-500 mt-1">
-                {{ validationErrors.duration }}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Step 2: Details -->
-        <div v-if="currentStep === 2" class="space-y-4 py-4">
-          <div class="grid gap-2">
-            <Label for="type">Type *</Label>
-            <Select v-model="type">
-              <SelectTrigger :class="{ 'border-red-500': validationErrors.type }">
-                <SelectValue placeholder="Select a type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="online">Online</SelectItem>
-                <SelectItem value="offline">Offline</SelectItem>
-                <SelectItem value="hybrid">Hybrid</SelectItem>
-              </SelectContent>
-            </Select>
-            <p v-if="validationErrors.type" class="text-sm text-red-500 mt-1">
-              {{ validationErrors.type }}
-            </p>
-          </div>
-          <div v-if="isLocationRequired" class="grid gap-2">
-            <Label for="location">Location *</Label>
-            <Select v-model="locationId">
-              <SelectTrigger :class="{ 'border-red-500': validationErrors.location_id }">
-                <SelectValue placeholder="Select a location" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem v-for="loc in locationsStore.locations" :key="loc.id" :value="loc.id">
-                  {{ loc.name }}
-                </SelectItem>
-              </SelectContent>
-            </Select>
-            <p v-if="validationErrors.location_id" class="text-sm text-red-500 mt-1">
-              {{ validationErrors.location_id }}
-            </p>
-          </div>
-          <div v-if="isPasswordAllowed" class="grid gap-2">
-            <Label for="password">Password</Label>
-            <Input
-              id="password"
-              v-model="password"
-              type="password"
-              :class="{ 'border-red-500': validationErrors.password }"
-              placeholder="Optional: Leave empty to keep unchanged"
-              maxlength="10"
-            />
-            <p v-if="validationErrors.password" class="text-sm text-red-500 mt-1">
-              {{ validationErrors.password }}
-            </p>
-          </div>
-        </div>
-
-        <!-- Step 3: Participants -->
-        <div v-if="currentStep === 3" class="space-y-4 py-4">
-          <div class="grid gap-2">
-            <Label>
-              Participants
-              <Badge variant="outline" class="ml-2">
-                {{ selectedParticipants.length }} selected
-              </Badge>
-            </Label>
-            <ScrollArea class="h-48 border rounded-md p-3">
-              <div class="space-y-2">
-                <div
-                  v-for="user in availableUsers"
-                  :key="user.id"
-                  class="flex items-center space-x-2"
-                >
-                  <Checkbox
-                    :id="`user-edit-${user.id}`"
-                    :checked="selectedParticipants.includes(user.id)"
-                    @update:checked="toggleParticipant(user.id)"
-                  />
-                  <Label
-                    :for="`user-edit-${user.id}`"
-                    class="text-sm font-normal cursor-pointer flex-1"
-                  >
-                    {{ user.name }} ({{ user.email }})
-                  </Label>
-                </div>
-                <div
-                  v-if="availableUsers.length === 0"
-                  class="text-sm text-muted-foreground text-center py-4"
-                >
-                  No other users available
-                </div>
-              </div>
-            </ScrollArea>
-            <p class="text-sm text-muted-foreground">Select users to invite to this meeting.</p>
-          </div>
-        </div>
-      </ScrollArea>
+      <div class="flex-grow overflow-y-auto -mx-6 px-6">
+        <MeetingForm
+          v-model="formData"
+          :current-step="currentStep"
+          :locations="locationsStore.locations"
+          :users="availableUsers"
+          :validation-errors="validationErrors"
+          :is-edit-mode="true"
+        />
+      </div>
 
       <DialogFooter class="flex justify-between border-t pt-4">
         <div>

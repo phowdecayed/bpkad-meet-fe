@@ -73,6 +73,7 @@ export const useAuthStore = defineStore('auth', () => {
       console.error('Failed to logout on server:', error)
     } finally {
       clearAuth()
+      window.location.href = '/login'
     }
   }
 
