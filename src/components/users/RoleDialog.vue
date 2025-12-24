@@ -17,6 +17,8 @@ import { LoaderCircle } from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
 import { useUsersStore } from '@/stores/users'
 import type { Role, Permission } from '@/types/user'
+import { roleSchema } from '@/lib/validation/role-schemas'
+import { validateWithSchema, type ValidationResult } from '@/lib/validation/form-utils'
 
 const props = defineProps<{
   open: boolean
@@ -29,6 +31,7 @@ const emit = defineEmits(['update:open', 'saved'])
 const usersStore = useUsersStore()
 const isSaving = ref(false)
 const selectedPermissions = ref<number[]>([])
+const validationErrors = ref<Record<string, string>>({})
 
 const form = ref({
   name: '',
@@ -55,6 +58,7 @@ watch(
   () => props.open,
   (isOpen) => {
     if (isOpen) {
+      validationErrors.value = {}
       if (props.role) {
         form.value = { name: props.role.name }
         selectedPermissions.value = props.role.permissions?.map((p) => p.id) || []
@@ -67,6 +71,13 @@ watch(
 )
 
 async function handleSave() {
+  const validationResult: ValidationResult = validateWithSchema(roleSchema, form.value)
+  if (!validationResult.success) {
+    validationErrors.value = validationResult.fieldErrors || {}
+    return
+  }
+  validationErrors.value = {}
+
   isSaving.value = true
   try {
     const roleData = {
@@ -119,7 +130,14 @@ function handlePermissionChange(permissionId: number, checked: boolean) {
       <form class="space-y-4" @submit.prevent="handleSave">
         <div class="grid gap-2">
           <Label for="name">Name</Label>
-          <Input id="name" v-model="form.name" />
+          <Input
+            id="name"
+            v-model="form.name"
+            :class="{ 'border-red-500': validationErrors.name }"
+          />
+          <p v-if="validationErrors.name" class="text-sm text-red-500">
+            {{ validationErrors.name }}
+          </p>
         </div>
         <div class="grid gap-2">
           <Label>Permissions</Label>

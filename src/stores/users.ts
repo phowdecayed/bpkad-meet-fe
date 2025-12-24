@@ -33,6 +33,11 @@ export const useUsersStore = defineStore('users', () => {
       const response = await userService.fetchRoles()
       roles.value = response.data
     } catch (err: unknown) {
+      if (axios.isAxiosError(err) && err.response) {
+        error.value = err.response.data.message || 'Failed to fetch roles.'
+      } else {
+        error.value = 'Failed to fetch roles.'
+      }
       console.error('Failed to fetch roles:', err)
     }
   }
@@ -42,6 +47,11 @@ export const useUsersStore = defineStore('users', () => {
       const response = await userService.fetchPermissions()
       permissions.value = response.data.data
     } catch (err: unknown) {
+      if (axios.isAxiosError(err) && err.response) {
+        error.value = err.response.data.message || 'Failed to fetch permissions.'
+      } else {
+        error.value = 'Failed to fetch permissions.'
+      }
       console.error('Failed to fetch permissions:', err)
     }
   }

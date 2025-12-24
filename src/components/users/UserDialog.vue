@@ -17,8 +17,9 @@ import { LoaderCircle, Send } from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
 import { useUsersStore } from '@/stores/users'
 import type { User, UserCreationPayload, UserUpdatePayload } from '@/types/user'
-
 import type { Role } from '@/types/user'
+import { userSchema } from '@/lib/validation/user-schemas'
+import { validateWithSchema, type ValidationResult } from '@/lib/validation/form-utils'
 
 const props = defineProps<{
   open: boolean
@@ -31,6 +32,7 @@ const emit = defineEmits(['update:open', 'saved'])
 const usersStore = useUsersStore()
 const isSaving = ref(false)
 const selectedRoles = ref<number[]>([])
+const validationErrors = ref<Record<string, string>>({})
 
 const form = ref({
   name: '',
@@ -45,6 +47,7 @@ watch(
   () => props.open,
   (isOpen) => {
     if (isOpen) {
+      validationErrors.value = {}
       if (props.user) {
         form.value = {
           name: props.user.name,
@@ -62,6 +65,13 @@ watch(
 )
 
 async function handleSave() {
+  const validationResult: ValidationResult = validateWithSchema(userSchema, form.value)
+  if (!validationResult.success) {
+    validationErrors.value = validationResult.fieldErrors || {}
+    return
+  }
+  validationErrors.value = {}
+
   isSaving.value = true
   try {
     if (isEditing.value && props.user) {
@@ -137,11 +147,26 @@ function handleRoleChange(roleId: number, checked: boolean) {
       <form class="space-y-4" @submit.prevent="handleSave">
         <div class="grid gap-2">
           <Label for="name">Name</Label>
-          <Input id="name" v-model="form.name" />
+          <Input
+            id="name"
+            v-model="form.name"
+            :class="{ 'border-red-500': validationErrors.name }"
+          />
+          <p v-if="validationErrors.name" class="text-sm text-red-500">
+            {{ validationErrors.name }}
+          </p>
         </div>
         <div class="grid gap-2">
           <Label for="email">Email</Label>
-          <Input id="email" v-model="form.email" type="email" />
+          <Input
+            id="email"
+            v-model="form.email"
+            type="email"
+            :class="{ 'border-red-500': validationErrors.email }"
+          />
+          <p v-if="validationErrors.email" class="text-sm text-red-500">
+            {{ validationErrors.email }}
+          </p>
         </div>
         <template v-if="!isEditing">
           <div class="grid gap-2">
@@ -151,7 +176,11 @@ function handleRoleChange(roleId: number, checked: boolean) {
               v-model="form.password"
               type="password"
               placeholder="Enter User Password"
+              :class="{ 'border-red-500': validationErrors.password }"
             />
+            <p v-if="validationErrors.password" class="text-sm text-red-500">
+              {{ validationErrors.password }}
+            </p>
           </div>
           <div class="grid gap-2">
             <Label for="password_confirmation">Confirm Password</Label>
@@ -160,7 +189,11 @@ function handleRoleChange(roleId: number, checked: boolean) {
               v-model="form.password_confirmation"
               type="password"
               placeholder="Enter User Confirmation Password"
+              :class="{ 'border-red-500': validationErrors.password_confirmation }"
             />
+            <p v-if="validationErrors.password_confirmation" class="text-sm text-red-500">
+              {{ validationErrors.password_confirmation }}
+            </p>
           </div>
         </template>
         <div class="grid gap-2">
