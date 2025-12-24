@@ -16,6 +16,8 @@ import { LoaderCircle } from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
 import { useLocationsStore } from '@/stores/locations'
 import type { MeetingLocation } from '@/types/meeting'
+import { locationSchema } from '@/lib/validation/location-schemas'
+import { validateWithSchema, type ValidationResult } from '@/lib/validation/form-utils'
 
 const props = defineProps<{
   open: boolean
@@ -26,6 +28,7 @@ const emit = defineEmits(['update:open', 'saved'])
 
 const locationsStore = useLocationsStore()
 const isSaving = ref(false)
+const validationErrors = ref<Record<string, string>>({})
 
 const form = ref({
   name: '',
@@ -40,6 +43,7 @@ watch(
   () => props.open,
   (isOpen) => {
     if (isOpen) {
+      validationErrors.value = {}
       if (props.location) {
         form.value = {
           name: props.location.name,
@@ -55,6 +59,14 @@ watch(
 )
 
 async function handleSave() {
+  // Validate
+  const validationResult: ValidationResult = validateWithSchema(locationSchema, form.value)
+  if (!validationResult.success) {
+    validationErrors.value = validationResult.fieldErrors || {}
+    return
+  }
+  validationErrors.value = {}
+
   isSaving.value = true
   try {
     const locationData = {
@@ -100,20 +112,52 @@ async function handleSave() {
       <form class="space-y-4" @submit.prevent="handleSave">
         <div class="grid gap-2">
           <Label for="name">Location Name</Label>
-          <Input id="name" v-model="form.name" placeholder="e.g., Main Office" />
+          <Input
+            id="name"
+            v-model="form.name"
+            placeholder="e.g., Main Office"
+            :class="{ 'border-red-500': validationErrors.name }"
+          />
+          <p v-if="validationErrors.name" class="text-sm text-red-500">
+            {{ validationErrors.name }}
+          </p>
         </div>
         <div class="grid gap-2">
           <Label for="address">Address</Label>
-          <Input id="address" v-model="form.address" placeholder="e.g., 123 Government St" />
+          <Input
+            id="address"
+            v-model="form.address"
+            placeholder="e.g., 123 Government St"
+            :class="{ 'border-red-500': validationErrors.address }"
+          />
+          <p v-if="validationErrors.address" class="text-sm text-red-500">
+            {{ validationErrors.address }}
+          </p>
         </div>
         <div class="grid grid-cols-2 gap-4">
           <div class="grid gap-2">
             <Label for="room_name">Room Name (Optional)</Label>
-            <Input id="room_name" v-model="form.room_name" placeholder="e.g., Conference Room A" />
+            <Input
+              id="room_name"
+              v-model="form.room_name"
+              placeholder="e.g., Conference Room A"
+              :class="{ 'border-red-500': validationErrors.room_name }"
+            />
+            <p v-if="validationErrors.room_name" class="text-sm text-red-500">
+              {{ validationErrors.room_name }}
+            </p>
           </div>
           <div class="grid gap-2">
             <Label for="capacity">Capacity (Optional)</Label>
-            <Input id="capacity" v-model.number="form.capacity" type="number" />
+            <Input
+              id="capacity"
+              v-model.number="form.capacity"
+              type="number"
+              :class="{ 'border-red-500': validationErrors.capacity }"
+            />
+            <p v-if="validationErrors.capacity" class="text-sm text-red-500">
+              {{ validationErrors.capacity }}
+            </p>
           </div>
         </div>
         <DialogFooter>
