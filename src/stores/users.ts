@@ -1,6 +1,7 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import axios from 'axios'
+import { userService } from '@/services/userService'
 import type { User, Role, Permission, UserCreationPayload, UserUpdatePayload } from '@/types/user'
 
 export const useUsersStore = defineStore('users', () => {
@@ -14,7 +15,7 @@ export const useUsersStore = defineStore('users', () => {
     isLoading.value = true
     error.value = null
     try {
-      const response = await axios.get('/api/users')
+      const response = await userService.fetchUsers()
       users.value = response.data.data
     } catch (err: unknown) {
       if (axios.isAxiosError(err) && err.response) {
@@ -29,7 +30,7 @@ export const useUsersStore = defineStore('users', () => {
 
   async function fetchRoles() {
     try {
-      const response = await axios.get('/api/roles')
+      const response = await userService.fetchRoles()
       roles.value = response.data
     } catch (err: unknown) {
       console.error('Failed to fetch roles:', err)
@@ -38,7 +39,7 @@ export const useUsersStore = defineStore('users', () => {
 
   async function fetchPermissions() {
     try {
-      const response = await axios.get('/api/permissions')
+      const response = await userService.fetchPermissions()
       permissions.value = response.data.data
     } catch (err: unknown) {
       console.error('Failed to fetch permissions:', err)
@@ -46,37 +47,39 @@ export const useUsersStore = defineStore('users', () => {
   }
 
   async function createUser(userData: UserCreationPayload) {
-    const response = await axios.post('/api/register', userData)
+    const response = await userService.createUser(userData)
     await fetchUsers()
     return response.data
   }
 
   async function updateUser(id: number, userData: UserUpdatePayload) {
-    const response = await axios.patch(`/api/users/${id}`, userData)
+    const response = await userService.updateUser(id, userData)
     await fetchUsers()
     return response.data
   }
 
   async function deleteUser(id: number) {
-    await axios.delete(`/api/users/${id}`)
+    await userService.deleteUser(id)
     await fetchUsers()
   }
 
   async function sendPasswordReset(email: string) {
-    return axios.post('/api/forgot-password', { email })
+    return userService.sendPasswordReset(email)
   }
 
   async function resendVerificationEmail(userId: number) {
-    return axios.post(`/api/users/${userId}/resend-verification`)
+    return userService.resendVerificationEmail(userId)
   }
 
   async function createRole(roleData: { name: string; permissions: number[] }) {
-    const response = await axios.post('/api/roles', { name: roleData.name })
+    const response = await userService.createRole({ name: roleData.name })
     const newRole = response.data
+
+    // Process permission assignments sequentially
     for (const permissionId of roleData.permissions) {
       const permission = permissions.value.find((p) => p.id === permissionId)
       if (permission) {
-        await axios.post(`/api/roles/${newRole.id}/permissions`, { permission: permission.name })
+        await userService.addPermissionToRole(newRole.id, permission.name)
       }
     }
     await fetchRoles()
@@ -84,32 +87,35 @@ export const useUsersStore = defineStore('users', () => {
   }
 
   async function updateRole(id: number, roleData: { name: string; permissions: number[] }) {
-    await axios.patch(`/api/roles/${id}`, { name: roleData.name })
+    await userService.updateRoleName(id, roleData.name)
+
     const currentRole = roles.value.find((r) => r.id === id)
     const currentPermissionIds = currentRole?.permissions?.map((p) => p.id) || []
+
     const permissionsToAdd = roleData.permissions.filter((id) => !currentPermissionIds.includes(id))
     const permissionsToRemove = currentPermissionIds.filter(
       (id) => !roleData.permissions.includes(id),
     )
+
     for (const permissionId of permissionsToAdd) {
       const permission = permissions.value.find((p) => p.id === permissionId)
       if (permission) {
-        await axios.post(`/api/roles/${id}/permissions`, { permission: permission.name })
+        await userService.addPermissionToRole(id, permission.name)
       }
     }
+
     for (const permissionId of permissionsToRemove) {
       const permission = permissions.value.find((p) => p.id === permissionId)
       if (permission) {
-        await axios.delete(`/api/roles/${id}/permissions`, {
-          data: { permission: permission.name },
-        })
+        await userService.removePermissionFromRole(id, permission.name)
       }
     }
+
     await fetchRoles()
   }
 
   async function deleteRole(id: number) {
-    await axios.delete(`/api/roles/${id}`)
+    await userService.deleteRole(id)
     await fetchRoles()
   }
 

@@ -1,6 +1,6 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
-import axios from 'axios'
+import { locationService } from '@/services/locationService'
 import { isApiError } from '@/lib/error-handling'
 import type { MeetingLocation } from '@/types/meeting'
 
@@ -13,7 +13,7 @@ export const useLocationsStore = defineStore('locations', () => {
     isLoading.value = true
     error.value = null
     try {
-      const response = await axios.get('/api/meeting-locations')
+      const response = await locationService.fetchLocations()
       locations.value = response.data.data
     } catch (err: unknown) {
       if (isApiError(err)) {
@@ -31,19 +31,19 @@ export const useLocationsStore = defineStore('locations', () => {
   async function createLocation(
     locationData: Omit<MeetingLocation, 'id' | 'created_at' | 'updated_at'>,
   ) {
-    const response = await axios.post('/api/meeting-locations', locationData)
+    const response = await locationService.createLocation(locationData)
     await fetchLocations()
     return response.data
   }
 
   async function updateLocation(id: number, locationData: Partial<MeetingLocation>) {
-    const response = await axios.patch(`/api/meeting-locations/${id}`, locationData)
+    const response = await locationService.updateLocation(id, locationData)
     await fetchLocations()
     return response.data
   }
 
   async function deleteLocation(id: number) {
-    await axios.delete(`/api/meeting-locations/${id}`)
+    await locationService.deleteLocation(id)
     await fetchLocations()
   }
 

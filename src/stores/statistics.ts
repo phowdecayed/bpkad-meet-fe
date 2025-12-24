@@ -2,6 +2,7 @@ import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import axios from 'axios'
 import { isApiError } from '@/lib/error-handling'
+import { statisticsService } from '@/services/statisticsService'
 import type { DashboardStatistics } from '@/types/statistics'
 
 export const useStatisticsStore = defineStore('statistics', () => {
@@ -13,7 +14,7 @@ export const useStatisticsStore = defineStore('statistics', () => {
     isLoading.value = true
     error.value = null
     try {
-      const response = await axios.get('/api/statistics/dashboard')
+      const response = await statisticsService.fetchDashboardStats()
       dashboardStats.value = response.data.data
     } catch (err: unknown) {
       if (isApiError(err)) {

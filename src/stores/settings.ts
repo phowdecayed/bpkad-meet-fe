@@ -1,6 +1,7 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
-import axios, { type AxiosResponse } from 'axios'
+import { settingsService } from '@/services/settingsService'
+import { type AxiosResponse } from 'axios'
 import type {
   Setting,
   GroupedSettings,
@@ -18,7 +19,7 @@ export const useSettingsStore = defineStore('settings', () => {
     error.value = null
     console.log(`[Settings Store] Fetching settings for group: ${group}`)
     try {
-      const response = await axios.get('/api/settings', { params: { group } })
+      const response = await settingsService.fetchSettingsByGroup(group)
       console.log('[Settings Store] API Response Success:', response.data)
       settings.value = response.data
     } catch (err: unknown) {
@@ -54,7 +55,7 @@ export const useSettingsStore = defineStore('settings', () => {
     error.value = null
     console.log('[Settings Store] Fetching all settings')
     try {
-      const response = await axios.get('/api/settings')
+      const response = await settingsService.fetchAllSettings()
       console.log('[Settings Store] API Response Success:', response.data)
       settings.value = response.data
     } catch (err: unknown) {
@@ -92,15 +93,15 @@ export const useSettingsStore = defineStore('settings', () => {
     id: number,
     payload: SettingUpdatePayload,
   ): Promise<AxiosResponse<Setting>> {
-    return axios.patch(`/api/settings/${id}`, payload)
+    return settingsService.updateSetting(id, payload)
   }
 
   async function createSetting(payload: SettingCreationPayload): Promise<AxiosResponse<Setting>> {
-    return axios.post('/api/settings', payload)
+    return settingsService.createSetting(payload)
   }
 
   async function deleteSetting(id: number): Promise<void> {
-    await axios.delete(`/api/settings/${id}`)
+    await settingsService.deleteSetting(id)
     // Refresh the list after deleting
     const group = settings.value[0]?.group
     if (group) {
