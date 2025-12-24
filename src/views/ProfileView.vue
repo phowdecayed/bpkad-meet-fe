@@ -1,60 +1,27 @@
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { onMounted, ref } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { storeToRefs } from 'pinia'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Alert, AlertDescription } from '@/components/ui/alert'
 import { toast } from 'vue-sonner'
-import { Eye, EyeOff, AlertTriangle, LoaderCircle, Camera, MailWarning } from 'lucide-vue-next'
+import { LoaderCircle, Camera, MailWarning } from 'lucide-vue-next'
 import { isApiError } from '@/lib/error-handling'
-import ConfirmationDialog from '@/components/ConfirmationDialog.vue'
+import ProfileForm from '@/components/profile/ProfileForm.vue'
+import PasswordChangeForm from '@/components/profile/PasswordChangeForm.vue'
 
 const authStore = useAuthStore()
-const router = useRouter()
 const { user } = storeToRefs(authStore)
 
-// Profile form state
-const name = ref('')
-const email = ref('')
-const isUpdatingProfile = ref(false)
-
-// Password form state
-const current_password = ref('')
-const password = ref('')
-const password_confirmation = ref('')
-const isChangingPassword = ref(false)
-
 // UI state
-const showCurrentPassword = ref(false)
-const showPassword = ref(false)
-const showPasswordConfirmation = ref(false)
-const isConfirmDialogOpen = ref(false)
 const isResendingVerification = ref(false)
 
 // Avatar state
 const avatarPreview = ref<string | null>(null)
 const avatarFile = ref<File | null>(null)
 const fileInput = ref<HTMLInputElement | null>(null)
-
-watch(
-  user,
-  (newUser) => {
-    if (newUser) {
-      name.value = newUser.name
-      email.value = newUser.email
-    } else {
-      name.value = ''
-      email.value = ''
-    }
-  },
-  { immediate: true },
-)
 
 onMounted(async () => {
   if (!user.value) {
@@ -72,88 +39,21 @@ function onFileChange(event: Event) {
     const file = target.files[0]
     avatarFile.value = file
     avatarPreview.value = URL.createObjectURL(file)
+    handleAvatarUpload()
   }
 }
 
-async function handleUpdateProfile() {
-  isUpdatingProfile.value = true
+async function handleAvatarUpload() {
+  if (!avatarFile.value) return
+  // Mock avatar upload.
   try {
-    const profileUpdates = []
-    if (name.value !== user.value?.name) {
-      profileUpdates.push(authStore.changeName(name.value))
-    }
-    if (email.value !== user.value?.email) {
-      profileUpdates.push(authStore.changeEmail(email.value))
-    }
-    if (avatarFile.value) {
-      // Mock avatar upload. In a real app, you'd send this to your backend.
-      profileUpdates.push(
-        new Promise((resolve) => {
-          setTimeout(() => {
-            // console.log('Uploading avatar:', avatarFile.value?.name)
-            // Assuming the store handles the API call and updates the user object
-            // For now, we just show a success message.
-            resolve(true)
-          }, 1000)
-        }),
-      )
-    }
-
-    await Promise.all(profileUpdates)
-    await authStore.fetchUser()
-    avatarPreview.value = null // Clear preview after successful "upload"
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+    // In real app: await authStore.uploadAvatar(avatarFile.value)
+    toast.success('Avatar Updated')
+    avatarPreview.value = null
     avatarFile.value = null
-
-    toast.success('Success', {
-      description: 'Profile updated successfully.',
-    })
-  } catch (error: unknown) {
-    if (isApiError(error) && error.response) {
-      toast.error('Error', {
-        description: error.response.data.message || 'Failed to update profile.',
-      })
-    } else {
-      toast.error('Error', {
-        description: 'An unexpected error occurred.',
-      })
-    }
-  } finally {
-    isUpdatingProfile.value = false
-  }
-}
-
-function handleChangePassword() {
-  isConfirmDialogOpen.value = true
-}
-
-async function onConfirmChangePassword() {
-  isChangingPassword.value = true
-  try {
-    await authStore.changePassword({
-      current_password: current_password.value,
-      password: password.value,
-      password_confirmation: password_confirmation.value,
-    })
-
-    await authStore.logout()
-
-    toast.success('Password Changed', {
-      description: 'Your password has been updated. Please log in again.',
-    })
-
-    router.push({ name: 'login' })
-  } catch (error: unknown) {
-    if (isApiError(error) && error.response) {
-      toast.error('Error', {
-        description: error.response.data.message || 'Failed to update password.',
-      })
-    } else {
-      toast.error('Error', {
-        description: 'An unexpected error occurred.',
-      })
-    }
-  } finally {
-    isChangingPassword.value = false
+  } catch {
+    toast.error('Failed to upload avatar')
   }
 }
 
@@ -234,28 +134,7 @@ async function handleResendVerificationEmail() {
             <TabsTrigger value="security"> Security </TabsTrigger>
           </TabsList>
           <TabsContent value="profile">
-            <Card>
-              <CardHeader>
-                <CardTitle>Profile Information</CardTitle>
-                <CardDescription>Update your personal details here.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form class="space-y-6" @submit.prevent="handleUpdateProfile">
-                  <div class="grid gap-2">
-                    <Label for="name">Name</Label>
-                    <Input id="name" v-model="name" type="text" />
-                  </div>
-                  <div class="grid gap-2">
-                    <Label for="email">Email</Label>
-                    <Input id="email" v-model="email" type="email" />
-                  </div>
-                  <Button type="submit" :disabled="isUpdatingProfile">
-                    <LoaderCircle v-if="isUpdatingProfile" class="mr-2 h-4 w-4 animate-spin" />
-                    Save Changes
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
+            <ProfileForm />
           </TabsContent>
           <TabsContent value="security" class="space-y-6">
             <Card v-if="!user.email_verified_at">
@@ -276,83 +155,8 @@ async function handleResendVerificationEmail() {
                 </Button>
               </CardContent>
             </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle>Change Password</CardTitle>
-                <CardDescription
-                  >For security, you will be logged out after changing your
-                  password.</CardDescription
-                >
-              </CardHeader>
-              <CardContent>
-                <form class="space-y-6" @submit.prevent="handleChangePassword">
-                  <div class="grid gap-2 relative">
-                    <Label for="current_password">Current Password</Label>
-                    <Input
-                      id="current_password"
-                      v-model="current_password"
-                      :type="showCurrentPassword ? 'text' : 'password'"
-                      placeholder="Enter Current Password"
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      class="absolute right-1 top-7 h-7 w-7"
-                      @click="showCurrentPassword = !showCurrentPassword"
-                    >
-                      <component :is="showCurrentPassword ? EyeOff : Eye" class="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <div class="grid gap-2 relative">
-                    <Label for="password">New Password</Label>
-                    <Input
-                      id="password"
-                      v-model="password"
-                      :type="showPassword ? 'text' : 'password'"
-                      placeholder="Enter New Password"
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      class="absolute right-1 top-7 h-7 w-7"
-                      @click="showPassword = !showPassword"
-                    >
-                      <component :is="showPassword ? EyeOff : Eye" class="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <div class="grid gap-2 relative">
-                    <Label for="password_confirmation">Confirm New Password</Label>
-                    <Input
-                      id="password_confirmation"
-                      v-model="password_confirmation"
-                      :type="showPasswordConfirmation ? 'text' : 'password'"
-                      placeholder="Enter Confirmation Password"
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      class="absolute right-1 top-7 h-7 w-7"
-                      @click="showPasswordConfirmation = !showPasswordConfirmation"
-                    >
-                      <component :is="showPasswordConfirmation ? EyeOff : Eye" class="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <Alert variant="destructive" class="flex items-center gap-4">
-                    <AlertTriangle class="h-5 w-5" />
-                    <AlertDescription>
-                      Changing your password will log you out from all devices.
-                    </AlertDescription>
-                  </Alert>
-                  <Button type="submit" :disabled="isChangingPassword">
-                    <LoaderCircle v-if="isChangingPassword" class="mr-2 h-4 w-4 animate-spin" />
-                    Change Password
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
+
+            <PasswordChangeForm />
           </TabsContent>
         </Tabs>
       </div>
@@ -360,11 +164,5 @@ async function handleResendVerificationEmail() {
     <div v-else class="flex h-64 items-center justify-center">
       <LoaderCircle class="h-8 w-8 animate-spin text-muted-foreground" />
     </div>
-    <ConfirmationDialog
-      v-model:open="isConfirmDialogOpen"
-      title="Are you absolutely sure?"
-      description="This action will change your password and log you out from all devices. This cannot be undone."
-      @confirm="onConfirmChangePassword"
-    />
   </div>
 </template>
