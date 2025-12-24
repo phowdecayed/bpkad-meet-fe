@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { onMounted, ref, computed } from 'vue'
+import { onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useUsersStore } from '@/stores/users'
-import type { Role, Permission } from '@/types/user'
+import type { Role } from '@/types/user'
 import ConfirmationDialog from '@/components/ConfirmationDialog.vue'
+import RoleDialog from '@/components/users/RoleDialog.vue'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -14,100 +15,36 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-  DialogClose,
-} from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
-import { Checkbox } from '@/components/ui/checkbox'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'vue-sonner'
-import { PlusCircle, Trash2, Pencil, LoaderCircle } from 'lucide-vue-next'
+import { PlusCircle, Trash2, Pencil } from 'lucide-vue-next'
 
 const usersStore = useUsersStore()
 const { roles, permissions, isLoading } = storeToRefs(usersStore)
 
 const isDialogOpen = ref(false)
 const isConfirmDialogOpen = ref(false)
-const isEditing = ref(false)
-const isSaving = ref(false)
 const selectedRole = ref<Role | null>(null)
 const roleToDelete = ref<Role | null>(null)
-const selectedPermissions = ref<number[]>([])
-
-const form = ref({
-  name: '',
-})
 
 onMounted(() => {
   usersStore.fetchRoles()
   usersStore.fetchPermissions()
 })
 
-const groupedPermissions = computed(() => {
-  if (!permissions.value) return {}
-  return permissions.value.reduce(
-    (acc: Record<string, Permission[]>, permission: Permission) => {
-      const group = permission.group_name || 'general'
-      if (!acc[group]) {
-        acc[group] = []
-      }
-      acc[group].push(permission)
-      return acc
-    },
-    {} as Record<string, Permission[]>,
-  )
-})
-
 function openCreateDialog() {
-  isEditing.value = false
   selectedRole.value = null
-  form.value = { name: '' }
-  selectedPermissions.value = []
   isDialogOpen.value = true
 }
 
 function openEditDialog(role: Role) {
-  isEditing.value = true
   selectedRole.value = role
-  form.value = { name: role.name }
-  selectedPermissions.value = role.permissions?.map((p) => p.id) || []
   isDialogOpen.value = true
 }
 
-async function handleSave() {
-  isSaving.value = true
-  try {
-    const roleData = {
-      name: form.value.name,
-      permissions: selectedPermissions.value,
-    }
-
-    if (isEditing.value && selectedRole.value) {
-      await usersStore.updateRole(selectedRole.value.id, roleData)
-      toast.success('Role Updated', {
-        description: `${roleData.name} has been updated successfully.`,
-      })
-    } else {
-      await usersStore.createRole(roleData)
-      toast.success('Role Created', {
-        description: `${roleData.name} has been created successfully.`,
-      })
-    }
-    isDialogOpen.value = false
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'An unexpected error occurred.'
-    toast.error('Save Failed', { description: message })
-  } finally {
-    isSaving.value = false
-  }
+function handleSaved() {
+  usersStore.fetchRoles()
 }
 
 function handleDelete(role: Role) {
@@ -182,74 +119,12 @@ async function onConfirmDelete() {
       </Table>
     </div>
 
-    <Dialog v-model:open="isDialogOpen">
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{{ isEditing ? 'Edit Role' : 'Create Role' }}</DialogTitle>
-          <DialogDescription>
-            {{
-              isEditing
-                ? 'Update the details for this role.'
-                : 'Enter the details for the new role.'
-            }}
-          </DialogDescription>
-        </DialogHeader>
-        <form class="space-y-4" @submit.prevent="handleSave">
-          <div class="grid gap-2">
-            <Label for="name">Name</Label>
-            <Input id="name" v-model="form.name" />
-          </div>
-          <div class="grid gap-2">
-            <Label>Permissions</Label>
-            <div class="space-y-2 rounded-md border p-4">
-              <div
-                v-for="(permissionGroup, groupName) in groupedPermissions"
-                :key="groupName"
-                class="mb-4"
-              >
-                <h4 class="mb-2 font-semibold capitalize">
-                  {{ groupName }}
-                </h4>
-                <div class="space-y-2">
-                  <div
-                    v-for="permission in permissionGroup"
-                    :key="permission.id"
-                    class="flex items-center space-x-2"
-                  >
-                    <Checkbox
-                      :id="`permission-${permission.id}`"
-                      :checked="selectedPermissions.includes(permission.id)"
-                      @update:checked="
-                        () => {
-                          const index = selectedPermissions.indexOf(permission.id)
-                          if (index > -1) {
-                            selectedPermissions.splice(index, 1)
-                          } else {
-                            selectedPermissions.push(permission.id)
-                          }
-                        }
-                      "
-                    />
-                    <Label :for="`permission-${permission.id}`" class="font-normal">{{
-                      permission.name
-                    }}</Label>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <DialogClose as-child>
-              <Button type="button" variant="secondary" :disabled="isSaving"> Cancel </Button>
-            </DialogClose>
-            <Button type="submit" :disabled="isSaving">
-              <LoaderCircle v-if="isSaving" class="mr-2 h-4 w-4 animate-spin" />
-              Save
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+    <RoleDialog
+      v-model:open="isDialogOpen"
+      :role="selectedRole"
+      :permissions="permissions"
+      @saved="handleSaved"
+    />
 
     <ConfirmationDialog
       v-if="roleToDelete"

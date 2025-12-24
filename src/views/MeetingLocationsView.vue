@@ -4,6 +4,7 @@ import { storeToRefs } from 'pinia'
 import { useLocationsStore } from '@/stores/locations'
 import type { MeetingLocation } from '@/types/meeting'
 import ConfirmationDialog from '@/components/ConfirmationDialog.vue'
+import LocationDialog from '@/components/locations/LocationDialog.vue'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -14,87 +15,34 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-  DialogClose,
-} from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'vue-sonner'
-import { PlusCircle, Trash2, Pencil, LoaderCircle } from 'lucide-vue-next'
+import { PlusCircle, Trash2, Pencil } from 'lucide-vue-next'
 
 const locationsStore = useLocationsStore()
 const { locations, isLoading } = storeToRefs(locationsStore)
 
 const isDialogOpen = ref(false)
 const isConfirmDialogOpen = ref(false)
-const isEditing = ref(false)
-const isSaving = ref(false)
 const selectedLocation = ref<MeetingLocation | null>(null)
 const locationToDelete = ref<MeetingLocation | null>(null)
-
-const form = ref({
-  name: '',
-  address: '',
-  room_name: '',
-  capacity: null as number | null,
-})
 
 onMounted(() => {
   locationsStore.fetchLocations()
 })
 
 function openCreateDialog() {
-  isEditing.value = false
   selectedLocation.value = null
-  form.value = { name: '', address: '', room_name: '', capacity: null }
   isDialogOpen.value = true
 }
 
 function openEditDialog(location: MeetingLocation) {
-  isEditing.value = true
   selectedLocation.value = location
-  form.value = {
-    name: location.name,
-    address: location.address,
-    room_name: location.room_name || '',
-    capacity: location.capacity,
-  }
   isDialogOpen.value = true
 }
 
-async function handleSave() {
-  isSaving.value = true
-  try {
-    const locationData = {
-      ...form.value,
-      capacity: form.value.capacity || null,
-    }
-
-    if (isEditing.value && selectedLocation.value) {
-      await locationsStore.updateLocation(selectedLocation.value.id, locationData)
-      toast.success('Location Updated', {
-        description: `${locationData.name} has been updated successfully.`,
-      })
-    } else {
-      await locationsStore.createLocation(locationData)
-      toast.success('Location Created', {
-        description: `${locationData.name} has been created successfully.`,
-      })
-    }
-    isDialogOpen.value = false
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'An unknown error occurred'
-    toast.error('Save Failed', { description: message })
-  } finally {
-    isSaving.value = false
-  }
+function handleSaved() {
+  locationsStore.fetchLocations()
 }
 
 function handleDelete(location: MeetingLocation) {
@@ -166,53 +114,7 @@ async function onConfirmDelete() {
       </Table>
     </div>
 
-    <Dialog v-model:open="isDialogOpen">
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{{ isEditing ? 'Edit Location' : 'Create Location' }}</DialogTitle>
-          <DialogDescription>
-            {{
-              isEditing
-                ? 'Update the details for this location.'
-                : 'Enter the details for the new location.'
-            }}
-          </DialogDescription>
-        </DialogHeader>
-        <form class="space-y-4" @submit.prevent="handleSave">
-          <div class="grid gap-2">
-            <Label for="name">Location Name</Label>
-            <Input id="name" v-model="form.name" placeholder="e.g., Main Office" />
-          </div>
-          <div class="grid gap-2">
-            <Label for="address">Address</Label>
-            <Input id="address" v-model="form.address" placeholder="e.g., 123 Government St" />
-          </div>
-          <div class="grid grid-cols-2 gap-4">
-            <div class="grid gap-2">
-              <Label for="room_name">Room Name (Optional)</Label>
-              <Input
-                id="room_name"
-                v-model="form.room_name"
-                placeholder="e.g., Conference Room A"
-              />
-            </div>
-            <div class="grid gap-2">
-              <Label for="capacity">Capacity (Optional)</Label>
-              <Input id="capacity" v-model.number="form.capacity" type="number" />
-            </div>
-          </div>
-          <DialogFooter>
-            <DialogClose as-child>
-              <Button type="button" variant="secondary" :disabled="isSaving"> Cancel </Button>
-            </DialogClose>
-            <Button type="submit" :disabled="isSaving">
-              <LoaderCircle v-if="isSaving" class="mr-2 h-4 w-4 animate-spin" />
-              Save
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+    <LocationDialog v-model:open="isDialogOpen" :location="selectedLocation" @saved="handleSaved" />
 
     <ConfirmationDialog
       v-if="locationToDelete"
