@@ -3,21 +3,11 @@ import { onMounted, ref, computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useSettingsStore } from '@/stores/settings'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-  DialogClose,
-} from '@/components/ui/dialog'
 import { toast } from 'vue-sonner'
-import { LoaderCircle, PlusCircle, Settings, ChevronRight } from 'lucide-vue-next'
+import { PlusCircle, Settings, ChevronRight } from 'lucide-vue-next'
 import { Skeleton } from '@/components/ui/skeleton'
 import AccountSettingsForm from './AccountSettingsForm.vue'
+import AddZoomAccountDialog from './AddZoomAccountDialog.vue'
 import type { Setting } from '@/types/settings'
 import { isApiError } from '@/lib/error-handling'
 
@@ -32,20 +22,8 @@ const settingsStore = useSettingsStore()
 const { settings: storeSettings, isLoading } = storeToRefs(settingsStore)
 
 const isSaving = ref<Record<number, boolean>>({})
-const isCreating = ref(false)
 const isAddDialogOpen = ref(false)
 const selectedAccountId = ref<number | null>(null)
-
-const newAccountForm = ref({
-  name: '',
-  group: 'zoom',
-  payload: {
-    client_id: '',
-    client_secret: '',
-    account_id: '',
-    host_key: '',
-  },
-})
 
 onMounted(() => {
   // Only fetch settings if not provided via props (backward compatibility)
@@ -165,70 +143,11 @@ async function handleDelete(setting: Setting) {
   }
 }
 
-async function handleCreate() {
-  // Validate form data
-  if (!newAccountForm.value.name.trim()) {
-    toast.error('Validation Error', {
-      description: 'Account name is required.',
-    })
-    return
-  }
-
-  if (!newAccountForm.value.payload.client_id.trim()) {
-    toast.error('Validation Error', {
-      description: 'Client ID is required.',
-    })
-    return
-  }
-
-  isCreating.value = true
-  try {
-    await settingsStore.createSetting(newAccountForm.value)
-    // Only refetch if we're managing our own data (not using passed-in settings)
-    if (!props.settings) {
-      await settingsStore.fetchSettingsByGroup('zoom')
-    } else {
-      // If using passed-in settings, refresh all settings to update the parent
-      await settingsStore.fetchAllSettings()
-    }
-    toast.success('Account Added', {
-      description: `${newAccountForm.value.name} has been created successfully.`,
-    })
-    isAddDialogOpen.value = false
-    newAccountForm.value = {
-      name: '',
-      group: 'zoom',
-      payload: { client_id: '', client_secret: '', account_id: '', host_key: '' },
-    }
-  } catch (error: unknown) {
-    console.error('Failed to create zoom setting:', error)
-
-    let errorMessage = 'Failed to create account. Please try again.'
-    if (isApiError(error) && error.response) {
-      if (error.response?.status === 400) {
-        errorMessage = 'Invalid account data. Please check your input and try again.'
-      } else if (error.response?.status === 401) {
-        errorMessage = 'You are not authorized to create settings. Please log in again.'
-      } else if (error.response?.status === 403) {
-        errorMessage = 'You do not have permission to create settings.'
-      } else if (error.response?.status === 409) {
-        errorMessage = 'An account with this name already exists. Please choose a different name.'
-      } else if (error.response?.status >= 500) {
-        errorMessage = 'Server error. Please try again later.'
-      } else if (error.response?.data?.message) {
-        errorMessage = error.response.data.message
-      }
-    }
-
-    toast.error('Creation Failed', {
-      description: errorMessage,
-      action: {
-        label: 'Retry',
-        onClick: () => handleCreate(),
-      },
-    })
-  } finally {
-    isCreating.value = false
+async function onAccountCreated() {
+  if (!props.settings) {
+    await settingsStore.fetchSettingsByGroup('zoom')
+  } else {
+    await settingsStore.fetchAllSettings()
   }
 }
 </script>
@@ -242,59 +161,13 @@ async function handleCreate() {
           Manage the Zoom accounts used to create meetings.
         </p>
       </div>
-      <Dialog v-model:open="isAddDialogOpen">
-        <Button @click="isAddDialogOpen = true">
-          <PlusCircle class="mr-2 h-4 w-4" />
-          Add New Account
-        </Button>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add New Zoom Account</DialogTitle>
-            <DialogDescription>
-              Enter the details for the new Zoom account credentials.
-            </DialogDescription>
-          </DialogHeader>
-          <form class="space-y-4" @submit.prevent="handleCreate">
-            <div class="grid gap-2">
-              <Label for="new-name">Account Name</Label>
-              <Input
-                id="new-name"
-                v-model="newAccountForm.name"
-                placeholder="e.g., 'Secondary Zoom Account'"
-              />
-            </div>
-            <div class="grid gap-2">
-              <Label for="new-client-id">Client ID</Label>
-              <Input id="new-client-id" v-model="newAccountForm.payload.client_id" />
-            </div>
-            <div class="grid gap-2">
-              <Label for="new-client-secret">Client Secret</Label>
-              <Input
-                id="new-client-secret"
-                v-model="newAccountForm.payload.client_secret"
-                type="password"
-              />
-            </div>
-            <div class="grid gap-2">
-              <Label for="new-account-id">Account ID</Label>
-              <Input id="new-account-id" v-model="newAccountForm.payload.account_id" />
-            </div>
-            <div class="grid gap-2">
-              <Label for="new-host-key">Host Key</Label>
-              <Input id="new-host-key" v-model="newAccountForm.payload.host_key" />
-            </div>
-            <DialogFooter>
-              <DialogClose as-child>
-                <Button type="button" variant="secondary"> Cancel </Button>
-              </DialogClose>
-              <Button type="submit" :disabled="isCreating">
-                <LoaderCircle v-if="isCreating" class="mr-2 h-4 w-4 animate-spin" />
-                Create Account
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+
+      <Button @click="isAddDialogOpen = true">
+        <PlusCircle class="mr-2 h-4 w-4" />
+        Add New Account
+      </Button>
+
+      <AddZoomAccountDialog v-model:open="isAddDialogOpen" @created="onAccountCreated" />
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-8 pt-4">
