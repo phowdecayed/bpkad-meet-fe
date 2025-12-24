@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { toast } from 'vue-sonner'
 import { Eye, EyeOff, AlertTriangle, LoaderCircle, Camera, MailWarning } from 'lucide-vue-next'
-import axios from 'axios'
+import { isApiError } from '@/lib/error-handling'
 import ConfirmationDialog from '@/components/ConfirmationDialog.vue'
 
 const authStore = useAuthStore()
@@ -90,7 +90,7 @@ async function handleUpdateProfile() {
       profileUpdates.push(
         new Promise((resolve) => {
           setTimeout(() => {
-            console.log('Uploading avatar:', avatarFile.value?.name)
+            // console.log('Uploading avatar:', avatarFile.value?.name)
             // Assuming the store handles the API call and updates the user object
             // For now, we just show a success message.
             resolve(true)
@@ -108,7 +108,7 @@ async function handleUpdateProfile() {
       description: 'Profile updated successfully.',
     })
   } catch (error: unknown) {
-    if (axios.isAxiosError(error) && error.response) {
+    if (isApiError(error) && error.response) {
       toast.error('Error', {
         description: error.response.data.message || 'Failed to update profile.',
       })
@@ -143,7 +143,7 @@ async function onConfirmChangePassword() {
 
     router.push({ name: 'login' })
   } catch (error: unknown) {
-    if (axios.isAxiosError(error) && error.response) {
+    if (isApiError(error) && error.response) {
       toast.error('Error', {
         description: error.response.data.message || 'Failed to update password.',
       })
@@ -165,7 +165,7 @@ async function handleResendVerificationEmail() {
       description: 'A new verification link has been sent to your email address.',
     })
   } catch (error: unknown) {
-    if (axios.isAxiosError(error) && error.response) {
+    if (isApiError(error) && error.response) {
       toast.error('Error', {
         description: error.response.data.message || 'Failed to send verification email.',
       })

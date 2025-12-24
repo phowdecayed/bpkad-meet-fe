@@ -15,8 +15,6 @@ import App from './App.vue'
 import router from './router'
 import { useAuthStore } from './stores/auth'
 
-
-
 /**
  * The Vue application instance.
  * @type {object}

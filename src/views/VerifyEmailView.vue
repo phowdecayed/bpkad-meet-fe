@@ -6,7 +6,7 @@ import { toast } from 'vue-sonner'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { LoaderCircle, CircleCheck, CircleX } from 'lucide-vue-next'
-import axios from 'axios'
+import { isApiError } from '@/lib/error-handling'
 import { PERMISSIONS } from '@/constants/permissions'
 
 const route = useRoute()
@@ -69,7 +69,7 @@ onMounted(async () => {
     }
   } catch (error: unknown) {
     verificationStatus.value = 'error'
-    if (axios.isAxiosError(error) && error.response?.data?.message) {
+    if (isApiError(error) && error.response?.data?.message) {
       errorMessage.value = error.response.data.message
     } else if (error instanceof Error) {
       errorMessage.value = error.message

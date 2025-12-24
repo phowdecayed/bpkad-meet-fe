@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { toast } from 'vue-sonner'
 import { Eye, EyeOff, LoaderCircle } from 'lucide-vue-next'
-import axios from 'axios'
+import { isApiError } from '@/lib/error-handling'
 
 const route = useRoute()
 const router = useRouter()
@@ -52,7 +52,7 @@ async function handleSubmit() {
     router.push({ name: 'login' })
   } catch (error: unknown) {
     let errorMessage = 'An unknown error occurred. Please try again.'
-    if (axios.isAxiosError(error) && error.response?.data) {
+    if (isApiError(error) && error.response?.data) {
       if (error.response.data.errors) {
         const errors = error.response.data.errors as Record<string, string[]>
         const errorKey = Object.keys(errors)[0]

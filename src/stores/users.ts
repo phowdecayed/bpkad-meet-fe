@@ -75,13 +75,16 @@ export const useUsersStore = defineStore('users', () => {
     const response = await userService.createRole({ name: roleData.name })
     const newRole = response.data
 
-    // Process permission assignments sequentially
-    for (const permissionId of roleData.permissions) {
+    // Process permission assignments in parallel
+    const permissionPromises = roleData.permissions.map((permissionId) => {
       const permission = permissions.value.find((p) => p.id === permissionId)
       if (permission) {
-        await userService.addPermissionToRole(newRole.id, permission.name)
+        return userService.addPermissionToRole(newRole.id, permission.name)
       }
-    }
+      return Promise.resolve()
+    })
+    await Promise.all(permissionPromises)
+
     await fetchRoles()
     return newRole
   }
@@ -97,19 +100,23 @@ export const useUsersStore = defineStore('users', () => {
       (id) => !roleData.permissions.includes(id),
     )
 
-    for (const permissionId of permissionsToAdd) {
+    const addPromises = permissionsToAdd.map((permissionId) => {
       const permission = permissions.value.find((p) => p.id === permissionId)
       if (permission) {
-        await userService.addPermissionToRole(id, permission.name)
+        return userService.addPermissionToRole(id, permission.name)
       }
-    }
+      return Promise.resolve()
+    })
 
-    for (const permissionId of permissionsToRemove) {
+    const removePromises = permissionsToRemove.map((permissionId) => {
       const permission = permissions.value.find((p) => p.id === permissionId)
       if (permission) {
-        await userService.removePermissionFromRole(id, permission.name)
+        return userService.removePermissionFromRole(id, permission.name)
       }
-    }
+      return Promise.resolve()
+    })
+
+    await Promise.all([...addPromises, ...removePromises])
 
     await fetchRoles()
   }

@@ -17,10 +17,10 @@ export const useSettingsStore = defineStore('settings', () => {
   async function fetchSettingsByGroup(group: string): Promise<void> {
     isLoading.value = true
     error.value = null
-    console.log(`[Settings Store] Fetching settings for group: ${group}`)
+
     try {
       const response = await settingsService.fetchSettingsByGroup(group)
-      console.log('[Settings Store] API Response Success:', response.data)
+
       settings.value = response.data
     } catch (err: unknown) {
       console.error('[Settings Store] API Response Error:', err)
@@ -53,10 +53,10 @@ export const useSettingsStore = defineStore('settings', () => {
   async function fetchAllSettings(): Promise<void> {
     isLoading.value = true
     error.value = null
-    console.log('[Settings Store] Fetching all settings')
+
     try {
       const response = await settingsService.fetchAllSettings()
-      console.log('[Settings Store] API Response Success:', response.data)
+
       settings.value = response.data
     } catch (err: unknown) {
       console.error('[Settings Store] API Response Error:', err)

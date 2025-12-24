@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label'
 import { toast } from 'vue-sonner'
 import { RouterLink } from 'vue-router'
 import { LoaderCircle } from 'lucide-vue-next'
-import axios from 'axios'
+import { isApiError } from '@/lib/error-handling'
 
 const authStore = useAuthStore()
 const email = ref('')
@@ -22,7 +22,7 @@ async function handleSubmit() {
     })
   } catch (error: unknown) {
     let message = 'An error occurred.'
-    if (axios.isAxiosError(error) && error.response) {
+    if (isApiError(error) && error.response) {
       message = error.response.data.message || message
     } else if (error instanceof Error) {
       message = error.message

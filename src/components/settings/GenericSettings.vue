@@ -7,7 +7,7 @@ import { AlertTriangle, LoaderCircle } from 'lucide-vue-next'
 import { toast } from 'vue-sonner'
 import { useSettingsStore } from '@/stores/settings'
 import type { Setting } from '@/types/settings'
-import axios from 'axios'
+import { isApiError } from '@/lib/error-handling'
 
 interface Props {
   groupName: string
@@ -62,7 +62,7 @@ const handleSave = async (setting: Setting) => {
     console.error('Failed to save generic setting:', error)
 
     let errorMessage = 'Failed to save settings. Please try again.'
-    if (axios.isAxiosError(error) && error.response) {
+    if (isApiError(error) && error.response) {
       if (error.response?.status === 400) {
         errorMessage = 'Invalid settings data. Please check your JSON syntax and try again.'
       } else if (error.response?.status === 401) {

@@ -63,15 +63,18 @@ describe('useMeetingFilters', () => {
 
     const params = buildQueryParams()
 
-    expect(params).toEqual(expect.objectContaining({
-      topic: 'sync',
-      type: 'online',
-    }))
+    expect(params).toEqual(
+      expect.objectContaining({
+        topic: 'sync',
+        type: 'online',
+      }),
+    )
   })
 
   it('counts active filters correctly', () => {
     const fetchFn = vi.fn()
-    const { getActiveFilterCount, searchQuery, selectedType, selectedLocation, startDate } = useMeetingFilters(mockMeetings, fetchFn)
+    const { getActiveFilterCount, searchQuery, selectedType, selectedLocation, startDate } =
+      useMeetingFilters(mockMeetings, fetchFn)
 
     expect(getActiveFilterCount()).toBe(0)
 
@@ -90,7 +93,10 @@ describe('useMeetingFilters', () => {
 
   it('clears all filters', () => {
     const fetchFn = vi.fn()
-    const { clearFilters, searchQuery, selectedType, hasActiveFilters } = useMeetingFilters(mockMeetings, fetchFn)
+    const { clearFilters, searchQuery, selectedType, hasActiveFilters } = useMeetingFilters(
+      mockMeetings,
+      fetchFn,
+    )
 
     searchQuery.value = 'Search'
     selectedType.value = 'online'

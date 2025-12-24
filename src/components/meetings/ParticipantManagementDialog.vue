@@ -69,11 +69,17 @@ const error = ref<string | null>(null)
 
 // Computed properties
 const canManageParticipants = computed(() => {
-  return authStore.hasPermission(PERMISSIONS.PARTICIPANTS.MANAGE) || authStore.hasPermission(PERMISSIONS.MEETINGS.EDIT)
+  return (
+    authStore.hasPermission(PERMISSIONS.PARTICIPANTS.MANAGE) ||
+    authStore.hasPermission(PERMISSIONS.MEETINGS.EDIT)
+  )
 })
 
 const canViewParticipants = computed(() => {
-  return authStore.hasPermission(PERMISSIONS.PARTICIPANTS.VIEW) || authStore.hasPermission(PERMISSIONS.MEETINGS.VIEW)
+  return (
+    authStore.hasPermission(PERMISSIONS.PARTICIPANTS.VIEW) ||
+    authStore.hasPermission(PERMISSIONS.MEETINGS.VIEW)
+  )
 })
 
 const availableUsers = computed(() => {

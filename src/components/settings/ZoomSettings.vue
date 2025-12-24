@@ -19,7 +19,7 @@ import { LoaderCircle, PlusCircle, Settings, ChevronRight } from 'lucide-vue-nex
 import { Skeleton } from '@/components/ui/skeleton'
 import AccountSettingsForm from './AccountSettingsForm.vue'
 import type { Setting } from '@/types/settings'
-import axios from 'axios'
+import { isApiError } from '@/lib/error-handling'
 
 // Props interface for when used within SettingsGroupSection
 interface Props {
@@ -91,7 +91,7 @@ async function handleUpdate(setting: Setting) {
     console.error('Failed to update zoom setting:', error)
 
     let errorMessage = 'Failed to save settings. Please try again.'
-    if (axios.isAxiosError(error) && error.response) {
+    if (isApiError(error) && error.response) {
       if (error.response?.status === 400) {
         errorMessage = 'Invalid settings data. Please check your input and try again.'
       } else if (error.response?.status === 401) {
@@ -140,7 +140,7 @@ async function handleDelete(setting: Setting) {
       console.error('Failed to delete zoom setting:', error)
 
       let errorMessage = 'Failed to delete setting. Please try again.'
-      if (axios.isAxiosError(error) && error.response) {
+      if (isApiError(error) && error.response) {
         if (error.response?.status === 401) {
           errorMessage = 'You are not authorized to delete settings. Please log in again.'
         } else if (error.response?.status === 403) {
@@ -204,7 +204,7 @@ async function handleCreate() {
     console.error('Failed to create zoom setting:', error)
 
     let errorMessage = 'Failed to create account. Please try again.'
-    if (axios.isAxiosError(error) && error.response) {
+    if (isApiError(error) && error.response) {
       if (error.response?.status === 400) {
         errorMessage = 'Invalid account data. Please check your input and try again.'
       } else if (error.response?.status === 401) {

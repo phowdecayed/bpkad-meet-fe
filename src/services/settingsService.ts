@@ -1,9 +1,5 @@
 import api from './api'
-import type {
-  Setting,
-  SettingCreationPayload,
-  SettingUpdatePayload,
-} from '@/types/settings'
+import type { Setting, SettingCreationPayload, SettingUpdatePayload } from '@/types/settings'
 
 export const settingsService = {
   async fetchAllSettings() {

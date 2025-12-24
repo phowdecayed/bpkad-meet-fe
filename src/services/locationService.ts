@@ -6,9 +6,7 @@ export const locationService = {
     return api.get<{ data: MeetingLocation[] }>('/api/meeting-locations')
   },
 
-  async createLocation(
-    locationData: Omit<MeetingLocation, 'id' | 'created_at' | 'updated_at'>,
-  ) {
+  async createLocation(locationData: Omit<MeetingLocation, 'id' | 'created_at' | 'updated_at'>) {
     return api.post<MeetingLocation>('/api/meeting-locations', locationData)
   },
 
