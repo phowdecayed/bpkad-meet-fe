@@ -19,17 +19,18 @@ api.interceptors.request.use((config) => {
 })
 
 // Response interceptor to handle errors
+let isRedirecting = false
+
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
-      const authStore = useAuthStore()
-      // Directly call internal logout logic if needed, but here we just redirect
-      // to avoid circular dependency loop if logout calls API.
-      // But authStore.logout calls API.
-      // We should just clear state and redirect.
-      authStore.clearAuth()
-      window.location.href = '/login'
+      if (!isRedirecting) {
+        isRedirecting = true
+        const authStore = useAuthStore()
+        authStore.clearAuth()
+        window.location.href = '/login'
+      }
     }
     return Promise.reject(error)
   },

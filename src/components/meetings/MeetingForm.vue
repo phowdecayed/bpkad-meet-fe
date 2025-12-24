@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -97,6 +97,20 @@ function toggleParticipantCreate(userId: number) {
   toggleParticipant(userId)
   // openParticipantsPopover.value = false // Keep open for multi-select
 }
+
+// Watch for type changes to sanitize data
+
+watch(
+  () => localData.value.type,
+  (newType) => {
+    if (newType === 'online') {
+      localData.value.location_id = undefined
+    } else if (newType === 'offline') {
+      localData.value.password = undefined
+    }
+    // 'hybrid' keeps both
+  },
+)
 </script>
 
 <template>
