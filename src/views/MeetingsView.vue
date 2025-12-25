@@ -86,7 +86,6 @@ async function handleDeleteMeeting() {
 
   try {
     await meetingsStore.deleteMeeting(selectedMeeting.value.id)
-    await meetingsStore.deleteMeeting(selectedMeeting.value.id)
     toast.success('Meeting deleted successfully!')
     selectedMeeting.value = null
     handleMeetingDeleted()

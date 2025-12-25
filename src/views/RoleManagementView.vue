@@ -20,8 +20,16 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'vue-sonner'
 import { PlusCircle, Trash2, Pencil } from 'lucide-vue-next'
 
+import { useAuthStore } from '@/stores/auth'
+
 const usersStore = useUsersStore()
+const authStore = useAuthStore()
 const { roles, permissions, isLoading } = storeToRefs(usersStore)
+
+function isRoleAssignedToCurrentUser(role: Role): boolean {
+  if (!authStore.user?.roles) return false
+  return authStore.user.roles.some((r) => r.id === role.id)
+}
 
 const isDialogOpen = ref(false)
 const isConfirmDialogOpen = ref(false)
@@ -110,8 +118,21 @@ async function onConfirmDelete() {
               <Button variant="ghost" size="icon" @click="openEditDialog(role)">
                 <Pencil class="h-4 w-4" />
               </Button>
-              <Button variant="ghost" size="icon" @click="handleDelete(role)">
-                <Trash2 class="h-4 w-4" />
+              <Button
+                variant="ghost"
+                size="icon"
+                @click="handleDelete(role)"
+                :disabled="isRoleAssignedToCurrentUser(role)"
+                :title="
+                  isRoleAssignedToCurrentUser(role)
+                    ? 'You cannot delete a role assigned to you'
+                    : 'Delete role'
+                "
+              >
+                <Trash2
+                  class="h-4 w-4"
+                  :class="{ 'opacity-50': isRoleAssignedToCurrentUser(role) }"
+                />
               </Button>
             </TableCell>
           </TableRow>

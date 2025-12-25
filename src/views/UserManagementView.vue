@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useUsersStore } from '@/stores/users'
+import { useAuthStore } from '@/stores/auth'
 import type { User } from '@/types/user'
 import ConfirmationDialog from '@/components/ConfirmationDialog.vue'
 import UserDialog from '@/components/users/UserDialog.vue'
@@ -21,6 +22,7 @@ import { toast } from 'vue-sonner'
 import { PlusCircle, Trash2, Pencil, LoaderCircle, MailWarning } from 'lucide-vue-next'
 
 const usersStore = useUsersStore()
+const authStore = useAuthStore()
 const { users, roles, isLoading } = storeToRefs(usersStore)
 
 const isDialogOpen = ref(false)
@@ -157,8 +159,18 @@ function formatDate(dateString: string) {
               <Button variant="ghost" size="icon" @click="openEditDialog(user)">
                 <Pencil class="h-4 w-4" />
               </Button>
-              <Button variant="ghost" size="icon" @click="handleDelete(user)">
-                <Trash2 class="h-4 w-4" />
+              <Button
+                variant="ghost"
+                size="icon"
+                @click="handleDelete(user)"
+                :disabled="user.id === authStore.user?.id"
+                :title="
+                  user.id === authStore.user?.id
+                    ? 'You cannot delete your own account'
+                    : 'Delete user'
+                "
+              >
+                <Trash2 class="h-4 w-4" :class="{ 'opacity-50': user.id === authStore.user?.id }" />
               </Button>
             </TableCell>
           </TableRow>
