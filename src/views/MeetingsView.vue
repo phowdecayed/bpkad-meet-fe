@@ -160,14 +160,16 @@ async function handleMeetingUpdated() {
 }
 
 async function handleMeetingDeleted() {
-  // Refresh list. If page becomes empty, pagination controls might need adjustment logic or
-  // the store's fetch will return empty and we might want to go to prev page if current is empty.
-  // For simplicity, just refresh current page.
   const params = buildQueryParams()
   params.page = pagination.value.currentPage
-  // If current page is empty after delete and not page 1, we might want to go back.
-  // But let's stick to simple refresh for now.
+
   await meetingsStore.fetchMeetings(params)
+
+  // Auto-navigate to previous page if current page is empty and not the first page
+  if (meetings.value.length === 0 && pagination.value.currentPage > 1) {
+    params.page = pagination.value.currentPage - 1
+    await meetingsStore.fetchMeetings(params)
+  }
 }
 
 // Initialize
