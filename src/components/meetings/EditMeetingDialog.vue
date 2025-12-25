@@ -340,8 +340,6 @@ async function updateMeeting() {
 
     toast.success('Meeting updated successfully!')
     hasUnsavedChanges.value = false
-    toast.success('Meeting updated successfully!')
-    hasUnsavedChanges.value = false
     emit('update:open', false)
     emit('success', props.meeting.id)
   } catch (error: unknown) {
