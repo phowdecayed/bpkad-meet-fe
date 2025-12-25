@@ -20,8 +20,7 @@ onMounted(async () => {
 const fetchSettingsWithErrorHandling = async () => {
   try {
     await settingsStore.fetchAllSettings()
-  } catch (error: unknown) {
-    console.error('Failed to fetch settings:', error)
+  } catch {
     toast.error('Failed to Load Settings', {
       description: 'Unable to load settings. Please check your connection and try again.',
     })
@@ -36,8 +35,7 @@ const retryFetch = async () => {
     toast.success('Settings Loaded', {
       description: 'Settings have been successfully loaded.',
     })
-  } catch (error: unknown) {
-    console.error('Retry failed:', error)
+  } catch {
     toast.error('Retry Failed', {
       description: 'Still unable to load settings. Please try again later.',
     })

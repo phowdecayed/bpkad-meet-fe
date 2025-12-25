@@ -124,8 +124,6 @@ const onSubmit = handleSubmit(async (formData) => {
     // Refresh settings to get updated data
     await settingsStore.fetchAllSettings()
   } catch (error: unknown) {
-    console.error('Failed to save general settings:', error)
-
     let errorMessage = 'Failed to save general settings. Please try again.'
     if (
       error &&

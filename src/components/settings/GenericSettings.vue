@@ -59,8 +59,6 @@ const handleSave = async (setting: Setting) => {
       description: `${setting.name} has been updated successfully.`,
     })
   } catch (error: unknown) {
-    console.error('Failed to save generic setting:', error)
-
     let errorMessage = 'Failed to save settings. Please try again.'
     if (isApiError(error) && error.response) {
       if (error.response?.status === 400) {

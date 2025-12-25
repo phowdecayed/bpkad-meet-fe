@@ -142,9 +142,7 @@ async function loadUsers() {
   if (!usersStore.users.length) {
     try {
       await usersStore.fetchUsers()
-    } catch {
-      console.error('Failed to load users:')
-    }
+    } catch {}
   }
 }
 

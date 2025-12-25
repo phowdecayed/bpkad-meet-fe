@@ -60,17 +60,14 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       const response = await authService.fetchUser()
       setUser(response.data.data)
-    } catch (error) {
+    } catch {
       clearAuth()
-      console.error('Failed to fetch user:', error)
     }
   }
 
   async function logout() {
     try {
       await authService.logout()
-    } catch (error) {
-      console.error('Failed to logout on server:', error)
     } finally {
       clearAuth()
       if (window.location.pathname !== '/login') {

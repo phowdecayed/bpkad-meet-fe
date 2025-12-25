@@ -38,7 +38,6 @@ export const useUsersStore = defineStore('users', () => {
       } else {
         error.value = 'Failed to fetch roles.'
       }
-      console.error('Failed to fetch roles:', err)
     }
   }
 
@@ -52,7 +51,6 @@ export const useUsersStore = defineStore('users', () => {
       } else {
         error.value = 'Failed to fetch permissions.'
       }
-      console.error('Failed to fetch permissions:', err)
     }
   }
 

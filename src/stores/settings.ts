@@ -23,8 +23,6 @@ export const useSettingsStore = defineStore('settings', () => {
 
       settings.value = response.data
     } catch (err: unknown) {
-      console.error('[Settings Store] API Response Error:', err)
-
       const errorObj = err as {
         code?: string
         response?: { status: number; data?: { message?: string } }
@@ -59,8 +57,6 @@ export const useSettingsStore = defineStore('settings', () => {
 
       settings.value = response.data
     } catch (err: unknown) {
-      console.error('[Settings Store] API Response Error:', err)
-
       const errorObj = err as {
         code?: string
         response?: { status: number; data?: { message?: string } }

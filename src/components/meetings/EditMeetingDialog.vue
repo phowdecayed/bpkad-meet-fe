@@ -140,9 +140,7 @@ async function loadRequiredData() {
       usersStore.fetchUsers(),
       props.meeting ? meetingsStore.fetchParticipants(props.meeting.id) : Promise.resolve(),
     ])
-  } catch (error) {
-    console.error('Failed to load required data:', error)
-  }
+  } catch {}
 }
 
 async function populateForm(meeting: Meeting) {
@@ -161,9 +159,7 @@ async function populateForm(meeting: Meeting) {
   try {
     const participants = await meetingsStore.fetchParticipants(fullMeeting.id)
     participantIds = participants.map((p) => p.id)
-  } catch (error) {
-    console.error('Failed to load participants:', error)
-  }
+  } catch {}
 
   formData.value = {
     topic: fullMeeting.topic,
@@ -344,7 +340,6 @@ async function updateMeeting() {
     emit('success', props.meeting.id)
   } catch (error: unknown) {
     const e = error as Error & { response?: { data?: { errors?: Record<string, string> } } }
-    console.error('Failed to update meeting:', e)
     toast.error(e.message || 'An unexpected error occurred.')
     if (e.response?.data?.errors) {
       validationErrors.value = e.response.data.errors
