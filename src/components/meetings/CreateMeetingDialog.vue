@@ -24,7 +24,7 @@ const props = defineProps<{
   open: boolean
 }>()
 
-const emit = defineEmits(['update:open'])
+const emit = defineEmits(['update:open', 'success'])
 
 const meetingsStore = useMeetingsStore()
 const locationsStore = useLocationsStore()
@@ -192,11 +192,12 @@ async function createMeeting() {
       meetingData.password = formData.value.password.trim()
     }
 
-    await meetingsStore.createMeeting(meetingData)
+    const newMeeting = await meetingsStore.createMeeting(meetingData)
 
     toast.success('Meeting created successfully!')
     resetForm()
     emit('update:open', false)
+    emit('success', newMeeting)
   } catch {
     // Handle validation errors from server
     if (meetingsStore.error?.type === 'validation' && meetingsStore.error.details) {
@@ -272,15 +273,8 @@ watch(
   },
 )
 
-// Watch form fields for real-time validation
-watch(
-  formData,
-  () => {
-    if (currentStep.value === 1) validateStep(1)
-    if (currentStep.value === 2) validateStep(2)
-  },
-  { deep: true },
-)
+// Watch form fields for real-time validation REMOVED to prevent aggressive validation
+// Validation happens on Step Change or Submit attempt.
 
 // Watch for step changes to validate current step
 watch(currentStep, (newStep) => {

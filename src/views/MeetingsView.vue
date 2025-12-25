@@ -142,6 +142,12 @@ async function retryFetch() {
   await meetingsStore.fetchMeetings(params)
 }
 
+async function handleMeetingCreated() {
+  const params = buildQueryParams()
+  params.page = pagination.value.currentPage
+  await meetingsStore.fetchMeetings(params)
+}
+
 // Initialize
 onMounted(() => {
   meetingsStore.fetchMeetings(buildQueryParams())
@@ -232,7 +238,7 @@ onMounted(() => {
     />
 
     <!-- Dialogs -->
-    <CreateMeetingDialog v-model:open="showCreateDialog" />
+    <CreateMeetingDialog v-model:open="showCreateDialog" @success="handleMeetingCreated" />
     <EditMeetingDialog v-model:open="showEditDialog" :meeting="selectedMeeting" />
     <MeetingDetailsDialog v-model:open="showDetailsDialog" :meeting="selectedMeeting" />
     <ConfirmationDialog

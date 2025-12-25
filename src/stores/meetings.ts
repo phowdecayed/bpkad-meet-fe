@@ -241,8 +241,8 @@ export const useMeetingsStore = defineStore('meetings', () => {
       const response = await meetingService.createMeeting(meetingData)
       const newMeeting = response.data.data
 
-      // Add to current meetings list if it fits current filters
-      meetings.value.unshift(newMeeting)
+      // Note: We don't verify if it fits current filters here.
+      // The component is responsible for refreshing the list if needed.
 
       return newMeeting
     } catch (err: unknown) {
