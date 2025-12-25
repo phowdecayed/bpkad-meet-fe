@@ -37,9 +37,8 @@ async function handleSubmit() {
   try {
     await authStore.login({ email: email.value, password: password.value })
     router.push('/app/dashboard')
-  } catch (err) {
+  } catch {
     error.value = 'Failed to login. Please check your credentials.'
-    console.error(err)
   }
 }
 </script>

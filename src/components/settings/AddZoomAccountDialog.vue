@@ -71,8 +71,6 @@ async function handleCreate() {
     emit('created')
     emit('update:open', false)
   } catch (error: unknown) {
-    console.error('Failed to create zoom setting:', error)
-
     let errorMessage = 'Failed to create account. Please try again.'
     if (isApiError(error) && error.response) {
       if (error.response?.status === 400) {

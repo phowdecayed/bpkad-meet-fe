@@ -66,8 +66,6 @@ async function handleUpdate(setting: Setting) {
       description: `${setting.name} has been updated successfully.`,
     })
   } catch (error: unknown) {
-    console.error('Failed to update zoom setting:', error)
-
     let errorMessage = 'Failed to save settings. Please try again.'
     if (isApiError(error) && error.response) {
       if (error.response?.status === 400) {
@@ -115,8 +113,6 @@ async function handleDelete(setting: Setting) {
         selectedAccountId.value = null
       }
     } catch (error: unknown) {
-      console.error('Failed to delete zoom setting:', error)
-
       let errorMessage = 'Failed to delete setting. Please try again.'
       if (isApiError(error) && error.response) {
         if (error.response?.status === 401) {
