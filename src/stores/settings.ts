@@ -2,6 +2,7 @@ import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import { settingsService } from '@/services/settingsService'
 import { type AxiosResponse } from 'axios'
+import { isApiError } from '@/lib/error-handling'
 import type {
   Setting,
   GroupedSettings,
@@ -23,26 +24,29 @@ export const useSettingsStore = defineStore('settings', () => {
 
       settings.value = response.data
     } catch (err: unknown) {
-      const errorObj = err as {
-        code?: string
-        response?: { status: number; data?: { message?: string } }
-      }
-
-      // Provide more specific error messages based on error type
-      if (errorObj && errorObj.code === 'NETWORK_ERROR') {
-        error.value = `Network error while fetching ${group} settings. Please check your connection.`
-      } else if (errorObj && errorObj.response && errorObj.response.status === 401) {
-        error.value = `You are not authorized to access ${group} settings. Please log in again.`
-      } else if (errorObj && errorObj.response && errorObj.response.status === 403) {
-        error.value = `You do not have permission to view ${group} settings.`
-      } else if (errorObj && errorObj.response && errorObj.response.status >= 500) {
-        error.value = `Server error while fetching ${group} settings. Please try again later.`
+      if (isApiError(err) && err.response) {
+        switch (err.response.status) {
+          case 401:
+            error.value = `You are not authorized to access ${group} settings. Please log in again.`
+            break
+          case 403:
+            error.value = `You do not have permission to view ${group} settings.`
+            break
+          default:
+            if (err.response.status >= 500) {
+              error.value = `Server error while fetching ${group} settings. Please try again later.`
+            } else {
+              error.value = err.response.data.message || `Failed to fetch ${group} settings.`
+            }
+        }
+      } else if (err instanceof Error) {
+        error.value = err.message
       } else {
-        error.value = errorObj.response?.data?.message || `Failed to fetch ${group} settings.`
+        error.value = `Failed to fetch ${group} settings.`
       }
 
       settings.value = []
-      throw err // Re-throw to allow components to handle it
+      throw err
     } finally {
       isLoading.value = false
     }
@@ -57,29 +61,33 @@ export const useSettingsStore = defineStore('settings', () => {
 
       settings.value = response.data
     } catch (err: unknown) {
-      const errorObj = err as {
-        code?: string
-        response?: { status: number; data?: { message?: string } }
-      }
-
-      // Provide more specific error messages based on error type
-      if (errorObj && errorObj.code === 'NETWORK_ERROR') {
-        error.value = 'Network error. Please check your internet connection and try again.'
-      } else if (errorObj && errorObj.response && errorObj.response.status === 401) {
-        error.value = 'You are not authorized to access settings. Please log in again.'
-      } else if (errorObj && errorObj.response && errorObj.response.status === 403) {
-        error.value = 'You do not have permission to view settings. Contact your administrator.'
-      } else if (errorObj && errorObj.response && errorObj.response.status === 404) {
-        error.value = 'Settings endpoint not found. Please contact your administrator.'
-      } else if (errorObj && errorObj.response && errorObj.response.status >= 500) {
-        error.value = 'Server error. Please try again later or contact your administrator.'
+      if (isApiError(err) && err.response) {
+        switch (err.response.status) {
+          case 401:
+            error.value = 'You are not authorized to access settings. Please log in again.'
+            break
+          case 403:
+            error.value = 'You do not have permission to view settings. Contact your administrator.'
+            break
+          case 404:
+            error.value = 'Settings endpoint not found. Please contact your administrator.'
+            break
+          default:
+            if (err.response.status >= 500) {
+              error.value = 'Server error. Please try again later or contact your administrator.'
+            } else {
+              error.value =
+                err.response.data.message || 'Failed to fetch settings. Please try again.'
+            }
+        }
+      } else if (err instanceof Error) {
+        error.value = err.message
       } else {
-        error.value =
-          errorObj.response?.data?.message || 'Failed to fetch settings. Please try again.'
+        error.value = 'Failed to fetch settings. Please try again.'
       }
 
       settings.value = []
-      throw err // Re-throw to allow components to handle it
+      throw err
     } finally {
       isLoading.value = false
     }
