@@ -1,6 +1,6 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
-import axios from 'axios'
+
 import { isApiError } from '@/lib/error-handling'
 import { statisticsService } from '@/services/statisticsService'
 import type { DashboardStatistics } from '@/types/statistics'
@@ -23,13 +23,6 @@ export const useStatisticsStore = defineStore('statistics', () => {
         error.value = err.message
       } else {
         error.value = 'An unknown error occurred.'
-      }
-      if (axios.isAxiosError(err)) {
-        error.value = err.response?.data?.message || 'Failed to fetch dashboard statistics.'
-      } else if (err instanceof Error) {
-        error.value = err.message
-      } else {
-        error.value = 'An unexpected error occurred.'
       }
     } finally {
       isLoading.value = false
