@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Eye, EyeOff } from 'lucide-vue-next'
+import { toast } from 'vue-sonner'
 
 const props = defineProps<{
   class?: HTMLAttributes['class']
@@ -22,7 +23,6 @@ const props = defineProps<{
 const email = ref('')
 const password = ref('')
 const showPassword = ref(false)
-const error = ref<string | null>(null)
 
 const authStore = useAuthStore()
 const router = useRouter()
@@ -33,12 +33,13 @@ const router = useRouter()
  * If an error occurs, it displays an error message.
  */
 async function handleSubmit() {
-  error.value = null
   try {
     await authStore.login({ email: email.value, password: password.value })
     router.push('/app/dashboard')
   } catch {
-    error.value = 'Failed to login. Please check your credentials.'
+    toast.error('Login Failed', {
+      description: 'Please check your email and password.',
+    })
   }
 }
 </script>
@@ -85,9 +86,7 @@ async function handleSubmit() {
           </Button>
         </div>
       </div>
-      <div v-if="error" class="text-red-500 text-sm text-center">
-        {{ error }}
-      </div>
+
       <Button type="submit" class-name="w-full">Login</Button>
     </div>
   </form>
