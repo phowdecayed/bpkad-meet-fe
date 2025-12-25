@@ -1,13 +1,15 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useUsersStore } from '@/stores/users'
 import { useAuthStore } from '@/stores/auth'
 import type { User } from '@/types/user'
 import ConfirmationDialog from '@/components/ConfirmationDialog.vue'
 import UserDialog from '@/components/users/UserDialog.vue'
+import PaginationControls from '@/components/PaginationControls.vue'
 
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import {
   Table,
   TableBody,
@@ -19,17 +21,57 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from 'vue-sonner'
-import { PlusCircle, Trash2, Pencil, LoaderCircle, MailWarning } from 'lucide-vue-next'
+import { PlusCircle, Trash2, Pencil, LoaderCircle, MailWarning, Search } from 'lucide-vue-next'
 
 const usersStore = useUsersStore()
 const authStore = useAuthStore()
-const { users, roles, isLoading } = storeToRefs(usersStore)
+const { users, roles, isLoading, pagination, error } = storeToRefs(usersStore)
 
 const isDialogOpen = ref(false)
 const isConfirmDialogOpen = ref(false)
 const isResending = ref<Record<number, boolean>>({})
 const selectedUser = ref<User | null>(null)
 const userToDelete = ref<User | null>(null)
+const searchQuery = ref('')
+let searchTimeout: ReturnType<typeof setTimeout>
+
+const totalPages = computed(() => pagination.value.lastPage)
+const hasNextPage = computed(() => pagination.value.currentPage < pagination.value.lastPage)
+const hasPrevPage = computed(() => pagination.value.currentPage > 1)
+
+function handleSearch(event: Event) {
+  const query = (event.target as HTMLInputElement).value
+  searchQuery.value = query
+
+  clearTimeout(searchTimeout)
+  searchTimeout = setTimeout(() => {
+    usersStore.setSearch(query)
+  }, 300)
+}
+
+function handlePageChange(page: number) {
+  usersStore.setPage(page)
+}
+
+function handleNextPage() {
+  if (hasNextPage.value) handlePageChange(pagination.value.currentPage + 1)
+}
+
+function handlePrevPage() {
+  if (hasPrevPage.value) handlePageChange(pagination.value.currentPage - 1)
+}
+
+function handleFirstPage() {
+  handlePageChange(1)
+}
+
+function handleLastPage() {
+  handlePageChange(totalPages.value)
+}
+
+function handleRetry() {
+  usersStore.fetchUsers()
+}
 
 onMounted(() => {
   usersStore.fetchUsers()
@@ -102,6 +144,20 @@ function formatDate(dateString: string) {
         <PlusCircle class="mr-2 h-4 w-4" />
         Create User
       </Button>
+    </div>
+
+    <div class="flex items-center py-4">
+      <div class="relative w-full max-w-sm items-center">
+        <Input
+          :model-value="searchQuery"
+          @input="handleSearch"
+          placeholder="Search users..."
+          class="pl-10"
+        />
+        <span class="absolute start-0 inset-y-0 flex items-center justify-center px-2">
+          <Search class="size-4 text-muted-foreground" />
+        </span>
+      </div>
     </div>
 
     <div v-if="isLoading">
@@ -177,6 +233,24 @@ function formatDate(dateString: string) {
         </TableBody>
       </Table>
     </div>
+
+    <PaginationControls
+      :current-page="pagination.currentPage"
+      :total-pages="totalPages"
+      :total-items="pagination.total"
+      :items-per-page="pagination.perPage"
+      :has-next-page="hasNextPage"
+      :has-prev-page="hasPrevPage"
+      :is-loading="isLoading"
+      :error="error ? { message: error, retryable: true } : null"
+      @page-change="handlePageChange"
+      @first-page="handleFirstPage"
+      @last-page="handleLastPage"
+      @next-page="handleNextPage"
+      @prev-page="handlePrevPage"
+      @retry="handleRetry"
+      class="mt-4"
+    />
 
     <UserDialog
       v-model:open="isDialogOpen"

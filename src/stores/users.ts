@@ -11,12 +11,41 @@ export const useUsersStore = defineStore('users', () => {
   const isLoading = ref(false)
   const error = ref<string | null>(null)
 
-  async function fetchUsers() {
+  const pagination = ref({
+    currentPage: 1,
+    perPage: 15, // Laravel Default
+    total: 0,
+    lastPage: 1,
+    from: 0,
+    to: 0,
+  })
+
+  const searchQuery = ref('')
+
+  async function fetchUsers(params: { page?: number; per_page?: number; search?: string } = {}) {
     isLoading.value = true
     error.value = null
     try {
-      const response = await userService.fetchUsers()
+      // Merge params with current state
+      const queryParams = {
+        page: params.page || pagination.value.currentPage,
+        per_page: params.per_page || pagination.value.perPage,
+        search: params.search !== undefined ? params.search : searchQuery.value,
+      }
+
+      const response = await userService.fetchUsers(queryParams)
       users.value = response.data.data
+
+      // Update pagination state
+      const meta = response.data.meta
+      pagination.value = {
+        currentPage: meta.current_page,
+        perPage: meta.per_page,
+        total: meta.total,
+        lastPage: meta.last_page,
+        from: meta.from,
+        to: meta.to,
+      }
     } catch (err: unknown) {
       if (isApiError(err) && err.response) {
         error.value = err.response.data.message || 'Failed to fetch users.'
@@ -28,6 +57,17 @@ export const useUsersStore = defineStore('users', () => {
     } finally {
       isLoading.value = false
     }
+  }
+
+  function setPage(page: number) {
+    pagination.value.currentPage = page
+    fetchUsers({ page })
+  }
+
+  function setSearch(query: string) {
+    searchQuery.value = query
+    pagination.value.currentPage = 1 // Reset to first page on search
+    fetchUsers({ page: 1, search: query })
   }
 
   async function fetchRoles() {
@@ -142,7 +182,11 @@ export const useUsersStore = defineStore('users', () => {
     permissions,
     isLoading,
     error,
+    pagination,
+    searchQuery,
     fetchUsers,
+    setPage,
+    setSearch,
     fetchRoles,
     fetchPermissions,
     createUser,

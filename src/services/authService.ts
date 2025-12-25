@@ -63,6 +63,18 @@ export const authService = {
     return api.post('/api/email/verification-notification')
   },
 
+  async updateAvatar(file: File) {
+    await this.getCsrfToken()
+    const formData = new FormData()
+    formData.append('avatar', file)
+
+    return api.post<{ message: string; avatar_url: string }>('/api/user/change-avatar', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    })
+  },
+
   async getCsrfToken() {
     return api.get('/sanctum/csrf-cookie')
   },

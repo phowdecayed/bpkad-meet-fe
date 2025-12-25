@@ -2,8 +2,18 @@ import api from './api'
 import type { User, Role, Permission, UserCreationPayload, UserUpdatePayload } from '@/types/user'
 
 export const userService = {
-  async fetchUsers() {
-    return api.get<{ data: User[] }>('/api/users')
+  async fetchUsers(params?: { page?: number; per_page?: number; search?: string }) {
+    return api.get<{
+      data: User[]
+      meta: {
+        current_page: number
+        last_page: number
+        total: number
+        per_page: number
+        from: number
+        to: number
+      }
+    }>('/api/users', { params })
   },
 
   async fetchRoles() {

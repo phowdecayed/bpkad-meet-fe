@@ -108,6 +108,16 @@ export const useAuthStore = defineStore('auth', () => {
     return authService.resendVerificationEmail()
   }
 
+  async function uploadAvatar(file: File) {
+    const response = await authService.updateAvatar(file)
+    if (user.value && response.data.avatar_url) {
+      user.value.avatar_url = response.data.avatar_url
+      localStorage.setItem('user', JSON.stringify(user.value))
+    }
+    await fetchUser()
+    return response
+  }
+
   async function getCsrfToken() {
     return authService.getCsrfToken()
   }
@@ -137,6 +147,7 @@ export const useAuthStore = defineStore('auth', () => {
     resetPassword,
     verifyEmail,
     resendVerificationEmail,
+    uploadAvatar,
     getCsrfToken,
     hasPermission,
   }

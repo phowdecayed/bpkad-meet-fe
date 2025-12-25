@@ -37,6 +37,17 @@ function onFileChange(event: Event) {
   const target = event.target as HTMLInputElement
   if (target.files && target.files[0]) {
     const file = target.files[0]
+
+    // Validate file size (2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('File too large', {
+        description: 'Avatar image must be smaller than 2MB.',
+      })
+      // Reset input
+      target.value = ''
+      return
+    }
+
     avatarFile.value = file
     avatarPreview.value = URL.createObjectURL(file)
     handleAvatarUpload()
@@ -45,15 +56,20 @@ function onFileChange(event: Event) {
 
 async function handleAvatarUpload() {
   if (!avatarFile.value) return
-  // Mock avatar upload.
+
   try {
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-    // In real app: await authStore.uploadAvatar(avatarFile.value)
+    await authStore.uploadAvatar(avatarFile.value)
     toast.success('Avatar Updated')
     avatarPreview.value = null
     avatarFile.value = null
-  } catch {
-    toast.error('Failed to upload avatar')
+  } catch (error: unknown) {
+    if (isApiError(error)) {
+      toast.error('Failed to upload avatar', {
+        description: error.response?.data?.message || 'Server error',
+      })
+    } else {
+      toast.error('Failed to upload avatar')
+    }
   }
 }
 
