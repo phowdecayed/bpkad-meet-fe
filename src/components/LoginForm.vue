@@ -10,6 +10,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import type { HTMLAttributes } from 'vue'
 import { cn } from '@/lib/utils'
+import { isApiError } from '@/lib/error-handling'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -36,9 +37,22 @@ async function handleSubmit() {
   try {
     await authStore.login({ email: email.value, password: password.value })
     router.push('/app/dashboard')
-  } catch {
-    toast.error('Login Failed', {
-      description: 'Please check your email and password.',
+  } catch (error: unknown) {
+    const title = 'Login Failed'
+    let description = 'An unexpected error occurred.'
+
+    if (isApiError(error)) {
+      if (error.response?.status === 401 || error.response?.status === 422) {
+        description = 'Please check your email and password.'
+      } else {
+        description = error.response?.data?.message || description
+      }
+    } else if (error instanceof Error) {
+      description = error.message
+    }
+
+    toast.error(title, {
+      description,
     })
   }
 }
