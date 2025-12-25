@@ -24,6 +24,7 @@ defineProps<{
   availableLocations: string[]
   locationsCount: number
   isLoading: boolean
+  error?: { message: string } | null
 }>()
 
 const emit = defineEmits([
@@ -84,7 +85,11 @@ const emit = defineEmits([
           </div>
 
           <div class="space-y-2">
-            <Label for="location">Location ({{ locationsCount }} available)</Label>
+            <Label for="location">
+              Location
+              <span v-if="error" class="text-destructive text-xs ml-1">(Error loading)</span>
+              <span v-else>({{ locationsCount }} available)</span>
+            </Label>
             <Select
               :model-value="selectedLocation"
               @update:model-value="emit('update:selectedLocation', $event)"

@@ -27,7 +27,7 @@ const props = defineProps<{
   meeting: Meeting | null
 }>()
 
-const emit = defineEmits(['update:open'])
+const emit = defineEmits(['update:open', 'success'])
 
 const meetingsStore = useMeetingsStore()
 const locationsStore = useLocationsStore()
@@ -93,7 +93,7 @@ watch(
     if (originalData.value) {
       hasUnsavedChanges.value = hasFormChanged()
     }
-    validateStep(currentStep.value)
+    // Validation removed for UX improvement (Lazy validation)
   },
   { deep: true },
 )
@@ -340,7 +340,10 @@ async function updateMeeting() {
 
     toast.success('Meeting updated successfully!')
     hasUnsavedChanges.value = false
+    toast.success('Meeting updated successfully!')
+    hasUnsavedChanges.value = false
     emit('update:open', false)
+    emit('success', props.meeting.id)
   } catch (error: unknown) {
     const e = error as Error & { response?: { data?: { errors?: Record<string, string> } } }
     console.error('Failed to update meeting:', e)

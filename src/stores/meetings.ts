@@ -262,13 +262,10 @@ export const useMeetingsStore = defineStore('meetings', () => {
       const response = await meetingService.updateMeeting(id, meetingData)
       const updatedMeeting = response.data.data
 
-      // Update in current meetings list
-      const index = meetings.value.findIndex((m) => m.id === id)
-      if (index !== -1) {
-        meetings.value[index] = updatedMeeting
-      }
+      // Note: We no longer optimistic update the list here to ensure filter consistency.
+      // The component will trigger a refresh.
 
-      // Update current meeting if it's the same
+      // Update current meeting if it's the same (for detail view consistency)
       if (currentMeeting.value?.id === id) {
         currentMeeting.value = updatedMeeting
       }
@@ -290,8 +287,7 @@ export const useMeetingsStore = defineStore('meetings', () => {
     try {
       await meetingService.deleteMeeting(id)
 
-      // Remove from current meetings list
-      meetings.value = meetings.value.filter((m) => m.id !== id)
+      // Note: We no longer optimistic delete from the list here.
 
       // Clear current meeting if it's the deleted one
       if (currentMeeting.value?.id === id) {

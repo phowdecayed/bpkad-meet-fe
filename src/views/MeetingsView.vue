@@ -86,8 +86,10 @@ async function handleDeleteMeeting() {
 
   try {
     await meetingsStore.deleteMeeting(selectedMeeting.value.id)
+    await meetingsStore.deleteMeeting(selectedMeeting.value.id)
     toast.success('Meeting deleted successfully!')
     selectedMeeting.value = null
+    handleMeetingDeleted()
   } catch {
     const errorMessage = meetingsStore.error?.message || 'Failed to delete meeting'
     toast.error(errorMessage)
@@ -145,6 +147,26 @@ async function retryFetch() {
 async function handleMeetingCreated() {
   const params = buildQueryParams()
   params.page = pagination.value.currentPage
+  await meetingsStore.fetchMeetings(params)
+  await meetingsStore.fetchMeetings(params)
+}
+
+async function handleMeetingUpdated() {
+  // If the updated meeting is the one we are currently viewing details for, we could refresh details.
+  // But primarily we need to refresh the list to respect filters.
+  const params = buildQueryParams()
+  params.page = pagination.value.currentPage
+  await meetingsStore.fetchMeetings(params)
+}
+
+async function handleMeetingDeleted() {
+  // Refresh list. If page becomes empty, pagination controls might need adjustment logic or
+  // the store's fetch will return empty and we might want to go to prev page if current is empty.
+  // For simplicity, just refresh current page.
+  const params = buildQueryParams()
+  params.page = pagination.value.currentPage
+  // If current page is empty after delete and not page 1, we might want to go back.
+  // But let's stick to simple refresh for now.
   await meetingsStore.fetchMeetings(params)
 }
 
@@ -239,7 +261,11 @@ onMounted(() => {
 
     <!-- Dialogs -->
     <CreateMeetingDialog v-model:open="showCreateDialog" @success="handleMeetingCreated" />
-    <EditMeetingDialog v-model:open="showEditDialog" :meeting="selectedMeeting" />
+    <EditMeetingDialog
+      v-model:open="showEditDialog"
+      :meeting="selectedMeeting"
+      @success="handleMeetingUpdated"
+    />
     <MeetingDetailsDialog v-model:open="showDetailsDialog" :meeting="selectedMeeting" />
     <ConfirmationDialog
       v-model:open="showDeleteDialog"
