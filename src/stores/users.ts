@@ -1,6 +1,6 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
-import axios from 'axios'
+import { isApiError } from '@/lib/error-handling'
 import { userService } from '@/services/userService'
 import type { User, Role, Permission, UserCreationPayload, UserUpdatePayload } from '@/types/user'
 
@@ -18,8 +18,10 @@ export const useUsersStore = defineStore('users', () => {
       const response = await userService.fetchUsers()
       users.value = response.data.data
     } catch (err: unknown) {
-      if (axios.isAxiosError(err) && err.response) {
+      if (isApiError(err) && err.response) {
         error.value = err.response.data.message || 'Failed to fetch users.'
+      } else if (err instanceof Error) {
+        error.value = err.message
       } else {
         error.value = 'An unexpected error occurred.'
       }
@@ -33,7 +35,7 @@ export const useUsersStore = defineStore('users', () => {
       const response = await userService.fetchRoles()
       roles.value = response.data
     } catch (err: unknown) {
-      if (axios.isAxiosError(err) && err.response) {
+      if (isApiError(err) && err.response) {
         error.value = err.response.data.message || 'Failed to fetch roles.'
       } else {
         error.value = 'Failed to fetch roles.'
@@ -46,7 +48,7 @@ export const useUsersStore = defineStore('users', () => {
       const response = await userService.fetchPermissions()
       permissions.value = response.data.data
     } catch (err: unknown) {
-      if (axios.isAxiosError(err) && err.response) {
+      if (isApiError(err) && err.response) {
         error.value = err.response.data.message || 'Failed to fetch permissions.'
       } else {
         error.value = 'Failed to fetch permissions.'

@@ -1,6 +1,6 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
-import axios, { type AxiosError } from 'axios'
+import { isApiError } from '@/lib/error-handling'
 import { meetingService } from '@/services/meetingService'
 import type { Meeting } from '@/types/meeting'
 import type { User } from '@/types/user'
@@ -99,13 +99,9 @@ export const useMeetingsStore = defineStore('meetings', () => {
 
   // Helper function to create error state
   function createErrorState(err: unknown): ErrorState {
-    if (axios.isAxiosError(err)) {
-      const axiosError = err as AxiosError<{
-        message?: string
-        errors?: Record<string, string[]>
-      }>
-      const status = axiosError.response?.status
-      const data = axiosError.response?.data
+    if (isApiError(err)) {
+      const status = err.response?.status
+      const data = err.response?.data
 
       switch (status) {
         case 422:
@@ -136,7 +132,7 @@ export const useMeetingsStore = defineStore('meetings', () => {
             retryable: true,
           }
         default:
-          if (!axiosError.response) {
+          if (!err.response) {
             return {
               type: ErrorType.NETWORK,
               message: 'Network error. Please check your connection.',
