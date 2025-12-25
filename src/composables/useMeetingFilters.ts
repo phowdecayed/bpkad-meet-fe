@@ -3,9 +3,12 @@ import debounce from 'lodash-es/debounce'
 import type { Meeting } from '@/types/meeting'
 import type { MeetingQueryParams } from '@/stores/meetings'
 
+import type { MeetingLocation } from '@/types/meeting'
+
 export function useMeetingFilters(
   meetings: { value: Meeting[] },
   fetchMeetingsCallback: (params: MeetingQueryParams) => Promise<void>,
+  locations?: { value: MeetingLocation[] },
 ) {
   // Search and filter states
   const searchQuery = ref('')
@@ -38,6 +41,10 @@ export function useMeetingFilters(
 
   // Extract unique locations
   const availableLocations = computed(() => {
+    if (locations && locations.value.length > 0) {
+      return locations.value.map((loc) => loc.name).sort()
+    }
+
     const locationSet = new Set<string>()
     meetings.value.forEach((meeting) => {
       if (meeting.location?.name) {

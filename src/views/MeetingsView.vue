@@ -2,6 +2,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useMeetingsStore } from '@/stores/meetings'
 import { useAuthStore } from '@/stores/auth'
+import { useLocationsStore } from '@/stores/locations'
 
 import { storeToRefs } from 'pinia'
 import type { Meeting } from '@/types/meeting'
@@ -21,8 +22,10 @@ import { PERMISSIONS } from '@/constants/permissions'
 
 const meetingsStore = useMeetingsStore()
 const authStore = useAuthStore()
+const locationsStore = useLocationsStore()
 const { meetings, isLoading, error, pagination } = storeToRefs(meetingsStore)
 const { hasPermission } = storeToRefs(authStore)
+const { locations } = storeToRefs(locationsStore)
 
 // Dialog states
 const showEditDialog = ref(false)
@@ -44,9 +47,13 @@ const {
   locationsCount,
   buildQueryParams,
   clearFilters,
-} = useMeetingFilters(meetings, async (params) => {
-  await meetingsStore.fetchMeetings(params)
-})
+} = useMeetingFilters(
+  meetings,
+  async (params) => {
+    await meetingsStore.fetchMeetings(params)
+  },
+  locations,
+)
 
 // Permission checks
 const canCreateMeetings = computed(() => hasPermission.value(PERMISSIONS.MEETINGS.CREATE))
@@ -138,6 +145,7 @@ async function retryFetch() {
 // Initialize
 onMounted(() => {
   meetingsStore.fetchMeetings(buildQueryParams())
+  locationsStore.fetchLocations()
 })
 </script>
 
