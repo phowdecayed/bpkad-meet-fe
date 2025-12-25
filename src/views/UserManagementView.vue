@@ -45,7 +45,7 @@ function openEditDialog(user: User) {
 }
 
 function handleSaved() {
-  usersStore.fetchUsers()
+  // Store handles refresh automatically
 }
 
 function handleDelete(user: User) {

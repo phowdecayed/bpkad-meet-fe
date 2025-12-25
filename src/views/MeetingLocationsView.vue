@@ -42,7 +42,7 @@ function openEditDialog(location: MeetingLocation) {
 }
 
 function handleSaved() {
-  locationsStore.fetchLocations()
+  // Store handles refresh automatically
 }
 
 function handleDelete(location: MeetingLocation) {
