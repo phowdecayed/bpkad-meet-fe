@@ -148,7 +148,6 @@ async function handleMeetingCreated() {
   const params = buildQueryParams()
   params.page = pagination.value.currentPage
   await meetingsStore.fetchMeetings(params)
-  await meetingsStore.fetchMeetings(params)
 }
 
 async function handleMeetingUpdated() {
